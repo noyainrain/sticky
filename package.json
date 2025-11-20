@@ -4,7 +4,7 @@
         "#*": "./src/*.js"
     },
     "scripts": {
-        "type": "tsc --project jsconfig.json || true",
+        "type": "tsc --project jsconfig.json",
         "test": "wtr || true",
         "lint": "eslint",
         "check": "npm run type && npm run test && npm run lint"
