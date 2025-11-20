@@ -9,6 +9,9 @@
         "lint": "eslint",
         "check": "npm run type && npm run test && npm run lint"
     },
+    "dependencies": {
+        "p5": "^2.1"
+    },
     "devDependencies": {
         "typescript": "^6.0",
         "@web/test-runner": "^0.20",
