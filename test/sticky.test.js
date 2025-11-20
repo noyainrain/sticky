@@ -1,5 +1,109 @@
 import { expect } from "chai";
-import { argumentStream, px } from "#sticky";
+import p5 from "p5";
+import { Ellipse, argumentStream, px } from "#sticky";
+
+// OQ or just path in general?
+/** @typedef {[string, ...unknown[]]} PathCommand */
+
+/**
+ * @typedef DrawCommand
+ * @property {"fill" | "stroke"} type
+ * @property {PathCommand[]} path
+ */
+
+/**
+ * @typedef {HTMLCanvasElement & RecordedCanvasProperties} RecordedCanvas
+ * @typedef RecordedCanvasProperties
+ * @property {DrawCommand[]} commands
+ */
+
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @returns {RecordedCanvas}
+ */
+function recordedCanvas(canvas) {
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    throw new TypeError("Bad canvas context type");
+  }
+  /** @type {PathCommand[]} */
+  const path = [];
+  /** @type {DrawCommand[]} */
+  const commands = [];
+
+  // Patch because
+  // Inherit from anything but HTMLElement is forbidden
+  // DOM does not accept Proxy objects, e.g. for append
+  Object.defineProperties(context, {
+    beginPath: {
+      value: () => {
+        CanvasRenderingContext2D.prototype.beginPath.call(context);
+        path.splice(0);
+      },
+    },
+
+    ellipse: {
+      /**
+       * @param {number} x
+       * @param {number} y
+       * @param {number} radiusX
+       * @param {number} radiusY
+       * @param {number} rotation
+       * @param {number} startAngle
+       * @param {number} endAngle
+       */
+      value: (x, y, radiusX, radiusY, rotation, startAngle, endAngle) => {
+        CanvasRenderingContext2D.prototype.ellipse.call(
+          context, x, y, radiusX, radiusY, rotation, startAngle, endAngle,
+        );
+        path.push(["ellipse", x, y, radiusX, radiusY, rotation, startAngle, endAngle]);
+      },
+    },
+
+    fill: {
+      value: () => {
+        // TODO look up issue
+        // Work around TypeScript binding wrong overload
+        // @ts-ignore
+        CanvasRenderingContext2D.prototype.fill.call(context);
+        commands.push({ type: "fill", path });
+      },
+    },
+
+    stroke: {
+      value: () => {
+        // Work around TypeScript binding wrong overload
+        // @ts-ignore
+        CanvasRenderingContext2D.prototype.stroke.call(context);
+        commands.push({ type: "stroke", path });
+      },
+    },
+  });
+
+  Object.defineProperty(canvas, "commands", { value: commands });
+  return /** @type {RecordedCanvas} */ (canvas);
+}
+
+/**
+ * @param {OnSketchSetUpCallback} onSketchSetUp
+ * @callback OnSketchSetUpCallback
+ * @param {p5} p
+ * @param {RecordedCanvas} canvas
+ */
+function beforeEachSetUpSketch(onSketchSetUp) {
+  beforeEach(async function () {
+    const canvas = recordedCanvas(document.createElement("canvas"));
+    const p = await new Promise((resolve) => {
+      new p5((p) => {
+        p.setup = () => {
+          p.createCanvas(640, 360, p.P2D, canvas);
+          resolve(p);
+        };
+      });
+    });
+    onSketchSetUp(p, canvas);
+  });
+}
 
 describe("argumentStream", function () {
   describe("call", function () {
@@ -43,6 +147,50 @@ describe("PixelLengthValue", function () {
       const value = px(360);
       const result = value.evaluate();
       expect(result).to.equal(value.value);
+    });
+  });
+});
+
+describe("Ellipse", function () {
+  /** @type {p5} */
+  let p;
+  /** @type {RecordedCanvas} canvas */
+  let canvas;
+
+  beforeEachSetUpSketch((newP, newCanvas) => {
+    p = newP;
+    canvas = newCanvas;
+  });
+
+  // TODO move to shapetest
+  describe("constructor", function () {
+    it("should do something", function () {
+      const attributes = { width: px(3), height: px(4) };
+      const shape = new Ellipse(px(1), px(2), attributes);
+      expect(shape.width).to.equal(attributes.width);
+      expect(shape.height).to.equal(attributes.height);
+    });
+
+    it("should do more", function () {
+      const width = px(1);
+      const height = px(2);
+      const shape = new Ellipse(width, height);
+      expect(shape.width).to.equal(width);
+      expect(shape.height).to.equal(height);
+    });
+  });
+
+  describe("render", function () {
+    it("should render shape", function () {
+      const ellipse = new Ellipse(px(canvas.width), px(canvas.height));
+      ellipse.render(p);
+      expect(canvas.commands[0]?.type).to.equal("fill");
+      const radiusX = canvas.width / 2;
+      const radiusY = canvas.height / 2;
+      expect(canvas.commands[0]?.path).to.deep.equal(
+        [["ellipse", radiusX, radiusY, radiusX, radiusY, 0, 0, 2 * Math.PI]],
+      );
+      expect(canvas.commands[1]?.type).to.equal("stroke");
     });
   });
 });

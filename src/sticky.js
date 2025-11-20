@@ -1,5 +1,8 @@
 /** Library for describing and rendering 2D models made entirely of simple shapes. */
 
+// eslint-disable-next-line no-unused-vars
+import p5 from "p5";
+
 /**
  * @template T
  * @typedef {new (...args: never[]) => T} Constructor
@@ -153,4 +156,99 @@ export class PixelLengthValue extends QuantityValue {
  */
 export function px(value) {
   return new PixelLengthValue(value);
+}
+
+/**
+ * Shape attributes.
+ * @typedef ShapeAttributes
+ * @property {Value<"length">} [width]
+ * @property {Value<"length">} [height]
+ */
+
+/**
+ * @param {NextCallback} next
+ * @returns {ShapeAttributes}
+ */
+function readShapeShortcutArguments(next) {
+  const attributes = {};
+  let width = next(Value, arg => arg.type === "length");
+  if (width.value !== undefined) {
+    attributes.width = width.value;
+    let height = next(Value, arg => arg.type === "length");
+    if (height.value !== undefined) {
+      attributes.height = height.value;
+    }
+  }
+  return attributes;
+}
+
+/**
+ * Basic geometric shape.
+ */
+export class Shape {
+  /**
+   * Width of the shape.
+   * @type {Value<"length">}
+   */
+  width;
+  /**
+   * Height of the shape.
+   * @type {Value<"length">}
+   */
+  height;
+
+  /**
+   * @overload
+   * @param {ShapeAttributes} [attributes]
+   * @overload
+   * @param {Value<"length">} width
+   * @param {ShapeAttributes} [attributes]
+   * @overload
+   * @param {Value<"length">} width
+   * @param {Value<"length">} height
+   * @param {ShapeAttributes} [attributes]
+   * @function
+   * @param {...unknown} args
+   */
+  constructor(...args) {
+    const next = argumentStream(args);
+    const attributes = Object.assign(
+      {}, readShapeShortcutArguments(next), next(Object).value ?? {},
+    );
+
+    this.width = attributes.width ?? px(0);
+    this.height = attributes.height ?? px(0);
+  }
+
+  // OQ DESIGN renderer / calls
+  /**
+   * Render the shape to a sketch.
+   * @param {p5} p - p5.js sketch.
+   */
+  render(p) {
+    this.renderShape(p);
+  }
+
+  /**
+   * Render the shape itself to a sketch.
+   * @param {p5} p - p5.js sketch.
+   */
+  // eslint-disable-next-line no-unused-vars
+  renderShape(p) {
+    throw new Error("Unimplemented method");
+  }
+}
+
+/**
+ * Ellipse.
+ */
+export class Ellipse extends Shape {
+  /**
+   * @param {p5} p
+   */
+  renderShape(p) {
+    const width = this.width.evaluate();
+    const height = this.height.evaluate();
+    p.ellipse(width / 2, height / 2, width, height);
+  }
 }
