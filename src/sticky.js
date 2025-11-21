@@ -69,9 +69,17 @@ export function argumentStream(values) {
 }
 
 /**
+ * Viewport point.
+ * @typedef Point
+ * @property {number} x - Horizontal distance in pixels.
+ * @property {number} y - Vertical distance in pixels.
+ */
+
+/**
  * Result type of each dynamic value type.
  * @typedef ValueTypes
  * @property {number} length - Length quantity.
+ * @property {Point} position - Position, i.e. the description of a point in space.
  */
 
 /**
@@ -241,10 +249,72 @@ export function h(value) {
 }
 
 /**
+ * Position on the face of a reference shape in Cartesian coordinates.
+ * @extends Value<"position">
+ */
+export class PointPositionValue extends Value {
+  /**
+   * Horizontal distance.
+   * @type {Value<"length">}
+   */
+  x;
+  /**
+   * Vertical distance.
+   * @type {Value<"length">}
+   */
+  y;
+
+  /**
+   * @param {Value<"length">} x
+   * @param {Value<"length">} y
+   */
+  constructor(x, y) {
+    super("position");
+    this.x = x;
+    this.y = y;
+  }
+
+  /**
+   * @param {Shape | p5} reference
+   */
+  bind(reference) {
+    super.bind(reference);
+    this.x.bind(reference);
+    this.y.bind(reference);
+  }
+
+  compute() {
+    return { x: this.x.evaluate(), y: this.y.evaluate() };
+  }
+}
+
+/**
+ * Position on the face of a reference shape in Cartesian coordinates.
+ * @param {Value<"length">} x - Horizontal distance.
+ * @param {Value<"length">} y - Vertical distance.
+ * @returns {PointPositionValue}
+ */
+export function point(x, y) {
+  return new PointPositionValue(x, y);
+}
+
+// Backwards compatibility
+/**
+ * @param {Value<"length"> | number} x
+ * @param {Value<"length"> | number} y
+ */
+export function body(x, y) {
+  x = typeof x === "number" ? w(x) : x;
+  y = typeof y === "number" ? h(y) : y;
+  return new PointPositionValue(x, y);
+}
+
+/**
  * Shape attributes.
  * @typedef ShapeAttributes
  * @property {Value<"length">} [width]
  * @property {Value<"length">} [height]
+ * @property {Value<"position">} [at]
  */
 
 /**
@@ -255,10 +325,14 @@ function readShapeShortcutArguments(next) {
   const attributes = {};
   let width = next(Value, arg => arg.type === "length");
   if (width.value !== undefined) {
-    attributes.width = width.value;
+    attributes.width = /** @type {Value<"length">} */ (width.value);
     let height = next(Value, arg => arg.type === "length");
     if (height.value !== undefined) {
-      attributes.height = height.value;
+      attributes.height = /** @type {Value<"length">} */ (height.value);
+      const at = next(Value, arg => arg.type === "position");
+      if (at.value !== undefined) {
+        attributes.at = /** @type {Value<"position">} */ (at.value);
+      }
     }
   }
   return attributes;
@@ -300,6 +374,11 @@ export class Shape {
    */
   height;
   /**
+   * ...
+   * @type {Value<"position">}
+   */
+  at;
+  /**
    * Base the shape is linked to, if any.
    * @type {?Shape}
    */
@@ -309,6 +388,11 @@ export class Shape {
    * @type {Shape[]}
    */
   links = [];
+  /**
+   * ...
+   * @type {?p5}
+   */
+  p = null;
 
   /**
    * @overload
@@ -321,6 +405,12 @@ export class Shape {
    * @overload
    * @param {Value<"length">} width
    * @param {Value<"length">} height
+   * @param {ShapeAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {Value<"length">} width
+   * @param {Value<"length">} height
+   * @param {Value<"position">} at
    * @param {ShapeAttributes | Shape} [attributes]
    * @param {...Shape[]} links
    * @function
@@ -336,6 +426,7 @@ export class Shape {
 
     this.width = attributes.width ?? w(1);
     this.height = attributes.height ?? h(1);
+    this.at = attributes.at ?? point(w(1 / 2), h(1 / 2));
     this.stick(...links);
   }
 
@@ -375,13 +466,21 @@ export class Shape {
    * @param {p5} p - p5.js sketch.
    */
   render(p) {
+    this.p = p;
     this.width.bind(this.base ?? p);
     this.height.bind(this.base ?? p);
+    this.at.bind(this.base ?? p);
+
+    p.push();
+    const at = this.at.evaluate();
+    p.translate(at.x, at.y);
+    p.translate(-this.width.evaluate() / 2, -this.height.evaluate() / 2);
 
     this.renderShape(p);
     for (const link of this.links) {
       link.render(p);
     }
+    p.pop();
   }
 
   /**

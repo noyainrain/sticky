@@ -1,9 +1,9 @@
 import p5 from "p5";
-import { Ellipse, px } from "#sticky";
+import { Ellipse, body, px } from "#sticky";
 
 new p5((p) => {
-  const size = px(360 / 8 * 2);
-  const model = new Ellipse(px(640 * 2), px(360 * 2));
+  const size = px(360 / 8);
+  const model = new Ellipse(px(640), px(360));
 
   const target = 1000 / 60;
   const f = 1.01;
@@ -44,7 +44,7 @@ new p5((p) => {
       model.unstick(...model.links.slice(diff));
     } else {
       for (let i = 0; i < diff; i++) {
-        const shape = new Ellipse(size, size);
+        const shape = new Ellipse(size, size, body(p.random(), p.random()));
         model.stick(shape);
         // model.links.unshift(shape)
         shape.base = model;

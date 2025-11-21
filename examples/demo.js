@@ -1,8 +1,19 @@
 import p5 from "p5";
-import { Ellipse, px } from "#sticky";
+import { Ellipse, body, h, w } from "#sticky";
 
 new p5((p) => {
-  const model = new Ellipse(px(180), px(180), new Ellipse(px(90), px(90)));
+  const model = new Ellipse(
+    h(1 / 2), h(1 / 2), body(1 / 2, 1 / 2),
+    // Eye
+    new Ellipse(
+      w(1 / 4), h(1 / 4 * 2 / 3), body(1 / 4, 1 / 2),
+      new Ellipse(w(1 / 2), w(1 / 2), body(1 / 2, 1 / 2)),
+    ),
+    new Ellipse(
+      w(1 / 4), h(1 / 4 * 2 / 3), body(3 / 4, 1 / 2),
+      new Ellipse(w(1 / 2), w(1 / 2), body(1 / 2, 1 / 2)),
+    ),
+  );
 
   p.setup = () => {
     p.createCanvas(640, 360);
