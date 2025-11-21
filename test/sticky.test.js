@@ -151,6 +151,38 @@ describe("PixelLengthValue", function () {
   });
 });
 
+/**
+ * @param {new (...links: import("#sticky").Shape[]) => import("#sticky").Shape} Shape
+ */
+function itShouldBehaveLikeShape(Shape) {
+  describe("stick", function () {
+    it("should link shapes", function () {
+      /** @type {[import("#sticky").Shape, import("#sticky").Shape, import("#sticky").Shape]} */
+      const links = [new Shape(), new Shape(), new Shape()];
+      const base = new Shape(links[0]);
+      const otherBase = new Shape(links[1]);
+
+      base.stick(...links.slice(1));
+      expect(base.links).to.deep.equal(links);
+      expect(links.every(link => link.base === base)).to.be.true;
+      expect(otherBase.links).to.deep.equal([]);
+    });
+  });
+
+  describe("unstick", function () {
+    it("should unlink shapes", function () {
+      /** @type {[import("#sticky").Shape, import("#sticky").Shape, import("#sticky").Shape]} */
+      const links = [new Shape(), new Shape(), new Shape()];
+      const base = new Shape(...links);
+
+      base.unstick(...links.slice(1));
+      expect(base.links).to.deep.equal([links[0]]);
+      expect(links[0].base).to.equal(base);
+      expect(links.slice(1).every(link => !link.base)).to.be.true;
+    });
+  });
+}
+
 describe("Ellipse", function () {
   /** @type {p5} */
   let p;
@@ -162,13 +194,17 @@ describe("Ellipse", function () {
     canvas = newCanvas;
   });
 
+  itShouldBehaveLikeShape(Ellipse);
+
   // TODO move to shapetest
   describe("constructor", function () {
     it("should do something", function () {
       const attributes = { width: px(3), height: px(4) };
-      const shape = new Ellipse(px(1), px(2), attributes);
+      const links = [new Ellipse()];
+      const shape = new Ellipse(px(1), px(2), attributes, ...links);
       expect(shape.width).to.equal(attributes.width);
       expect(shape.height).to.equal(attributes.height);
+      expect(shape.links).to.deep.equal(links);
     });
 
     it("should do more", function () {
@@ -177,6 +213,7 @@ describe("Ellipse", function () {
       const shape = new Ellipse(width, height);
       expect(shape.width).to.equal(width);
       expect(shape.height).to.equal(height);
+      expect(shape.links).to.deep.equal([]);
     });
   });
 

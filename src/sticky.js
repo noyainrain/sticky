@@ -183,6 +183,27 @@ function readShapeShortcutArguments(next) {
 }
 
 /**
+ * @param {NextCallback} next
+ * @returns {Shape[]}
+ */
+function readShapeArguments(next) {
+  /** @type {Shape[]} */
+  const shapes = [];
+  let shape;
+  while ((shape = next(Shape)).value !== undefined) {
+    shapes.push(shape.value);
+  }
+  // TODO support any object
+  // TODO move out of function, if (!next().done) { ...
+  // OQ or maybe ignore because typescript checks this for us already...
+  // ^ yeah i think
+  if (!shape.done) {
+    throw new TypeError(`Bad arguments item ${shape.value}`);
+  }
+  return shapes;
+}
+
+/**
  * Basic geometric shape.
  */
 export class Shape {
@@ -196,28 +217,75 @@ export class Shape {
    * @type {Value<"length">}
    */
   height;
+  /**
+   * Base the shape is linked to, if any.
+   * @type {?Shape}
+   */
+  base = null;
+  /**
+   * Shapes linked to the shape.
+   * @type {Shape[]}
+   */
+  links = [];
 
   /**
    * @overload
-   * @param {ShapeAttributes} [attributes]
+   * @param {ShapeAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
    * @overload
    * @param {Value<"length">} width
-   * @param {ShapeAttributes} [attributes]
+   * @param {ShapeAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
    * @overload
    * @param {Value<"length">} width
    * @param {Value<"length">} height
-   * @param {ShapeAttributes} [attributes]
+   * @param {ShapeAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
    * @function
    * @param {...unknown} args
    */
   constructor(...args) {
     const next = argumentStream(args);
     const attributes = Object.assign(
-      {}, readShapeShortcutArguments(next), next(Object).value ?? {},
+      {}, readShapeShortcutArguments(next),
+      next(Object, arg => !(arg instanceof Shape)).value ?? {},
     );
+    const links = readShapeArguments(next);
 
     this.width = attributes.width ?? px(0);
     this.height = attributes.height ?? px(0);
+    this.stick(...links);
+  }
+
+  /**
+   * Link one or more shapes to the shape.
+   *
+   * If a shape is already linked to another base, it is unlinked from it.
+   * @param {...Shape} shapes - Shapes to stick.
+   */
+  stick(...shapes) {
+    for (const shape of shapes) {
+      if (shape.base) {
+        shape.base.unstick(shape);
+      }
+      this.links.push(shape);
+      shape.base = this;
+    }
+  }
+
+  /**
+   * Unlink one or more shapes from the shape.
+   * @param {...Shape} shapes - Shapes to unstick.
+   */
+  unstick(...shapes) {
+    for (const shape of shapes) {
+      const i = this.links.lastIndexOf(shape);
+      if (i === -1) {
+        throw new DOMException(`No links entry ${shape}`, "NotFoundError");
+      }
+      this.links.splice(i, 1);
+      shape.base = null;
+    }
   }
 
   // OQ DESIGN renderer / calls
@@ -236,6 +304,18 @@ export class Shape {
   // eslint-disable-next-line no-unused-vars
   renderShape(p) {
     throw new Error("Unimplemented method");
+  }
+
+  toString() {
+    const path = [];
+    /** @type {?Shape} */
+    let shape = this;
+    while (shape) {
+      const index = shape.base ? `[${shape.base.links.findIndex(link => link === shape)}]` : "";
+      path.unshift(`${shape.constructor.name}${index}`);
+      shape = shape.base;
+    }
+    return path.join("/");
   }
 }
 
