@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import p5 from "p5";
 import {
-  ConstValue, Ellipse, Rectangle, Triangle, argumentStream, assert, color, h, px, scalar, tr,
+  ConstValue, Ellipse, Rectangle, Triangle, argumentStream, assert, body, color, h, px, scalar, tr,
   variable, w,
 } from "#sticky";
 
@@ -30,7 +30,7 @@ function recordedCanvas(canvas) {
     throw new TypeError("Bad canvas context type");
   }
   /** @type {PathCommand[]} */
-  const path = [];
+  let path = [];
   /** @type {DrawCommand[]} */
   const commands = [];
 
@@ -41,7 +41,7 @@ function recordedCanvas(canvas) {
     beginPath: {
       value: () => {
         CanvasRenderingContext2D.prototype.beginPath.call(context);
-        path.splice(0);
+        path = [];
       },
     },
 
@@ -104,7 +104,7 @@ function recordedCanvas(canvas) {
         // Work around TypeScript binding wrong overload
         // @ts-ignore
         CanvasRenderingContext2D.prototype.fill.call(context);
-        commands.push({ type: "fill", path });
+        commands.push({ type: "fill", path: [...path] });
       },
     },
 
@@ -113,7 +113,7 @@ function recordedCanvas(canvas) {
         // Work around TypeScript binding wrong overload
         // @ts-ignore
         CanvasRenderingContext2D.prototype.stroke.call(context);
-        commands.push({ type: "stroke", path });
+        commands.push({ type: "stroke", path: [...path] });
       },
     },
   });
@@ -476,14 +476,21 @@ describe("Ellipse", function () {
 
   describe("render", function () {
     it("should render shape", function () {
-      const ellipse = new Ellipse(px(canvas.width), px(canvas.height));
+      const ellipse = new Ellipse(
+        px(p.width), px(p.height), body(1 / 2, 1 / 2), { start: 1 / 3, end: 2 / 3 },
+      );
       ellipse.render(p);
       expect(canvas.commands[0]?.type).to.equal("fill");
+      const path = canvas.commands[0]?.path[0];
+      if (!path) {
+        throw new Error("aaaaaaaaaaaa");
+      }
       const radiusX = canvas.width / 2;
       const radiusY = canvas.height / 2;
-      expect(canvas.commands[0]?.path).to.deep.equal(
-        [["ellipse", radiusX, radiusY, radiusX, radiusY, 0, 0, 2 * Math.PI]],
-      );
+      expect(path.slice(0, 6)).to.deep.equal(["ellipse", radiusX, radiusY, radiusX, radiusY, 0]);
+      // p5 does some fancy ellipse correction of the angle
+      expect(path[6]).to.be.greaterThan(0);
+      expect(path[7]).to.be.lessThan(2 * Math.PI);
       expect(canvas.commands[1]?.type).to.equal("stroke");
     });
   });

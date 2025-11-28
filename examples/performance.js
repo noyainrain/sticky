@@ -1,7 +1,9 @@
 import p5 from "p5";
 import { Ellipse, Rectangle, Triangle, body, px } from "#sticky";
 
-const SHAPES = [Triangle, Rectangle, Ellipse];
+const SHAPES = [
+  { Shape: Triangle, edges: 3 }, { Shape: Rectangle, edges: 4 }, { Shape: Ellipse, edges: 1 },
+];
 
 const PALETTE = {
   black: "#000",
@@ -66,16 +68,16 @@ new p5((p) => {
       model.unstick(...model.links.slice(diff));
     } else {
       for (let i = 0; i < diff; i++) {
-        const Shape = SHAPES[Math.trunc(Math.random() * SHAPES.length)];
-        if (!Shape) {
-          throw new Error("no");
-        }
+        const meta = p.random(SHAPES);
         const color = Math.trunc(p.random(0, 8));
-        const shape = new Shape(
+        const shape = new meta.Shape(
           size, size, body(p.random(), p.random()),
           {
             fill: palette[color + 8],
             stroke: palette[color],
+            // OQ maybe partial should be something to activate? introduces additional shape points
+            // - seems like extra feature?
+            end: p.random(meta.edges / 2, meta.edges),
           },
         );
         model.stick(shape);
