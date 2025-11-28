@@ -3,6 +3,26 @@ import { Ellipse, Rectangle, Triangle, body, px } from "#sticky";
 
 const SHAPES = [Triangle, Rectangle, Ellipse];
 
+const PALETTE = {
+  black: "#000",
+  blue: "#00a",
+  green: "#0a0",
+  cyan: "#0aa",
+  red: "#a00",
+  magenta: "#a0a",
+  brown: "#a50",
+  lightGray: "#aaa",
+  darkGray: "#555",
+  lightBlue: "#55f",
+  lightGreen: "#5f5",
+  lightCyan: "#5ff",
+  lightRed: "#f55",
+  lightMagenta: "#f5f",
+  yellow: "#ff5",
+  white: "#fff",
+};
+const palette = Object.values(PALETTE);
+
 new p5((p) => {
   const size = px(360 / 8);
   const model = new Ellipse(px(640), px(360));
@@ -50,7 +70,13 @@ new p5((p) => {
         if (!Shape) {
           throw new Error("no");
         }
-        const shape = new Shape(size, size, body(p.random(), p.random()));
+        const color = Math.trunc(p.random(0, 8));
+        const shape = new Shape(
+          size, size, body(p.random(), p.random()),
+          {
+            fill: palette[color + 8],
+          },
+        );
         model.stick(shape);
         // model.links.unshift(shape)
         shape.base = model;

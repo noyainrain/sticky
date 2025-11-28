@@ -9,12 +9,12 @@ new p5((p) => {
     new Triangle(w(1 / 4), h(1 / 4), body(1 / 2, 1 / 4)),
     // Eye
     new Ellipse(
-      w(1 / 4), h(1 / 4 * 2 / 3), body(1 / 4, 1 / 2),
-      new Ellipse(w(1 / 2), w(1 / 2), body(1 / 2, 1 / 2)),
+      w(1 / 4), h(1 / 4 * 2 / 3), body(1 / 4, 1 / 2), {},
+      new Ellipse(w(1 / 2), w(1 / 2), body(1 / 2, 1 / 2), { fill: "pink" }),
     ),
     new Ellipse(
-      w(1 / 4), h(1 / 4 * 2 / 3), body(3 / 4, 1 / 2),
-      new Ellipse(w(1 / 2), w(1 / 2), body(1 / 2, 1 / 2)),
+      w(1 / 4), h(1 / 4 * 2 / 3), body(3 / 4, 1 / 2), {},
+      new Ellipse(w(1 / 2), w(1 / 2), body(1 / 2, 1 / 2), { fill: "pink" }),
     ),
   );
 

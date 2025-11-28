@@ -548,7 +548,7 @@ export function auto() {
  * @property {Value<"length">} [width]
  * @property {Value<"length">} [height]
  * @property {Value<"position">} [at]
- * @property {Auto} [fill]
+ * @property {?string | Auto} [fill]
  */
 
 /**
@@ -614,7 +614,7 @@ export class Shape {
   at;
   /**
    * TODO.
-   * @type {Auto}
+   * @type {?string | Auto}
    */
   fill;
   /**
@@ -750,6 +750,9 @@ export class Shape {
     this.width.bind(this, this.base ?? p);
     this.height.bind(this, this.base ?? p);
     this.at.bind(this, this.base ?? p);
+    if (this.fill instanceof Value) {
+      this.fill.bind(this, this);
+    }
 
     for (const variable of this.#variables.values()) {
       variable.bind(this, this);
@@ -757,6 +760,9 @@ export class Shape {
     }
 
     p.push();
+    if (!(this.fill instanceof Value)) {
+      p.fill(this.fill ?? "transparent");
+    }
     const at = this.at.evaluate();
     p.translate(at.x, at.y);
     p.translate(-this.width.evaluate() / 2, -this.height.evaluate() / 2);
