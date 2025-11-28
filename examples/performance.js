@@ -75,6 +75,7 @@ new p5((p) => {
           size, size, body(p.random(), p.random()),
           {
             fill: palette[color + 8],
+            stroke: palette[color],
           },
         );
         model.stick(shape);

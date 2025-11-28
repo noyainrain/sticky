@@ -549,6 +549,7 @@ export function auto() {
  * @property {Value<"length">} [height]
  * @property {Value<"position">} [at]
  * @property {?string | Auto} [fill]
+ * @property {?string | Auto} [stroke]
  */
 
 /**
@@ -617,6 +618,11 @@ export class Shape {
    * @type {?string | Auto}
    */
   fill;
+  /**
+   * TODO.
+   * @type {?string | Auto}
+   */
+  stroke;
   /**
    * Base the shape is linked to, if any.
    * @type {?Shape}
@@ -707,6 +713,7 @@ export class Shape {
     this.height = attributes.height ?? h(1);
     this.at = attributes.at ?? point(w(1 / 2), h(1 / 2));
     this.fill = attributes.fill ?? auto();
+    this.stroke = attributes.stroke ?? auto();
     this.stick(...links);
   }
 
@@ -762,6 +769,9 @@ export class Shape {
     p.push();
     if (!(this.fill instanceof Value)) {
       p.fill(this.fill ?? "transparent");
+    }
+    if (!(this.stroke instanceof Value)) {
+      p.stroke(this.stroke ?? "transparent");
     }
     const at = this.at.evaluate();
     p.translate(at.x, at.y);
