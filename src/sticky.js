@@ -212,6 +212,35 @@ export function w(value) {
 }
 
 /**
+ * Fraction of the height of a reference shape.
+ * @extends {QuantityValue<"length">}
+ */
+export class HeightLengthValue extends QuantityValue {
+  /**
+   * @param {number} value
+   */
+  constructor(value) {
+    super("length", value);
+  }
+
+  /**
+   * @param {Shape | p5} reference
+   */
+  compute(reference) {
+    return this.value * (reference instanceof p5 ? reference.height : reference.height.evaluate());
+  }
+}
+
+/**
+ * Fraction of the height of a reference shape.
+ * @param {number} value - Quantity value.
+ * @returns {HeightLengthValue}
+ */
+export function h(value) {
+  return new HeightLengthValue(value);
+}
+
+/**
  * Shape attributes.
  * @typedef ShapeAttributes
  * @property {Value<"length">} [width]

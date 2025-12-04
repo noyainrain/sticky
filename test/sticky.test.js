@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import p5 from "p5";
-import { Ellipse, argumentStream, px, w } from "#sticky";
+import { Ellipse, argumentStream, h, px, w } from "#sticky";
 
 // OQ or just path in general?
 /** @typedef {[string, ...unknown[]]} PathCommand */
@@ -194,6 +194,33 @@ describe("WidthLengthValue", function () {
       value.bind(shape);
       const result = value.evaluate();
       expect(result).to.equal(p.width / 2);
+    });
+  });
+});
+
+describe("HeightLengthValue", function () {
+  /** @type {p5} */
+  let p;
+  /** @type {import("#sticky").HeightLengthValue} */
+  let value;
+
+  beforeEachSetUpSketch((newP) => {
+    p = newP;
+  });
+
+  beforeEach(function () {
+    value = h(1 / 2);
+  });
+
+  itShouldBehaveLikeValue(() => value);
+
+  describe("evaluate", function () {
+    it("should determine value", function () {
+      const shape = new Ellipse(px(p.width), px(p.height));
+      shape.render(p);
+      value.bind(shape);
+      const result = value.evaluate();
+      expect(result).to.equal(p.height / 2);
     });
   });
 });
