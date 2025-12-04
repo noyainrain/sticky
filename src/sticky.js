@@ -1,6 +1,5 @@
 /** Library for describing and rendering 2D models made entirely of simple shapes. */
 
-// eslint-disable-next-line no-unused-vars
 import p5 from "p5";
 
 /**
@@ -181,6 +180,35 @@ export class PixelLengthValue extends QuantityValue {
  */
 export function px(value) {
   return new PixelLengthValue(value);
+}
+
+/**
+ * Fraction of the width of a reference shape.
+ * @extends {QuantityValue<"length">}
+ */
+export class WidthLengthValue extends QuantityValue {
+  /**
+   * @param {number} value
+   */
+  constructor(value) {
+    super("length", value);
+  }
+
+  /**
+   * @param {Shape | p5} reference
+   */
+  compute(reference) {
+    return this.value * (reference instanceof p5 ? reference.width : reference.width.evaluate());
+  }
+}
+
+/**
+ * Fraction of the width of a reference shape.
+ * @param {number} value - Quantity value.
+ * @returns {WidthLengthValue}
+ */
+export function w(value) {
+  return new WidthLengthValue(value);
 }
 
 /**
