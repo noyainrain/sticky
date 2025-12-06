@@ -1,13 +1,26 @@
 {
     "type": "module",
+    "imports": {
+        "#*": "./src/*.js"
+    },
     "scripts": {
         "type": "tsc --project jsconfig.json || true",
+        "test": "wtr || true",
         "lint": "eslint",
-        "check": "npm run type && npm run lint"
+        "check": "npm run type && npm run test && npm run lint"
     },
     "devDependencies": {
         "typescript": "^6.0",
+        "@web/test-runner": "^0.20",
+        "@web/test-runner-selenium": "^0.5",
+        "@web/dev-server-import-maps": "^0.2",
+        "selenium-webdriver": "^4.36",
+        "chai": "^6.2",
         "eslint": "^10.2",
-        "@eslint/js": "^10.0"
+        "@eslint/js": "^10.0",
+        "@stylistic/eslint-plugin": "^5.4",
+        "@types/mocha": "^10.0",
+        "@types/selenium-webdriver": "4.35",
+        "@types/chai": "^5.2"
     }
 }
