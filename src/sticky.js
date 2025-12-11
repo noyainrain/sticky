@@ -506,6 +506,23 @@ export class Shape {
 }
 
 /**
+ * Triangle.
+ */
+export class Triangle extends Shape {
+  /**
+   * @param {p5} p
+   */
+  renderShape(p) {
+    //     ^ C
+    //    / \
+    // B .---. A
+    const width = this.width.evaluate();
+    const height = this.height.evaluate();
+    p.triangle(width, height, 0, height, width / 2, 0);
+  }
+}
+
+/**
  * Ellipse.
  */
 export class Ellipse extends Shape {

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import p5 from "p5";
-import { Ellipse, argumentStream, h, px, w } from "#sticky";
+import { Ellipse, Triangle, argumentStream, h, px, w } from "#sticky";
 
 // OQ or just path in general?
 /** @typedef {[string, ...unknown[]]} PathCommand */
@@ -39,6 +39,28 @@ function recordedCanvas(canvas) {
       value: () => {
         CanvasRenderingContext2D.prototype.beginPath.call(context);
         path.splice(0);
+      },
+    },
+
+    moveTo: {
+      /**
+       * @param {number} x
+       * @param {number} y
+       */
+      value: (x, y) => {
+        CanvasRenderingContext2D.prototype.moveTo.call(context, x, y);
+        path.push(["moveTo", x, y]);
+      },
+    },
+
+    lineTo: {
+      /**
+       * @param {number} x
+       * @param {number} y
+       */
+      value: (x, y) => {
+        CanvasRenderingContext2D.prototype.lineTo.call(context, x, y);
+        path.push(["lineTo", x, y]);
       },
     },
 
@@ -256,6 +278,32 @@ function itShouldBehaveLikeShape(Shape) {
     });
   });
 }
+
+describe("Triangle", function () {
+  /** @type {p5} */
+  let p;
+  /** @type {RecordedCanvas} canvas */
+  let canvas;
+
+  beforeEachSetUpSketch((newP, newCanvas) => {
+    p = newP;
+    canvas = newCanvas;
+  });
+
+  itShouldBehaveLikeShape(Triangle);
+
+  describe("render", function () {
+    it("should render shape", function () {
+      const triangle = new Triangle(px(canvas.width), px(canvas.height));
+      triangle.render(p);
+      expect(canvas.commands[0]?.type).to.equal("fill");
+      expect(canvas.commands[0]?.path).to.deep.equal([
+        ["moveTo", p.width, p.height], ["lineTo", 0, p.height], ["lineTo", p.width / 2, 0],
+      ]);
+      expect(canvas.commands[1]?.type).to.equal("stroke");
+    });
+  });
+});
 
 describe("Ellipse", function () {
   /** @type {p5} */

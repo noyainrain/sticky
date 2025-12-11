@@ -1,5 +1,7 @@
 import p5 from "p5";
-import { Ellipse, body, px } from "#sticky";
+import { Ellipse, Triangle, body, px } from "#sticky";
+
+const SHAPES = [Triangle, Ellipse];
 
 new p5((p) => {
   const size = px(360 / 8);
@@ -44,7 +46,11 @@ new p5((p) => {
       model.unstick(...model.links.slice(diff));
     } else {
       for (let i = 0; i < diff; i++) {
-        const shape = new Ellipse(size, size, body(p.random(), p.random()));
+        const Shape = SHAPES[Math.trunc(Math.random() * SHAPES.length)];
+        if (!Shape) {
+          throw new Error("no");
+        }
+        const shape = new Shape(size, size, body(p.random(), p.random()));
         model.stick(shape);
         // model.links.unshift(shape)
         shape.base = model;

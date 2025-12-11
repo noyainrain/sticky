@@ -1,9 +1,11 @@
 import p5 from "p5";
-import { Ellipse, body, h, w } from "#sticky";
+import { Ellipse, Triangle, body, h, w } from "#sticky";
 
 new p5((p) => {
   const model = new Ellipse(
     h(1 / 2), h(1 / 2), body(1 / 2, 1 / 2),
+    // Ear
+    new Triangle(w(1 / 4), h(1 / 4), body(1 / 2, 1 / 4)),
     // Eye
     new Ellipse(
       w(1 / 4), h(1 / 4 * 2 / 3), body(1 / 4, 1 / 2),
