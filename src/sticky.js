@@ -464,6 +464,11 @@ export class PointPositionValue extends Value {
   compute() {
     return { x: this.x.evaluate(), y: this.y.evaluate() };
   }
+
+  // XXX
+  angle() {
+    return 0;
+  }
 }
 
 /**
@@ -544,6 +549,14 @@ export class EdgeValue extends Value {
     return reference instanceof p5
       ? new p5.Vector()
       : reference.getEdgePoint(this.index, this.offset, this.crossOffset.evaluate());
+  }
+
+  // XXX
+  /**
+   * @param {Shape | p5} reference
+   */
+  angle(reference) {
+    return reference instanceof p5 ? 0 : reference.getEdgeAngle(this.index, this.offset);
   }
 }
 
@@ -956,7 +969,11 @@ export class Shape {
     }
     const at = this.at.evaluate();
     p.translate(at.x, at.y);
-    p.rotate(this.orientation.evaluate());
+    p.rotate(
+      // XXX true, angle does not exist on Value... design this differently
+      // @ts-ignore
+      this.orientation.evaluate() * 2 * Math.PI + this.at.angle(this.base ?? p),
+    );
     p.translate(-this.width.evaluate() / 2, -this.height.evaluate() / 2);
 
     this.renderShape(p);
@@ -984,6 +1001,17 @@ export class Shape {
    */
   // eslint-disable-next-line no-unused-vars
   getEdgePoint(index, offset, crossOffset) {
+    throw new Error("Unimplemented method");
+  }
+
+  /**
+   * ...
+   * @param {number} index
+   * @param {Value<"length">} offset
+   * @returns {number}
+   */
+  // eslint-disable-next-line no-unused-vars
+  getEdgeAngle(index, offset) {
     throw new Error("Unimplemented method");
   }
 
@@ -1178,6 +1206,20 @@ export class Ellipse extends Shape {
     } else {
       // const t = offsetPx / this.lengthPx;
       return new p5.Vector(0, 0);
+    }
+  }
+
+  /**
+   * ...
+   * @param {number} index
+   * @param {Value<"length">} offset
+   */
+  getEdgeAngle(index, offset) {
+    // TODO maybe this can be done better now with new Value architecture?
+    if (offset instanceof EdgeLengthValue) {
+      return offset.value * 2 * Math.PI + Math.PI / 2;
+    } else {
+      return 0;
     }
   }
 }

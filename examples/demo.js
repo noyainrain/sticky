@@ -2,6 +2,8 @@ import p5 from "p5";
 import { Ellipse, Rectangle, Triangle, body, edge, h, px, w } from "#sticky";
 
 new p5((p) => {
+  const earW = w(1 / 3);
+  const earH = h(3 / 4 * earW.value);
   const model = new Rectangle(
     w(1), h(1), body(1 / 2, 1 / 2), { fill: "black", stroke: null },
 
@@ -21,7 +23,12 @@ new p5((p) => {
     new Ellipse(
       h(1 / 2), h(1 / 2), body(1 / 2, 1 / 2), { stroke: "pink", fill: "black" },
       // Ear
-      new Triangle(w(1 / 4), h(1 / 4), edge(0, 3 / 4, h(1 / 4 / 2)), { start: 1, end: 3 }),
+      new Triangle(
+        earW, earH, edge(0, 10 / 16, h(earH.value / 2 - earH.value / 8)), { start: 1, end: 3 },
+      ),
+      new Triangle(
+        earW, earH, edge(0, 14 / 16, h(earH.value / 2 - earH.value / 8)), { start: 1, end: 3 },
+      ),
       // Eye
       new Ellipse(
         w(1 / 4), h(1 / 4 * 2 / 3), body(1 / 4, 1 / 2), {},
