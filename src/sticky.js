@@ -321,6 +321,75 @@ export function h(value) {
 }
 
 /**
+ * Fraction of an edge length of a reference shape.
+ * @extends {QuantityValue<"length">}
+ */
+export class EdgeLengthValue extends QuantityValue {
+  /**
+   * ...
+   * @type {number}
+   */
+  index;
+
+  /**
+   * @param {number} index
+   * @param {number} value
+   */
+  constructor(index, value) {
+    super("length", value);
+    this.index = index;
+  }
+
+  /**
+   * @param {Shape | p5} reference
+   */
+  // eslint-disable-next-line no-unused-vars
+  toPixels(reference) {
+    return 0;
+    // shape.getEdge(this.index)
+    // this.value * shape.getEdgeLengthPx(this.index);
+  }
+}
+
+/**
+ * Fraction of an edge length of a reference shape.
+ * @param {number} index
+ * @param {number} value - Length value
+ */
+export function e(index, value) {
+  return new EdgeLengthValue(index, value);
+}
+
+// e(0, 1 / 2)
+// edge(0, px(50))
+// edge(0, 1 / 2)
+// edge(0, e(0, 1 / 2))
+
+// export class PolygonEdge {
+//   a;
+//   b;
+//
+//   get lengthPx {
+//   }
+//
+//   getPointPx(offsetPx) {
+//
+//   }
+// }
+
+// export class EllipseEdge {
+//   center;
+//   radiusX;
+//   radiusY;
+//   //start;
+//   //end;
+//
+// }
+//
+// shape.getEdge(index).getPointPx(offset.px(shape))
+//                                 shape.getEdge(index).lengthPx
+
+/**
  * ...
  * @extends {QuantityValue<"angle">}
  */
@@ -416,6 +485,74 @@ export function body(x, y) {
   x = typeof x === "number" ? w(x) : x;
   y = typeof y === "number" ? h(y) : y;
   return new PointPositionValue(x, y);
+}
+
+// getEdges() -> curves (basically every curve is an axis)
+// getCartesianCoordinateSystem() -> origin, xAxis, yAxis
+// getPolarCoordinateSystem() -> pole, axis
+/**
+ * ...
+ * @extends {Value<"position">}
+ */
+export class EdgeValue extends Value {
+  /**
+   * ...
+   * @type {number}
+   */
+  index;
+  /**
+   * ...
+   * @type {Value<"length">}
+   */
+  offset;
+  /**
+   * ...
+   * @type {Value<"length">}
+   */
+  crossOffset;
+
+  /**
+   * @param {number} index
+   * @param {Value<"length"> | number} offset
+   * @param {Value<"length"> | number} crossOffset
+   */
+  constructor(index, offset = 1 / 2, crossOffset = 0) {
+    super("position");
+    this.index = index;
+    this.offset = typeof offset === "number" ? e(index, offset) : offset;
+    this.crossOffset = typeof crossOffset === "number" ? e(index, crossOffset) : crossOffset;
+  }
+
+  // TODO design without chaining
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.offset.bind(shape, reference);
+    this.crossOffset.bind(shape, reference);
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  compute(shape, reference) {
+    return reference instanceof p5
+      ? new p5.Vector()
+      : reference.getEdgePoint(this.index, this.offset, this.crossOffset.evaluate());
+  }
+}
+
+/**
+ * ...
+ * @param {number} index
+ * @param {Value<"length"> | number} offset
+ * @param {Value<"length"> | number} crossOffset
+ */
+export function edge(index, offset = 1 / 2, crossOffset = 0) {
+  return new EdgeValue(index, offset, crossOffset);
 }
 
 // TODO OQ p5.Color, right? use whatever fill() accepts and _doesnt_ convert - IIRC tuples or
@@ -810,6 +947,18 @@ export class Shape {
     throw new Error("Unimplemented method");
   }
 
+  /**
+   * ...
+   * @param {number} index - ...
+   * @param {Value<"length"> | number} offset - ...
+   * @param {number} crossOffset - ...
+   * @returns {p5.Vector}
+   */
+  // eslint-disable-next-line no-unused-vars
+  getEdgePoint(index, offset, crossOffset) {
+    throw new Error("Unimplemented method");
+  }
+
   toString() {
     const path = [];
     /** @type {?Shape} */
@@ -970,5 +1119,37 @@ export class Ellipse extends Shape {
     p.arc(
       width / 2, height / 2, width, height, this.start * 2 * Math.PI, end * 2 * Math.PI, p.OPEN,
     );
+  }
+
+  // getEdgeLength(index) {
+  // }
+
+  /**
+   * ...
+   * @param {number} index
+   * @param {Value<"length">} offset
+   * @param {number} crossOffset
+   */
+  getEdgePoint(index, offset, crossOffset) {
+    // TODO maybe this can be done better now with new Value architecture?
+    if (offset instanceof EdgeLengthValue) {
+      const angle = offset.value * 2 * Math.PI;
+      const radiusX = this.width.evaluate() / 2;
+      const radiusY = this.height.evaluate() / 2;
+      return new p5.Vector(
+        (radiusX + crossOffset) * Math.cos(angle) + radiusX,
+        (radiusY + crossOffset) * Math.sin(angle) + radiusY,
+      );
+
+      // const renderCrossOffset = crossOffset.px(this);
+      // const crossAxis = p5.Vector.fromAngle(angle);
+      // const point = new p5.Vector(center.x * Math.cos(t), center.y * Math.sin(t));
+      // const center = new p5.Vector(this.renderWidth / 2, this.renderHeight / 2);
+      // const crossAxis = p5.Vector.sub(point, center).normalize();
+      // return point;
+    } else {
+      // const t = offsetPx / this.lengthPx;
+      return new p5.Vector(0, 0);
+    }
   }
 }
