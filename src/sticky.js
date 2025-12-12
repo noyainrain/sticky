@@ -334,8 +334,8 @@ export class Shape {
     );
     const links = readShapeArguments(next);
 
-    this.width = attributes.width ?? px(0);
-    this.height = attributes.height ?? px(0);
+    this.width = attributes.width ?? w(1);
+    this.height = attributes.height ?? h(1);
     this.stick(...links);
   }
 

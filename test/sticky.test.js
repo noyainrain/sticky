@@ -189,7 +189,7 @@ describe("WidthLengthValue", function () {
 
   describe("evaluate", function () {
     it("should determine value", function () {
-      const shape = new Ellipse(px(p.width), px(p.height));
+      const shape = new Ellipse();
       shape.render(p);
       value.bind(shape);
       const result = value.evaluate();
@@ -216,7 +216,7 @@ describe("HeightLengthValue", function () {
 
   describe("evaluate", function () {
     it("should determine value", function () {
-      const shape = new Ellipse(px(p.width), px(p.height));
+      const shape = new Ellipse();
       shape.render(p);
       value.bind(shape);
       const result = value.evaluate();
