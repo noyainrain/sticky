@@ -787,14 +787,21 @@ export class TweenValue extends Value {
   to;
   /** @type {Scalar} */
   duration;
+  /**
+   * ...
+   * @type {Scalar}
+   */
+  offset;
 
   /**
    * @param {Value<T> | number} from
    * @param {Value<NoInfer<T>> | number} to
    * @param {Scalar | number} duration
-   * @param {boolean} [yoyo]
+   * @param {Object} [options]
+   * @param {Scalar | number} [options.offset]
+   * @param {boolean} [options.yoyo]
    */
-  constructor(from, to, duration, yoyo = false) {
+  constructor(from, to, duration, { offset = 0, yoyo = false } = {}) {
     if (typeof from === "number") {
       from = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(from)));
     }
@@ -805,6 +812,7 @@ export class TweenValue extends Value {
       : to;
     this.duration = typeof duration === "number" ? scalar(duration) : duration;
     this.yoyo = yoyo;
+    this.offset = typeof offset === "number" ? scalar(offset) : offset;
   }
 
   /**
@@ -816,6 +824,7 @@ export class TweenValue extends Value {
     this.from.bind(shape, reference);
     this.to.bind(shape, reference);
     this.duration.bind(shape, reference);
+    this.offset.bind(shape, reference);
   }
 
   /**
@@ -826,7 +835,7 @@ export class TweenValue extends Value {
   compute(shape, reference) {
     const time = (reference instanceof p5 ? reference : reference.p)?.millis() ?? 0;
     const duration = this.duration.evaluate();
-    let p = (time / 1000) / duration % 1;
+    let p = (time / 1000 + this.offset.evaluate()) / duration % 1;
     if (this.yoyo) {
       p = p * 2;
       p = p >= 1 ? 2 - p : p;
@@ -843,11 +852,13 @@ export class TweenValue extends Value {
  * @param {Value<T> | number} from
  * @param {Value<NoInfer<T>> | number} to
  * @param {Scalar | number} duration
- * @param {boolean} yoyo
+ * @param {Object} [options]
+ * @param {Scalar | number} [options.offset]
+ * @param {boolean} [options.yoyo]
  * @returns {TweenValue<T>}
  */
-export function tween(from, to, duration, yoyo = false) {
-  return new TweenValue(from, to, duration, yoyo);
+export function tween(from, to, duration, { offset = 0, yoyo = false } = {}) {
+  return new TweenValue(from, to, duration, { offset, yoyo });
 }
 
 /**

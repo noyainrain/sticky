@@ -23,7 +23,7 @@ new p5((p) => {
     // Cat
     new Ellipse(
       h(1 / 2), h(1 / 2),
-      body(w(1 / 2), tween(h(1 / 2 - 1 / 2 / 16 / 2), h(1 / 2 + 1 / 2 / 16 / 2), 2, true)),
+      body(w(1 / 2), tween(h(1 / 2 - 1 / 2 / 16 / 2), h(1 / 2 + 1 / 2 / 16 / 2), 2, { yoyo: true })),
       { stroke: "pink", fill: "black" },
       // Tail
       new Ellipse(
