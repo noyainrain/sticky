@@ -776,6 +776,13 @@ export function ease(progress) {
 // *
 
 /**
+ * @param {number} progress
+ */
+export function linear(progress) {
+  return progress;
+}
+
+/**
  * ...
  * @param {number} progress
  */
