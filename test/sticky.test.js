@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import p5 from "p5";
-import { Ellipse, Triangle, argumentStream, h, px, w } from "#sticky";
+import { Ellipse, Rectangle, Triangle, argumentStream, h, px, w } from "#sticky";
 
 // OQ or just path in general?
 /** @typedef {[string, ...unknown[]]} PathCommand */
@@ -79,6 +79,19 @@ function recordedCanvas(canvas) {
           context, x, y, radiusX, radiusY, rotation, startAngle, endAngle,
         );
         path.push(["ellipse", x, y, radiusX, radiusY, rotation, startAngle, endAngle]);
+      },
+    },
+
+    rect: {
+      /**
+       * @param {number} x
+       * @param {number} y
+       * @param {number} width
+       * @param {number} height
+       */
+      value: (x, y, width, height) => {
+        CanvasRenderingContext2D.prototype.rect.call(context, x, y, width, height);
+        path.push(["rect", x, y, width, height]);
       },
     },
 
@@ -300,6 +313,29 @@ describe("Triangle", function () {
       expect(canvas.commands[0]?.path).to.deep.equal([
         ["moveTo", p.width, p.height], ["lineTo", 0, p.height], ["lineTo", p.width / 2, 0],
       ]);
+      expect(canvas.commands[1]?.type).to.equal("stroke");
+    });
+  });
+});
+
+describe("Rectangle", function () {
+  /** @type {p5} */
+  let p;
+  /** @type {RecordedCanvas} canvas */
+  let canvas;
+
+  beforeEachSetUpSketch((newP, newCanvas) => {
+    p = newP;
+    canvas = newCanvas;
+  });
+
+  describe("render", function () {
+    it("should render shape", function () {
+      const rectangle = new Rectangle(px(p.width), px(p.height));
+      rectangle.render(p);
+      // p5 draws shapes / polygons with Path2D which is not inspectible :(
+      expect(canvas.commands[0]?.type).to.equal("fill");
+      expect(canvas.commands[0]?.path).to.deep.equal([["rect", 0, 0, p.width, p.height]]);
       expect(canvas.commands[1]?.type).to.equal("stroke");
     });
   });

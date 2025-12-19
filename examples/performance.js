@@ -1,7 +1,7 @@
 import p5 from "p5";
-import { Ellipse, Triangle, body, px } from "#sticky";
+import { Ellipse, Rectangle, Triangle, body, px } from "#sticky";
 
-const SHAPES = [Triangle, Ellipse];
+const SHAPES = [Triangle, Rectangle, Ellipse];
 
 new p5((p) => {
   const size = px(360 / 8);

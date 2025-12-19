@@ -2,6 +2,7 @@ import p5 from "p5";
 import { Ellipse, Triangle, body, h, w } from "#sticky";
 
 new p5((p) => {
+  // TODO add rectangle ground (?)
   const model = new Ellipse(
     h(1 / 2), h(1 / 2), body(1 / 2, 1 / 2),
     // Ear
