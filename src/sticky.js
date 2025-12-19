@@ -758,7 +758,7 @@ export function auto() {
 /**
  * @param {number} progress
  */
-function ease(progress) {
+export function ease(progress) {
   return (1 - Math.cos(progress * Math.PI)) / 2;
 }
 
@@ -774,6 +774,13 @@ function ease(progress) {
 //         : never
 //   } ValueType
 // *
+
+/**
+ * ...
+ * @callback EasingCallback
+ * @param {number} progress - ...
+ * @returns {number}
+ */
 
 /**
  * ...
@@ -799,9 +806,10 @@ export class TweenValue extends Value {
    * @param {Scalar | number} duration
    * @param {Object} [options]
    * @param {Scalar | number} [options.offset]
+   * @param {EasingCallback} [options.easing]
    * @param {boolean} [options.yoyo]
    */
-  constructor(from, to, duration, { offset = 0, yoyo = false } = {}) {
+  constructor(from, to, duration, { offset = 0, easing = ease, yoyo = false } = {}) {
     if (typeof from === "number") {
       from = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(from)));
     }
@@ -811,6 +819,7 @@ export class TweenValue extends Value {
       ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(to)))
       : to;
     this.duration = typeof duration === "number" ? scalar(duration) : duration;
+    this.easing = easing;
     this.yoyo = yoyo;
     this.offset = typeof offset === "number" ? scalar(offset) : offset;
   }
@@ -840,7 +849,7 @@ export class TweenValue extends Value {
       p = p * 2;
       p = p >= 1 ? 2 - p : p;
     }
-    const progress = ease(p);
+    const progress = this.easing(p);
     const v = (1 - progress) * this.from.evaluate() + progress * this.to.evaluate();
     // console.log("v", (canvas.millis() / 1000).toFixed(2), v);
     return v;
@@ -854,11 +863,12 @@ export class TweenValue extends Value {
  * @param {Scalar | number} duration
  * @param {Object} [options]
  * @param {Scalar | number} [options.offset]
+ * @param {EasingCallback} [options.easing]
  * @param {boolean} [options.yoyo]
  * @returns {TweenValue<T>}
  */
-export function tween(from, to, duration, { offset = 0, yoyo = false } = {}) {
-  return new TweenValue(from, to, duration, { offset, yoyo });
+export function tween(from, to, duration, { offset = 0, easing = ease, yoyo = false } = {}) {
+  return new TweenValue(from, to, duration, { offset, easing, yoyo });
 }
 
 /**
