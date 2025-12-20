@@ -908,6 +908,7 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Scalar | number} [orientation]
  * @property {?string | Auto} [fill]
  * @property {?string | Auto} [stroke]
+ * @property {Value<"length">} [blur]
  * @property {number} [start]
  * @property {number} [end]
  */
@@ -988,6 +989,11 @@ export class Shape {
    * @type {?string | Auto}
    */
   stroke;
+  /**
+   * ...
+   * @type {Value<"length">}
+   */
+  blur;
   /**
    * TODO.
    * @type {number}
@@ -1092,6 +1098,7 @@ export class Shape {
     }
     this.fill = attributes.fill === undefined ? auto() : attributes.fill;
     this.stroke = attributes.stroke === undefined ? auto() : attributes.stroke;
+    this.blur = attributes.blur ?? h(0);
     this.start = attributes.start ?? 0;
     this.end = attributes.end ?? -0;
     this.stick(...links);
@@ -1159,6 +1166,7 @@ export class Shape {
     if (this.stroke instanceof Value) {
       this.stroke.bind(this, this);
     }
+    this.blur.bind(this, this.base ?? p);
 
     for (const variable of this.#variables.values()) {
       variable.bind(this, this);
@@ -1172,6 +1180,12 @@ export class Shape {
     if (!(this.stroke instanceof Value)) {
       p.stroke(this.stroke ?? "transparent");
     }
+
+    const blur = this.blur.evaluate();
+    if (blur && p.drawingContext instanceof CanvasRenderingContext2D) {
+      p.drawingContext.filter = `blur(${blur * p.pixelDensity()}px)`;
+    }
+
     const at = this.at.evaluate();
     p.translate(at.x, at.y);
     p.rotate(
@@ -1182,6 +1196,11 @@ export class Shape {
     p.translate(-this.width.evaluate() / 2, -this.height.evaluate() / 2);
 
     this.renderShape(p);
+
+    if (blur && p.drawingContext instanceof CanvasRenderingContext2D) {
+      p.drawingContext.filter = "none";
+    }
+
     for (const link of this.links) {
       link.render(p);
     }
