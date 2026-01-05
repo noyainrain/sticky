@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Rectangle, Triangle, body, h, w } from "#sticky";
+import { Ellipse, Rectangle, Triangle, body, h, w } from "#sticky";
 
 /**
  * ...
@@ -60,6 +60,26 @@ class Shuttle extends Entity {
 /**
  * ...
  */
+class Particle extends Entity {
+  /**
+   * ...
+   * @type {number} size
+   */
+  size;
+
+  /**
+   * @param {number} size
+   * @param {EntityOptions} options
+   */
+  constructor(size, options = {}) {
+    super(new Ellipse(w(size), h(size), body(0, 0), { fill: "purple" }), options);
+    this.size = size;
+  }
+}
+
+/**
+ * ...
+ */
 export class World {
   // speed * reaction = 50m/s * 1s = 50m; for pixel perfect make sure its a divisor of 360p
   /**
@@ -79,9 +99,19 @@ export class World {
   constructor(p) {
     this.p = p;
     this.shuttle = new Shuttle();
+
+    // OQ negative / positive Y?
+    const level = [
+      { size: 10, position: [-5, -50] }, { size: 5, position: [5, -100] },
+    ];
+    this.particles = level.map(
+      particle => new Particle(particle.size, { position: new p5.Vector(...particle.position) }),
+    );
+
     // maps m to px
     this.camera = new Rectangle(
       h(1 / World.#VIEW), h(1 / World.#VIEW), body(0, 0), { fill: null }, this.shuttle.model,
+      ...this.particles.map(particle => particle.model),
     );
     this.model = new Rectangle({ fill: "black", stroke: null }, this.camera);
   }
