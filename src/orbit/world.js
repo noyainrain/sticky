@@ -20,20 +20,20 @@ class Entity {
    * ...
    * @type {p5.Vector}
    */
-  velocity = new p5.Vector();
+  velocity = new p5.Vector(0, 0);
   /**
    * ...
    * @type {p5.Vector}
    */
-  acceleration = new p5.Vector();
+  acceleration = new p5.Vector(0, 0);
 
-  #position = new p5.Vector();
+  #position = new p5.Vector(0, 0);
 
   /**
    * @param {import("#sticky").Shape} model
    * @param {EntityOptions} [options]
    */
-  constructor(model, { position = new p5.Vector() } = {}) {
+  constructor(model, { position = new p5.Vector(0, 0) } = {}) {
     this.model = model;
     this.position = position;
   }
@@ -152,6 +152,41 @@ export class World {
     this.model = new Rectangle({ fill: "black", stroke: null }, this.camera);
   }
 
+  #computeCollisions() {
+    // TODO between which objects?
+    const a = this.shuttle;
+    for (const b of this.particles) {
+      const offset = p5.Vector.sub(b.position, a.position);
+      const distance = offset.mag() - Shuttle.SIZE / 2 - b.size / 2;
+      if (distance <= 0) {
+        offset.setMag(Math.abs(distance));
+        console.log("COLLIDE", offset.mag(), offset.x, offset.y);
+        // TODO plus some delta, right?
+        a.position = a.position.sub(offset);
+
+        // TODO quick mass hack, do this somewhere else
+        const massA = 10000;
+        const massB = Math.pow(b.size / 2, 3) * Math.PI * 3 / 4 * 3000;
+        // resolve collision
+        // TODO maybe do this somewhere else
+        // https://en.wikipedia.org/wiki/Elastic_collision
+        const offs = p5.Vector.sub(b.position, a.position);
+        const n = p5.Vector.normalize(offs);
+        const relativeVelocity = p5.Vector.sub(b.velocity, a.velocity);
+        // removed minus of impulse here (-2) for correct directions, hm...
+        const impulse = 2 * massA * massB / (massA + massB) * p5.Vector.dot(relativeVelocity, n);
+        const da = p5.Vector.mult(n, impulse / massA);
+        const db = p5.Vector.mult(n, -impulse / massB);
+        a.velocity = a.velocity.add(da);
+        b.velocity = b.velocity.add(db);
+        console.log(
+          "Collision", impulse, da.x, da.y, db.x, db.y, n.x, n.y, relativeVelocity.x,
+          relativeVelocity.y,
+        );
+      }
+    }
+  }
+
   /**
    * ...
    */
@@ -216,8 +251,14 @@ export class World {
       this.shuttle.position, p5.Vector.mult(this.shuttle.velocity, t),
     );
 
+    for (const particle of this.particles) {
+      particle.position = p5.Vector.add(particle.position, p5.Vector.mult(particle.velocity, t));
+    }
+
     const cameraOffset = 1 - Shuttle.SIZE / World.#VIEW;
     this.camera.at = body(1 / 2, cameraOffset - this.shuttle.position.y / World.#VIEW);
+
+    this.#computeCollisions();
 
     this.model.render(this.p);
 
@@ -234,6 +275,7 @@ export class World {
 
     const info = [
       `${this.p.frameRate().toFixed()} fps`,
+      `${this.p.width} x ${this.p.height} @ ${this.p.pixelDensity()}`,
       `${this.shuttle.velocity.y.toFixed()}m/s`,
       `${this.shuttle.velocity.x.toFixed()}m/s`,
       `${ay.toFixed()}g`,

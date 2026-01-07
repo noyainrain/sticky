@@ -8,6 +8,11 @@ new p5((p) => {
   p.setup = () => {
     p.createCanvas(640, 360);
     world = new World(p);
+
+    // Dev console
+    // Work around https://github.com/microsoft/TypeScript/issues/15626
+    // @ts-ignore
+    self.world = world;
   };
 
   p.draw = () => {
