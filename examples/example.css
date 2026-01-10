@@ -1,0 +1,30 @@
+html {
+    background: hsl(0 0 75%);
+    xheight: 100lvh;
+}
+
+body {
+    margin: unset;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+main {
+    margin: unset;
+    padding: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+canvas {
+    /* object-fit scale-down does not consider dpr */
+    display: block;
+    width: auto !important;
+    height: auto !important;
+    max-width: min(640px, 100%);
+    max-height: min(360px, 100%);
+}
