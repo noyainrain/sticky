@@ -3,13 +3,17 @@ import {
   Ellipse, Rectangle, Text, Triangle, body, edge, h, multiply, px, repeated, tween, variable, w,
 } from "#sticky";
 
+// XXX cant assigne to multiple
+const TOP = () => body(1 / 2, 0);
+const BOTTOM = () => body(1 / 2, 1);
+
 new p5((p) => {
   const verbose = "verbose" in p.getURLParams();
 
   const earW = w(1 / 3 / 2);
   const earH = h(3 / 4 * earW.value);
   const model = new Rectangle(
-    w(1), h(1), body(1 / 2, 1 / 2), { fill: "black", stroke: null },
+    { fill: "black", stroke: null },
 
     // Stars
     ...[...Array(128)].map(() => {
@@ -39,18 +43,18 @@ new p5((p) => {
         // ),
       ),
       // Cover
-      new Ellipse(w(1), h(1)),
+      new Ellipse(),
       // Face
       new Ellipse(
-        w(1 / 2), h(1 / 2), body(1 / 2, 1 / 2 / 2), { stroke: null, fill: null },
+        w(1 / 2), h(1 / 2), TOP(), { anchor: TOP(), stroke: null, fill: null },
         // Eyes
         new Ellipse(
           w(1 / 4), h(1 / 4), body(1 / 4, 1 / 2), { stroke: "pink", fill: "black" },
-          new Ellipse(w(1 / 2), h(1 / 2), body(1 / 2, 1 / 2), { fill: "pink" }),
+          new Ellipse(w(1 / 2), h(1 / 2), { fill: "pink" }),
         ),
         new Ellipse(
           w(1 / 4), h(1 / 4), body(3 / 4, 1 / 2), { stroke: "pink", fill: "black" },
-          new Ellipse(w(1 / 2), h(1 / 2), body(1 / 2, 1 / 2), { fill: "pink" }),
+          new Ellipse(w(1 / 2), h(1 / 2), { fill: "pink" }),
         ),
         // Sleepy eyes
         new Ellipse(
@@ -70,6 +74,7 @@ new p5((p) => {
         ),
       ),
       // Ears
+      // TODO new Triangle(1 / 4, 1 / 4, body(1 / 2, 0), { anchor: body(1 / 2, 1) }),
       new Triangle(
         earW, earH, edge(0, 22 / 32, h(earH.value / 2 - earH.value / 8)), { start: 1, end: 3 },
       ),
@@ -77,8 +82,12 @@ new p5((p) => {
         earW, earH, edge(0, 26 / 32, h(earH.value / 2 - earH.value / 8)), { start: 1, end: 3 },
       ),
       // Paws
-      new Ellipse(w(1 / 8), h(1 / 8), body(1 / 2 - 1 / 8 / 2, 1 - 1 / 8 / 4), { end: 1 / 2 }),
-      new Ellipse(w(1 / 8), h(1 / 8), body(1 / 2 + 1 / 8 / 2, 1 - 1 / 8 / 4), { end: 1 / 2 }),
+      new Ellipse(
+        w(1 / 8), h(1 / 8), BOTTOM(), { anchor: body(1, 3 / 4), end: 1 / 2 },
+      ),
+      new Ellipse(
+        w(1 / 8), h(1 / 8), BOTTOM(), { anchor: body(0, 3 / 4), end: 1 / 2 },
+      ),
     ),
 
     repeated(
@@ -91,8 +100,8 @@ new p5((p) => {
 
     // huh, only shows from 21px on, so proabably line height?
     new Text(
-      "Sticky Demo 0.1", w(1), px(24), body(px(640 / 2 + 24), px(360 - 24 - 24 / 2)),
-      { fill: "white", stroke: "black" },
+      "Sticky Demo 0.1", w(1), px(24), body(0, 1), // body(px(640 / 2 + 24), px(360 - 24 - 24 / 2)),
+      { anchor: body(h(-1), 2), fill: "white", stroke: "black" },
     ),
   );
 

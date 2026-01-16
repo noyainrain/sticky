@@ -919,6 +919,7 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Value<"length">} [height]
  * @property {Value<"position">} [at]
  * @property {Scalar | number} [orientation]
+ * @property {Position} [anchor]
  * @property {?string | Auto} [fill]
  * @property {?string | Auto} [stroke]
  * @property {Value<"length">} [blur]
@@ -992,6 +993,11 @@ export class Shape {
    * @type {Scalar}
    */
   #orientation = scalar(0);
+  /**
+   * Anchor for positioning. Relative to the shape itself.
+   * @type {Position}
+   */
+  anchor;
   /**
    * TODO.
    * @type {?string | Auto}
@@ -1109,6 +1115,7 @@ export class Shape {
     if (attributes.orientation !== undefined) {
       this.orientation = attributes.orientation;
     }
+    this.anchor = attributes.anchor ?? body(1 / 2, 1 / 2);
     this.fill = attributes.fill === undefined ? auto() : attributes.fill;
     this.stroke = attributes.stroke === undefined ? auto() : attributes.stroke;
     this.blur = attributes.blur ?? h(0);
@@ -1173,6 +1180,7 @@ export class Shape {
     this.height.bind(this, this.base ?? p);
     this.at.bind(this, this.base ?? p);
     this.#orientation.bind(this, this.base ?? p);
+    this.anchor.bind(this, this);
     if (this.fill instanceof Value) {
       this.fill.bind(this, this);
     }
@@ -1206,7 +1214,12 @@ export class Shape {
       // @ts-ignore
       this.orientation.evaluate() * 2 * Math.PI + this.at.angle(this.base ?? p),
     );
-    p.translate(-this.width.evaluate() / 2, -this.height.evaluate() / 2);
+    // OQ unit test: a) via renderX property, which makes sense for renderWidth, renderOrientation,
+    // etc. (corresponding to computed values of user input), but I guess not to renderTranslation
+    // (internal prop), for the user the position is at renderAt with renderAnchor; b) via canvas
+    // test, but I guess like in a, renderAt and renderAnchor are passed individually, so it becomes
+    // c) renderer test, i.e. have right svg props been called, has right translate call been made
+    p.translate(p5.Vector.mult(this.anchor.evaluate(), -1));
 
     this.renderShape(p);
 
@@ -1389,6 +1402,7 @@ export class Triangle extends Polygon {
     return new Triangle(
       this.width, this.height, this.at,
       {
+        anchor: this.anchor,
         orientation: this.orientation,
         stroke: this.stroke,
         fill: this.fill,
@@ -1487,6 +1501,7 @@ export class Ellipse extends Shape {
     return new Ellipse(
       this.width, this.height, this.at.clone(),
       {
+        anchor: this.anchor,
         orientation: this.orientation,
         stroke: this.stroke,
         fill: this.fill,
