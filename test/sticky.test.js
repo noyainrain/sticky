@@ -141,10 +141,30 @@ describe("argumentStream", function () {
   });
 });
 
+/**
+ * @param {MakeValueCallback} makeValue
+ * @callback MakeValueCallback
+ * @returns {import("#sticky").Value<keyof import("#sticky").ValueTypes>}
+ */
+function itShouldBehaveLikeValue(makeValue) {
+  describe("bind", function () {
+    it("should bind value", function () {
+      const reference = new Ellipse();
+      const value = makeValue();
+      value.bind(reference);
+      expect(value.reference).to.equal(reference);
+    });
+  });
+}
+
 describe("PixelLengthValue", function () {
+  itShouldBehaveLikeValue(() => px(360));
+
   describe("evaluate", function () {
     it("should determine value", function () {
+      const shape = new Ellipse();
       const value = px(360);
+      value.bind(shape);
       const result = value.evaluate();
       expect(result).to.equal(value.value);
     });

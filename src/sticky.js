@@ -85,6 +85,11 @@ export class Value {
    * @type {T}
    */
   type;
+  /**
+   * Reference shape or canvas for relative values. `null` if the value is unbound.
+   * @type {?Shape | p5}
+   */
+  reference = null;
 
   /**
    * @param {T} type
@@ -94,18 +99,31 @@ export class Value {
   }
 
   /**
+   * Bind the value to a reference shape or canvas.
+   * @param {Shape | p5} reference - Reference shape or canvas for relative values.
+   */
+  bind(reference) {
+    this.reference = reference;
+  }
+
+  /**
    * Determine the value in viewport units.
    * @returns {ValueTypes[T]}
    */
   evaluate() {
-    return this.compute();
+    if (!this.reference) {
+      throw new Error("Unbound value");
+    }
+    return this.compute(this.reference);
   }
 
   /**
    * Subclass: Compute the value in viewport units.
+   * @param {Shape | p5} reference - Reference shape or canvas for relative values.
    * @returns {ValueTypes[T]}
    */
-  compute() {
+  // eslint-disable-next-line no-unused-vars
+  compute(reference) {
     throw new Error("Abstract method");
   }
 }
@@ -208,12 +226,12 @@ function readShapeArguments(next) {
  */
 export class Shape {
   /**
-   * Width of the shape.
+   * Width of the shape. Relative to the base.
    * @type {Value<"length">}
    */
   width;
   /**
-   * Height of the shape.
+   * Height of the shape. Relative to the base.
    * @type {Value<"length">}
    */
   height;
@@ -288,12 +306,14 @@ export class Shape {
     }
   }
 
-  // OQ DESIGN renderer / calls
   /**
    * Render the shape to a sketch.
    * @param {p5} p - p5.js sketch.
    */
   render(p) {
+    this.width.bind(this.base ?? p);
+    this.height.bind(this.base ?? p);
+
     this.renderShape(p);
     for (const link of this.links) {
       link.render(p);
