@@ -91,6 +91,9 @@ export class Value {
    */
   reference = null;
 
+  /** @type {ValueTypes[T] | undefined} */
+  #cache = undefined;
+
   /**
    * @param {T} type
    */
@@ -104,6 +107,7 @@ export class Value {
    */
   bind(reference) {
     this.reference = reference;
+    this.#cache = undefined;
   }
 
   /**
@@ -111,10 +115,13 @@ export class Value {
    * @returns {ValueTypes[T]}
    */
   evaluate() {
-    if (!this.reference) {
-      throw new Error("Unbound value");
+    if (this.#cache === undefined) {
+      if (!this.reference) {
+        throw new Error("Unbound value");
+      }
+      this.#cache = this.compute(this.reference);
     }
-    return this.compute(this.reference);
+    return this.#cache;
   }
 
   /**
