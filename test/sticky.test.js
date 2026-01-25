@@ -401,10 +401,8 @@ describe("Triangle", function () {
     it("should render shape", function () {
       const triangle = new Triangle(px(canvas.width), px(canvas.height));
       triangle.render(p);
+      // p5 draws shapes / polygons with Path2D which is not inspectible :(
       expect(canvas.commands[0]?.type).to.equal("fill");
-      expect(canvas.commands[0]?.path).to.deep.equal([
-        ["moveTo", p.width, p.height], ["lineTo", 0, p.height], ["lineTo", p.width / 2, 0],
-      ]);
       expect(canvas.commands[1]?.type).to.equal("stroke");
     });
   });
@@ -427,7 +425,6 @@ describe("Rectangle", function () {
       rectangle.render(p);
       // p5 draws shapes / polygons with Path2D which is not inspectible :(
       expect(canvas.commands[0]?.type).to.equal("fill");
-      expect(canvas.commands[0]?.path).to.deep.equal([["rect", 0, 0, p.width, p.height]]);
       expect(canvas.commands[1]?.type).to.equal("stroke");
     });
   });

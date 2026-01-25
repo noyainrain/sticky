@@ -806,10 +806,26 @@ export class Shape {
   }
 }
 
+class Polygon extends Shape {
+  /** @type {p5.Vector[]} */
+  vertices = [];
+
+  /**
+   * @param {p5} p
+   */
+  renderShape(p) {
+    p.beginShape();
+    for (const vertex of this.vertices) {
+      p.vertex(vertex.x, vertex.y);
+    }
+    p.endShape(p.CLOSE);
+  }
+}
+
 /**
  * Triangle.
  */
-export class Triangle extends Shape {
+export class Triangle extends Polygon {
   /**
    * @param {p5} p
    */
@@ -819,21 +835,34 @@ export class Triangle extends Shape {
     // B .---. A
     const width = this.width.evaluate();
     const height = this.height.evaluate();
-    p.triangle(width, height, 0, height, width / 2, 0);
+    // if (this.renderWidth !== this.cacheWidth && this.renderHeight !== this.cacheHeight) {
+    this.vertices = [
+      new p5.Vector(width, height),
+      new p5.Vector(0, height),
+      new p5.Vector(width / 2, 0),
+    ];
+    super.renderShape(p);
+    // TODO orientation positive x I think or positive y, right?
   }
 }
 
 /**
  * Rectangle.
  */
-export class Rectangle extends Shape {
+export class Rectangle extends Polygon {
   /**
    * @param {p5} p
    */
   renderShape(p) {
     const width = this.width.evaluate();
     const height = this.height.evaluate();
-    p.rect(0, 0, width, height);
+    this.vertices = [
+      new p5.Vector(0, 0),
+      new p5.Vector(width, 0),
+      new p5.Vector(width, height),
+      new p5.Vector(0, height),
+    ];
+    super.renderShape(p);
   }
 }
 
