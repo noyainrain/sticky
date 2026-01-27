@@ -1246,25 +1246,7 @@ export class Shape {
     if (blur && p.drawingContext instanceof CanvasRenderingContext2D) {
       p.drawingContext.filter = `blur(${blur * p.pixelDensity()}px)`;
     }
-
-    // OQ only if parent is null?
-    if (this.viewport) {
-      this.p.scale(this.p.height / this.viewport);
-    }
-    const at = this.at.evaluate();
-    p.translate(at.x, at.y);
-    p.rotate(
-      // XXX true, angle does not exist on Value... design this differently
-      // @ts-ignore
-      this.orientation.evaluate() * 2 * Math.PI + this.at.angle(this.base ?? p),
-    );
-    // OQ unit test: a) via renderX property, which makes sense for renderWidth, renderOrientation,
-    // etc. (corresponding to computed values of user input), but I guess not to renderTranslation
-    // (internal prop), for the user the position is at renderAt with renderAnchor; b) via canvas
-    // test, but I guess like in a, renderAt and renderAnchor are passed individually, so it becomes
-    // c) renderer test, i.e. have right svg props been called, has right translate call been made
-    const anchor = this.anchor.evaluate();
-    p.translate(-anchor.x, -anchor.y);
+    this.#transform();
 
     this.renderShape(p);
 
@@ -1278,6 +1260,31 @@ export class Shape {
     p.pop();
   }
 
+  #transform() {
+    if (!this.p) {
+      throw new Error("Unrendered shape");
+    }
+
+    // OQ only if parent is null?
+    if (this.viewport) {
+      this.p.scale(this.p.height / this.viewport);
+    }
+    const at = this.at.evaluate();
+    this.p.translate(at.x, at.y);
+    this.p.rotate(
+      // XXX true, angle does not exist on Value... design this differently
+      // @ts-ignore
+      this.orientation.evaluate() * 2 * Math.PI + this.at.angle(this.base ?? this.p),
+    );
+    // OQ unit test: a) via renderX property, which makes sense for renderWidth, renderOrientation,
+    // etc. (corresponding to computed values of user input), but I guess not to renderTranslation
+    // (internal prop), for the user the position is at renderAt with renderAnchor; b) via canvas
+    // test, but I guess like in a, renderAt and renderAnchor are passed individually, so it becomes
+    // c) renderer test, i.e. have right svg props been called, has right translate call been made
+    const anchor = this.anchor.evaluate();
+    this.p.translate(-anchor.x, -anchor.y);
+  }
+
   /**
    * Render the shape itself to a sketch.
    * @param {p5} p - p5.js sketch.
@@ -1285,6 +1292,49 @@ export class Shape {
   // eslint-disable-next-line no-unused-vars
   renderShape(p) {
     throw new Error("Unimplemented method");
+  }
+
+  /**
+   * ...
+   *
+   * Note that the behavior of picking from a non-root shape is undefined.
+   * @param {p5.Vector} point
+   * @returns {Shape | undefined}
+   */
+  pick(point) {
+    if (!this.p) {
+      throw new Error("Unrendered shape");
+    }
+
+    this.p.push();
+    this.#transform();
+
+    // latest = in front first
+    let shape = this.links.findLast(link => link.pick(point));
+
+    if (!shape) {
+      this.p.beginClip();
+      this.renderShape(this.p);
+      if (!(this.p.drawingContext instanceof CanvasRenderingContext2D)) {
+        throw new Error("no");
+      }
+      /**
+       * @typedef Renderer
+       * @property {Path2D} clipPath
+       * @typedef Priv
+       * @property {Renderer} _renderer
+       * @typedef {p5 & Priv} P5P
+       */
+      if (this.p.drawingContext.isPointInPath(
+        /** @type {P5P} */ (this.p)._renderer.clipPath, point.x, point.y)
+      ) {
+        shape = this;
+      }
+      this.p.endClip();
+    };
+    this.p.pop();
+
+    return shape;
   }
 
   /**

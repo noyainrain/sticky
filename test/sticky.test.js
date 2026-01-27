@@ -486,6 +486,33 @@ describe("Ellipse", function () {
     });
   });
 
+  // TODO move to shape test
+  describe("pick", function () {
+    it("should pick shape", function () {
+      const link = new Ellipse(w(1 / 2), h(1 / 2));
+      const shape = new Ellipse(link);
+      shape.render(p);
+      const picked = shape.pick(new p5.Vector(p.width / 2, p.height / 2));
+      expect(picked).to.equal(link);
+    });
+
+    it("should pick shape", function () {
+      const link = new Ellipse(w(1 / 2), h(1 / 2));
+      const shape = new Ellipse(link);
+      shape.render(p);
+      const picked = shape.pick(new p5.Vector(p.width * 5 / 16, p.height * 5 / 16));
+      expect(picked).to.equal(shape);
+    });
+
+    it("should pick shape", function () {
+      const link = new Ellipse(w(1 / 2), h(1 / 2));
+      const shape = new Ellipse(link);
+      shape.render(p);
+      const picked = shape.pick(new p5.Vector(p.width / 8, p.height / 8));
+      expect(picked).to.be.undefined;
+    });
+  });
+
   describe("renderX", function () {
     it("should render shape", function () {
       const shape = new Ellipse(new Ellipse());
