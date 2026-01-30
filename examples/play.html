@@ -17,6 +17,31 @@
             header {
                 padding: 0.5rem;
             }
+
+            ul {
+                margin: unset;
+                padding: unset;
+                list-style: none;
+            }
+
+            li {
+                display: block;
+                padding: 0.5rem;
+            }
+
+            .contextual {
+                position: relative;
+            }
+
+            .contextual > :last-child {
+                position: absolute;
+                background: gray;
+            }
+
+            .contextual:not(:focus-within) > :last-child {
+                height: 0;
+                overflow: hidden;
+            }
         </style>
 
         <script type="importmap">
@@ -29,7 +54,15 @@
 
     <body>
         <studio-app>
-            <header>&nbsp;</header>
+            <header>
+                &nbsp;
+                <div class="contextual">
+                    <button>Menu</button>
+                    <ul>
+                        <li>New</li>
+                    </ul>
+                </div>
+            </header>
         </studio-ui>
     </body>
 </html>
