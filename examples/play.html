@@ -45,11 +45,42 @@
                 height: 0;
                 overflow: hidden;
             }
+
+            html,
+            body,
+            studio-app {
+                height: 100vh;
+            }
+
+            studio-app {
+                display: flex;
+                flex-flow: column;
+            }
+
+            main {
+                flex: auto;
+                display: flex;
+            }
+
+            textarea {
+                display: block;
+                flex: auto;
+                border: none;
+                overflow: scroll;
+                white-space: pre;
+                tab-size: 4;
+
+                /*min-width: 0;
+                flex: 1 1 0;*/
+            }
         </style>
 
         <script type="importmap">
             {
-                "imports": {}
+                "imports": {
+                    "p5": "/node_modules/p5/lib/p5.esm.min.js",
+                    "#sticky": "/src/sticky.js"
+                }
             }
         </script>
         <script type="module" src="/examples/play.js"></script>
@@ -59,13 +90,17 @@
         <studio-app>
             <header>
                 &nbsp;
+                <input type="text"></input>
                 <div class="contextual">
                     <button>Menu</button>
                     <ul>
-                        <li>New</li>
+                        <li id="create-model" tabindex="0">New</li>
                     </ul>
                 </div>
             </header>
+            <main>
+                <textarea spellcheck="false"></textarea>
+            </main>
         </studio-ui>
     </body>
 </html>
