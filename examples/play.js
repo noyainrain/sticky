@@ -277,16 +277,40 @@ class App extends HTMLElement {
 
         /** @type {[number, number]} */
         const range = [this.#textarea.selectionStart, this.#textarea.selectionEnd];
-
         const lines = getLines(this.#textarea.value, range[0], range[1]);
-        for (const [i, line] of lines.entries()) {
-          this.#textarea.selectionStart = line.offset + i;
-          this.#textarea.selectionEnd = line.offset + i;
-          document.execCommand("insertText", false, "\t");
-        }
 
-        this.#textarea.selectionStart = range[0] + 1;
-        this.#textarea.selectionEnd = range[1] + lines.length;
+        if (event.shiftKey) {
+          let deletions = 0;
+          for (const line of lines) {
+            if (!line.content.startsWith("\t")) {
+              continue;
+            }
+            const offset = line.offset - deletions;
+            this.#textarea.selectionStart = offset;
+            this.#textarea.selectionEnd = offset;
+            document.execCommand("forwardDelete", false);
+            deletions++;
+            if (range[0] > offset) {
+              range[0]--;
+            }
+            if (range[1] > offset) {
+              range[1]--;
+            }
+          }
+          this.#textarea.selectionStart = range[0];
+          this.#textarea.selectionEnd = range[1];
+          // textarea.selectionStart = range[0] - (range[0] > firstLine.offset ? 1 : 0);
+          // textarea.selectionEnd
+          //   = range[1] - (lines.length - 1) - (range[1] > lastLine.offset ? 1 : 0);
+        } else {
+          for (const [i, line] of lines.entries()) {
+            this.#textarea.selectionStart = line.offset + i;
+            this.#textarea.selectionEnd = line.offset + i;
+            document.execCommand("insertText", false, "\t");
+          }
+          this.#textarea.selectionStart = range[0] + 1;
+          this.#textarea.selectionEnd = range[1] + lines.length;
+        }
       }
     });
     this.#textarea.addEventListener("input", () => {
