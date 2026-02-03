@@ -312,6 +312,19 @@ class App extends HTMLElement {
           this.#textarea.selectionEnd = range[1] + lines.length;
         }
       }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const lines = getLines(this.#textarea.value, this.#textarea.selectionStart, this.#textarea.selectionEnd);
+        assert(lines[0]);
+        // enter terminates line at cursor
+        const line = lines[0].content.slice(0, this.#textarea.selectionEnd - lines[0].offset);
+        const match = line.match(/^\t*/);
+        assert(match);
+        const indent = match[0].length;
+        const tabs = "\t".repeat(indent);
+        document.execCommand("insertText", false, `\n${tabs}`);
+      }
     });
     this.#textarea.addEventListener("input", () => {
       // localStorage.text = textarea.value;
