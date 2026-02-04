@@ -5,7 +5,8 @@
         <title>Sticky Studio</title>
 
         <style>
-            html {
+            html,
+            dialog {
                 background: gray;
                 font: medium / 1.5 sans-serif;
             }
@@ -126,7 +127,7 @@
                         <li id="open-model-dialog" tabindex="0">Open Model</li>
                         <li id="open-rename-dialog" tabindex="0">Rename</li>
                         <li id="download" tabindex="0">Download</li>
-                        <li id="record" tabindex="0">Record</li>
+                        <li id="open-record-dialog" tabindex="0">Record</li>
                     </ul>
                 </div>
             </header>
@@ -153,7 +154,13 @@
                 </dialog>
             </studio-rename-dialog>
 
-            <dialog id="record-dialog" closedby="any"></dialog>
+            <dialog id="record-dialog" closedby="any">
+                <header>
+                    <h2>Record</h2>
+                    <button id="record">Record</button>
+                </header>
+                <div id="record-canvas"></div>
+            </dialog>
         </studio-ui>
     </body>
 </html>

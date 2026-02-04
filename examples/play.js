@@ -209,6 +209,8 @@ class App extends HTMLElement {
     location.hash = `#${name}`;
   }
 
+  #p;
+
   #nameH1;
   #textarea;
   #errorP;
@@ -370,20 +372,56 @@ class App extends HTMLElement {
       a.click();
     });
 
-    const recordButton = document.querySelector("#record");
-    assert(recordButton instanceof HTMLLIElement);
-    recordButton.addEventListener("click", () => {
-      const dialog = document.querySelector("#record-dialog");
-      assert(dialog instanceof HTMLDialogElement);
-      dialog.showModal();
+    const openRecordDialogButton = document.querySelector("#open-record-dialog");
+    assert(openRecordDialogButton instanceof HTMLLIElement);
+    openRecordDialogButton.addEventListener("click", () => {
+      recordDialog.showModal();
+      // resetRecordP(true);
+      this.#p.noLoop();
+      recordP.loop();
     });
+
+    element = document.querySelector("#record-dialog");
+    assert(element instanceof HTMLDialogElement);
+    const recordDialog = element;
+    recordDialog.addEventListener("close", () => {
+      recordP.noLoop();
+      this.#p.loop();
+    });
+
+    const recordButton = document.querySelector("#record");
+    assert(recordButton instanceof HTMLButtonElement);
+    recordButton.addEventListener("click", () => {
+      // resetRecordP(true);
+      // no way to reset millis yet, maybe in future https://github.com/processing/p5.js/issues/4264
+      // @ts-ignore
+      recordP._millisStart = performance.now();
+      recordP.saveGif(`${this.#currentModel.name}.gif`, 1);
+    });
+
+    element = document.querySelector("#record-canvas");
+    assert(element instanceof HTMLDivElement);
+    const recordCanvas = element;
+    const recordP = new p5((p) => {
+      p.setup = () => {
+        p.createCanvas(640, 360);
+        p.noLoop();
+      };
+
+      p.draw = () => {
+        p.background(0);
+        if (this.#model) {
+          this.#model.render(p);
+        }
+      };
+    }, recordCanvas);
 
     const container = document.querySelector("#canvas");
     if (!(container instanceof HTMLDivElement)) {
       throw new Error("Assertion failed");
     }
 
-    new p5((p) => {
+    this.#p = new p5((p) => {
       p.setup = () => {
         p.createCanvas(640, 360);
         // this.#update();
