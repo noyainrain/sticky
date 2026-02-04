@@ -370,6 +370,14 @@ class App extends HTMLElement {
       a.click();
     });
 
+    const recordButton = document.querySelector("#record");
+    assert(recordButton instanceof HTMLLIElement);
+    recordButton.addEventListener("click", () => {
+      const dialog = document.querySelector("#record-dialog");
+      assert(dialog instanceof HTMLDialogElement);
+      dialog.showModal();
+    });
+
     const container = document.querySelector("#canvas");
     if (!(container instanceof HTMLDivElement)) {
       throw new Error("Assertion failed");
