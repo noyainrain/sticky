@@ -291,7 +291,17 @@ export class WidthLengthValue extends QuantityValue {
    * @param {Shape | p5} reference
    */
   compute(shape, reference) {
-    return this.value * (reference instanceof p5 ? reference.width : reference.width.evaluate());
+    if (reference instanceof p5) {
+      // const shape = { viewport: 360 };
+      // OQ is this good, or should it be viewport width + viewport height? but then we would also
+      // need some aspect ratio preserving flag or behaviour?
+      return this.value * (shape.viewport
+        ? shape.viewport * reference.width / reference.height
+        : reference.width);
+    } else {
+      return this.value * reference.width.evaluate();
+    }
+    // return this.value * (reference instanceof p5 ? reference.width : reference.width.evaluate());
   }
 }
 
@@ -321,7 +331,21 @@ export class HeightLengthValue extends QuantityValue {
    * @param {Shape | p5} reference
    */
   compute(shape, reference) {
-    return this.value * (reference instanceof p5 ? reference.height : reference.height.evaluate());
+    // let h;
+    // if (reference instanceof p5) {
+    //   // h = reference.height / (shape.viewport ? reference.height / shape.viewport : 1);
+    //   const shape = { viewport: 360 };
+    //   h = shape.viewport ?? reference.height;
+    // } else {
+    //   h = reference.height.evaluate();
+    // }
+    // return this.value * h;
+
+    // const shape = { viewport: 360 };
+    return this.value * (
+      reference instanceof p5 ? (shape.viewport ?? reference.height) : reference.height.evaluate()
+    );
+    // return this.value * (reference instanceof p5 ? reference.height : reference.height.evaluate());
   }
 }
 
@@ -796,6 +820,15 @@ export function linear(progress) {
 }
 
 /**
+ * @param {number} progress
+ */
+export function easeOn(progress) {
+  // XXX
+  return progress < 0.5 ? 0 : 1;
+  // return 1;
+}
+
+/**
  * ...
  * @param {number} progress
  */
@@ -925,6 +958,7 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Value<"length">} [blur]
  * @property {number} [start]
  * @property {number} [end]
+ * @property {?number} [viewport]
  */
 
 /**
@@ -1024,6 +1058,11 @@ export class Shape {
    */
   end;
   /**
+   * ...
+   * @type {?number}
+   */
+  viewport = null;
+  /**
    * Base the shape is linked to, if any.
    * @type {?Shape}
    */
@@ -1121,6 +1160,7 @@ export class Shape {
     this.blur = attributes.blur ?? h(0);
     this.start = attributes.start ?? 0;
     this.end = attributes.end ?? -0;
+    this.viewport = attributes.viewport ?? null;
     this.stick(...links);
   }
 
@@ -1207,6 +1247,10 @@ export class Shape {
       p.drawingContext.filter = `blur(${blur * p.pixelDensity()}px)`;
     }
 
+    // OQ only if parent is null?
+    if (this.viewport) {
+      this.p.scale(this.p.height / this.viewport);
+    }
     const at = this.at.evaluate();
     p.translate(at.x, at.y);
     p.rotate(
