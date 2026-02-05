@@ -457,6 +457,7 @@ class App extends HTMLElement {
     this.#p = new p5((p) => {
       p.setup = () => {
         p.createCanvas(640, 360);
+        p.colorMode(p.HSL);
         // this.#update();
       };
 
