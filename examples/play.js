@@ -389,14 +389,43 @@ class App extends HTMLElement {
       this.#p.loop();
     });
 
+    // gif frame delay is given in 10ms, 50fps is the closest possible to 60fps
+    const RECORD_FPS = 50;
+
     const recordButton = document.querySelector("#record");
     assert(recordButton instanceof HTMLButtonElement);
-    recordButton.addEventListener("click", () => {
-      // resetRecordP(true);
+    recordButton.addEventListener("click", async () => {
+      // recordP.millis = origMillis;
+      // const origMillis = recordP.millis;
+      // recordP.millis = () => t;
+
+      // const origLoop = recordP.loop;
+      // recordP.loop = () => {
+      //   console.log("RESETTING NOW");
+      //   recordP.loop = origLoop;
+      //   performance.now = origNow;
+      //   window.requestAnimationFrame = origRAF;
+      //   recordP.loop();
+      // };
+
       // no way to reset millis yet, maybe in future https://github.com/processing/p5.js/issues/4264
       // @ts-ignore
-      recordP._millisStart = performance.now();
-      recordP.saveGif(`${this.#currentModel.name}.gif`, 1);
+      // recordP._millisStart = performance.now();
+
+      // @ts-ignore
+      let t = recordP._millisStart;
+      const origNow = performance.now;
+      performance.now = () => t;
+      const origRAF = window.requestAnimationFrame;
+      window.requestAnimationFrame = (callback) => {
+        t += 1000 / RECORD_FPS;
+        return origRAF.call(window, callback);
+      };
+
+      await recordP.saveGif(`${this.#currentModel.name}.gif`, 0.5);
+
+      performance.now = origNow;
+      window.requestAnimationFrame = origRAF;
     });
 
     element = document.querySelector("#record-canvas");
@@ -404,7 +433,8 @@ class App extends HTMLElement {
     const recordCanvas = element;
     const recordP = new p5((p) => {
       p.setup = () => {
-        p.createCanvas(640, 360);
+        p.createCanvas(640 * 2, 360 * 2);
+        p.frameRate(RECORD_FPS);
         p.noLoop();
       };
 
@@ -413,6 +443,9 @@ class App extends HTMLElement {
         if (this.#model) {
           this.#model.render(p);
         }
+
+        // p.fill("white");
+        // p.text(p.frameRate().toString(), 50, 50);
       };
     }, recordCanvas);
 
