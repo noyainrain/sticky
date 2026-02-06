@@ -6,6 +6,17 @@ import p5 from "p5";
 export const AUTO = Symbol();
 
 /**
+ * ...
+ * @param {unknown} condition
+ * @returns {asserts condition}
+ */
+export function assert(condition) {
+  if (!condition) {
+    throw new Error("Assertion failed");
+  }
+}
+
+/**
  * @template T
  * @typedef {new (...args: never[]) => T} Constructor
  */
@@ -487,6 +498,14 @@ export function auto() {
  * @typedef {Value<"auto">} Auto
  */
 
+// TODO add all types
+/**
+ * @typedef ValueTypes
+ * @property {number} width-length
+ * @property {p5.Color} color
+ * @property {number} scalar
+ */
+
 /**
  * Shape attributes.
  * @typedef ShapeAttributes
@@ -578,6 +597,46 @@ export class Shape {
    */
   p = null;
 
+  /** @type {Map<string, Value<string, unknown>>} */
+  #variables = new Map();
+
+  /**
+   * ...
+   * @param {string} name
+   * @param {Value<string, unknown>} value
+   */
+  setVariable(name, value) {
+    // TODO this has to be bound on render also, right?
+    // TODO bind reference to parent or self? (this could make us reconsider reference binding and
+    // passing it explicitly again, but then we would need cache per reference which is super ugly
+    // :/ )
+    // value.bind(this, this);
+    this.#variables.set(name, value);
+  }
+
+  // OQ type could be optional, defaulting to unknown
+  /**
+   * ...
+   * @template {keyof ValueTypes} T
+   * @param {string} name
+   * @param {T} type
+   * @returns {Value<T, ValueTypes[T]>}
+   */
+  getVariable(name, type) {
+    const value = this.#variables.get(name);
+    if (value !== undefined) {
+      if (value.type !== type) {
+        throw new TypeError(`Bad variable type ${value.type} of ${name}`);
+      }
+      return /** @type {Value<T, ValueTypes[T]>} */ (value);
+    }
+    if (!this.base) {
+      // TODO better error?
+      throw new Error(`Unknown variable ${name}`);
+    }
+    return this.base.getVariable(name, type);
+  }
+
   /**
    * @overload
    * @param {ShapeAttributes | Shape} [attributes]
@@ -655,6 +714,11 @@ export class Shape {
     this.width.bind(this, this.base ?? p);
     this.height.bind(this, this.base ?? p);
     this.at.bind(this, this.base ?? p);
+
+    for (const variable of this.#variables.values()) {
+      variable.bind(this, this);
+      variable.evaluate();
+    }
 
     p.push();
     const at = this.at.evaluate();

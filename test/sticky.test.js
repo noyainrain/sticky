@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import p5 from "p5";
-import { Ellipse, Rectangle, Triangle, argumentStream, color, h, px, scalar, tr, w } from "#sticky";
+import {
+  ConstValue, Ellipse, Rectangle, Triangle, argumentStream, assert, color, h, px, scalar, tr, w,
+} from "#sticky";
 
 // OQ or just path in general?
 /** @typedef {[string, ...unknown[]]} PathCommand */
@@ -332,6 +334,29 @@ function itShouldBehaveLikeShape(Shape) {
       expect(base.links).to.deep.equal([links[0]]);
       expect(links[0].base).to.equal(base);
       expect(links.slice(1).every(link => !link.base)).to.be.true;
+    });
+  });
+
+  describe("setVariable", function () {
+    it("should set variable", function () {
+      const shape = new Ellipse();
+      shape.setVariable("foo", scalar(42));
+      const value = shape.getVariable("foo", "scalar");
+      assert(value instanceof ConstValue);
+      expect(value.type).to.equal("scalar");
+      expect(value.value).to.equal(42);
+    });
+  });
+
+  describe("getVariable", function () {
+    it("should get parent variable", function () {
+      const link = new Ellipse();
+      const base = new Ellipse(link);
+      base.setVariable("foo", scalar(42));
+      const value = link.getVariable("foo", "scalar");
+      assert(value instanceof ConstValue);
+      expect(value.type).to.equal("scalar");
+      expect(value.value).to.equal(42);
     });
   });
 }
