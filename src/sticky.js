@@ -169,6 +169,50 @@ export class Value {
 }
 
 /**
+ * ...
+ * @template {keyof ValueTypes} T
+ * @extends {Value<T>}
+ */
+export class VariableValue extends Value {
+  /**
+   * ...
+   * @type {string} name
+   */
+  name;
+
+  /**
+   * @param {T} type
+   * @param {string} name
+   */
+  constructor(type, name) {
+    super(type);
+    this.name = name;
+  }
+
+  /**
+   * @param {Shape} shape
+   */
+  compute(shape) {
+    const variable = shape.getVariable(this.name, this.type);
+    if (variable.type !== this.type) {
+      throw new TypeError(`Baaaad variable type ${variable.type} for ${this.name}`);
+    }
+    return /** @type {ValueTypes[T]} */ (variable.evaluate());
+  }
+}
+
+/**
+ * ...
+ * @template {keyof ValueTypes} T
+ * @param {string} name
+ * @param {T} type
+ * @returns {VariableValue<T>}
+ */
+export function variable(name, type) {
+  return new VariableValue(type, name);
+}
+
+/**
  * Quantity, i.e. a value with a unit.
  * @template {keyof ValueTypes} T
  * @extends {Value<T>}
@@ -498,14 +542,6 @@ export function auto() {
  * @typedef {Value<"auto">} Auto
  */
 
-// TODO add all types
-/**
- * @typedef ValueTypes
- * @property {number} width-length
- * @property {p5.Color} color
- * @property {number} scalar
- */
-
 /**
  * Shape attributes.
  * @typedef ShapeAttributes
@@ -597,13 +633,13 @@ export class Shape {
    */
   p = null;
 
-  /** @type {Map<string, Value<string, unknown>>} */
+  /** @type {Map<string, Value<keyof ValueTypes>>} */
   #variables = new Map();
 
   /**
    * ...
    * @param {string} name
-   * @param {Value<string, unknown>} value
+   * @param {Value<keyof ValueTypes>} value
    */
   setVariable(name, value) {
     // TODO this has to be bound on render also, right?
@@ -620,7 +656,7 @@ export class Shape {
    * @template {keyof ValueTypes} T
    * @param {string} name
    * @param {T} type
-   * @returns {Value<T, ValueTypes[T]>}
+   * @returns {Value<T>}
    */
   getVariable(name, type) {
     const value = this.#variables.get(name);
@@ -628,7 +664,7 @@ export class Shape {
       if (value.type !== type) {
         throw new TypeError(`Bad variable type ${value.type} of ${name}`);
       }
-      return /** @type {Value<T, ValueTypes[T]>} */ (value);
+      return /** @type {Value<T>} */ (value);
     }
     if (!this.base) {
       // TODO better error?

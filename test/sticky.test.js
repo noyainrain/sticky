@@ -1,7 +1,8 @@
 import { expect } from "chai";
 import p5 from "p5";
 import {
-  ConstValue, Ellipse, Rectangle, Triangle, argumentStream, assert, color, h, px, scalar, tr, w,
+  ConstValue, Ellipse, Rectangle, Triangle, argumentStream, assert, color, h, px, scalar, tr,
+  variable, w,
 } from "#sticky";
 
 // OQ or just path in general?
@@ -174,6 +175,28 @@ describe("argumentStream", function () {
       const c = next(Date);
       expect(c.value).to.equal(undefined);
       expect(c.done).to.be.true;
+    });
+  });
+});
+
+describe("VariableValue", function () {
+  /** @type {p5} */
+  let p;
+
+  beforeEachSetUpSketch((newP) => {
+    p = newP;
+  });
+
+  describe("evaluate", function () {
+    it("should determine value", function () {
+      const shape = new Ellipse();
+      // TODO set in constr
+      shape.setVariable("foo", scalar(7));
+      shape.render(p);
+      const value = variable("foo", "scalar");
+      value.bind(shape, shape);
+      const result = value.evaluate();
+      expect(result).to.equal(7);
     });
   });
 });
