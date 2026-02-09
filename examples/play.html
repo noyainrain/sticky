@@ -4,6 +4,21 @@
         <meta charset="utf-8" />
         <title>Sticky Studio</title>
 
+        <style>
+            html {
+                background: gray;
+                font: medium / 1.5 sans-serif;
+            }
+
+            body {
+                margin: unset;
+            }
+
+            header {
+                padding: 0.5rem;
+            }
+        </style>
+
         <script type="importmap">
             {
                 "imports": {}
@@ -12,5 +27,9 @@
         <script type="module" src="/examples/play.js"></script>
     </head>
 
-    <body></body>
+    <body>
+        <studio-app>
+            <header>&nbsp;</header>
+        </studio-ui>
+    </body>
 </html>
