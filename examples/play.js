@@ -270,6 +270,25 @@ class App extends HTMLElement {
       throw new Error("Assertion failed");
     }
     this.#textarea = element;
+
+    this.#textarea.addEventListener("keydown", (event) => {
+      if (event.key === "Tab") {
+        event.preventDefault();
+
+        /** @type {[number, number]} */
+        const range = [this.#textarea.selectionStart, this.#textarea.selectionEnd];
+
+        const lines = getLines(this.#textarea.value, range[0], range[1]);
+        for (const [i, line] of lines.entries()) {
+          this.#textarea.selectionStart = line.offset + i;
+          this.#textarea.selectionEnd = line.offset + i;
+          document.execCommand("insertText", false, "\t");
+        }
+
+        this.#textarea.selectionStart = range[0] + 1;
+        this.#textarea.selectionEnd = range[1] + lines.length;
+      }
+    });
     this.#textarea.addEventListener("input", () => {
       // localStorage.text = textarea.value;
       this.#currentModel = updateModel({ ...this.#currentModel, text: this.#textarea.value });
