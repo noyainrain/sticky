@@ -54,6 +54,21 @@ function createModel(model) {
   return model;
 }
 
+/**
+ * ...
+ */
+class OpenModelDialog extends HTMLElement {
+  /**
+   * ...
+   */
+  open() {
+    const dialog = this.querySelector("dialog");
+    assert(dialog instanceof HTMLDialogElement);
+    dialog.showModal();
+  }
+}
+customElements.define("studio-open-model-dialog", OpenModelDialog);
+
 /** ... */
 class App extends HTMLElement {
   /** @type {Model} */
@@ -86,6 +101,14 @@ class App extends HTMLElement {
       const model = createModel({ name: "", text: "" });
       location.hash = `#${model.name}`;
       this.#loadModel();
+    });
+
+    const openModelDialogButton = document.querySelector("#open-model-dialog");
+    assert(openModelDialogButton instanceof HTMLLIElement);
+    openModelDialogButton.addEventListener("click", () => {
+      const openModelDialog = document.querySelector("studio-open-model-dialog");
+      assert(openModelDialog instanceof OpenModelDialog);
+      openModelDialog.open();
     });
   }
 
