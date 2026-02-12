@@ -64,6 +64,21 @@ class OpenModelDialog extends HTMLElement {
   open() {
     const dialog = this.querySelector("dialog");
     assert(dialog instanceof HTMLDialogElement);
+    const ul = dialog.querySelector("ul");
+    assert(ul instanceof HTMLUListElement);
+
+    ul.replaceChildren(
+      ...getModels().map((model) => {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = `#${model.name}`;
+        a.textContent = model.name;
+        a.addEventListener("click", () => dialog.close());
+        li.append(a);
+        return li;
+      }),
+    );
+
     dialog.showModal();
   }
 }
@@ -83,6 +98,10 @@ class App extends HTMLElement {
     let element = document.querySelector("header h1");
     assert(element instanceof HTMLHeadingElement);
     this.#nameH1 = element;
+
+    addEventListener("hashchange", () => {
+      this.#loadModel();
+    });
 
     element = document.querySelector("textarea");
     if (!(element instanceof HTMLTextAreaElement)) {
