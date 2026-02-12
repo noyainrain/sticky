@@ -14,8 +14,10 @@
                 margin: unset;
             }
 
-            header {
+            header,
+            p {
                 padding: 0.5rem;
+                margin: unset;
             }
 
             ul {
@@ -85,6 +87,15 @@
                 /*min-width: 0;
                 flex: 1 1 0;*/
             }
+
+            footer:has(p:empty) {
+                display: none;
+            }
+
+            footer p {
+                color: red;
+                background: pink;
+            }
         </style>
 
         <script type="importmap">
@@ -116,6 +127,9 @@
             <main>
                 <textarea spellcheck="false"></textarea>
             </main>
+            <footer>
+                <p></p>
+            </footer>
 
             <studio-open-model-dialog>
                 <dialog closedby="any">

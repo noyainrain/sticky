@@ -172,8 +172,8 @@ class App extends HTMLElement {
   }
 
   #nameH1;
-  #header;
   #textarea;
+  #errorP;
 
   constructor() {
     super();
@@ -183,10 +183,6 @@ class App extends HTMLElement {
     let element = document.querySelector("header h1");
     assert(element instanceof HTMLHeadingElement);
     this.#nameH1 = element;
-
-    element = document.querySelector("header span");
-    assert(element instanceof HTMLElement);
-    this.#header = element;
 
     addEventListener("error", (event) => {
       if (!this.#catchError) {
@@ -209,7 +205,7 @@ class App extends HTMLElement {
         const match = this.#textarea.value.slice(i).match(/\w+|./);
         loc = `${match}@${event.lineno}:${event.colno}`;
       }
-      this.#header.textContent = `${event.error} (${loc})`;
+      this.#errorP.textContent = `${event.error} (${loc})`;
     });
 
     addEventListener("hashchange", () => {
@@ -226,6 +222,10 @@ class App extends HTMLElement {
       this.#currentModel = updateModel({ ...this.#currentModel, text: this.#textarea.value });
       this.#update();
     });
+
+    element = document.querySelector("footer p");
+    assert(element instanceof HTMLParagraphElement);
+    this.#errorP = element;
 
     const createModelLi = document.querySelector("#create-model");
     assert(createModelLi instanceof HTMLLIElement);
@@ -298,7 +298,7 @@ class App extends HTMLElement {
         // model = eval("//# sourceURL=stickyeval.js\n" + textarea.value);
         eval(this.#textarea.value);
         this.#catchError = false;
-        this.#header.textContent = "";
+        this.#errorP.textContent = "";
       },
       0,
     );
