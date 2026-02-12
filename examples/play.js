@@ -214,6 +214,15 @@ class App extends HTMLElement {
       assert(renameDialog instanceof RenameDialog);
       renameDialog.open();
     });
+
+    const downloadButton = document.querySelector("#download");
+    assert(downloadButton instanceof HTMLLIElement);
+    downloadButton.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.href = `data:text/plain,${encodeURIComponent(this.#textarea.value)}`;
+      a.download = this.#currentModel.name;
+      a.click();
+    });
   }
 
   connectedCallback() {
