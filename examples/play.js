@@ -242,9 +242,20 @@ class App extends HTMLElement {
         // maybe don't guess token and just match single character or complete line?
         // maybe at end of line error (produce with ") match last character or complete line?
         const match = this.#textarea.value.slice(i).match(/\w+|./);
-        loc = `${match}@${event.lineno}:${event.colno}`;
+        loc = `${match} in line ${event.lineno}, column ${event.colno}`;
       }
       this.#errorP.textContent = `${event.error} (${loc})`;
+
+      //      ::highlight(error) {
+      //          background: red;
+      //      }
+      // if (line) {
+      //   const range = new Range();
+      //   range.setStart(this.#textarea, line.offset);
+      //   range.setEnd(this.#textarea, line.offset + line.content.length - 1);
+      //   const highlight = new Highlight(range);
+      //   CSS.highlights.set("error", highlight);
+      // }
     });
 
     addEventListener("hashchange", () => {
