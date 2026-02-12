@@ -79,6 +79,41 @@ function renameModel(model, name) {
 }
 
 /**
+ * @typedef Line
+ * @property {number} offset
+ * @property {string} content
+ */
+
+/**
+ * @param {string} text
+ * @param {number} [start]
+ * @param {number} [end]
+ * @returns {Line[]}
+ */
+function getLines(text, start = 0, end = -0) {
+  if (end < 0 || Object.is(end, -0)) {
+    end = text.length + end;
+  }
+  const lines = text.split("\n");
+  let offset = 0;
+  /** @type {Line[]} */
+  const result = [];
+  for (let i = 0; i < lines.length; i++) {
+    const content = lines[i];
+    assert(content !== undefined);
+    const nextOffset = offset + content.length + 1;
+    if (start < nextOffset) {
+      result.push({ offset, content });
+    }
+    if (end < nextOffset) {
+      break;
+    }
+    offset = nextOffset;
+  }
+  return result;
+}
+
+/**
  * ...
  */
 class OpenModelDialog extends HTMLElement {
@@ -195,10 +230,14 @@ class App extends HTMLElement {
       // ff: "play.js" (*), chrome: "play.html" (syntax), "" (*)
       // (#sourceURL not useful, ff uses only in stack, not in filename)
       if (!event.filename || event.filename.search(/play.(js|html)/) !== -1) {
-        const i = this.#textarea.value.split("\n").slice(0, event.lineno - 1).reduce(
-          (offset, line) => offset + line.length + 1, 0,
-        )
-        + event.colno - 1;
+        const lines = getLines(this.#textarea.value);
+        const line = lines[event.lineno - 1];
+        assert(line !== undefined);
+        const i = line.offset + event.colno - 1;
+        // const i = this.#textarea.value.split("\n").slice(0, event.lineno - 1).reduce(
+        //   (offset, line) => offset + line.length + 1, 0,
+        // )
+        //  + event.colno - 1;
         // .match(/.+?\b/);
         // maybe don't guess token and just match single character or complete line?
         // maybe at end of line error (produce with ") match last character or complete line?
