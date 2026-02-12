@@ -8,6 +8,24 @@ import {
   edge, h, linear, multiply, px, repeated, scalar, tween, w,
 } from "#sticky";
 
+/* eslint-disable @stylistic/no-tabs */
+const EXAMPLE = `
+// Example <3
+new Triangle(
+	h(1/2), h(1/3), { orientation: 1/2, stroke: "pink", fill: null, start: 1},
+	
+	new Ellipse(
+		w(1/2), w(1/2), body(w(0), h(1)),
+		{ anchor: body(w(0), h(1/2)), end: 1/2 }
+	),
+	new Ellipse(
+		w(1/2), w(1/2), body(w(1), h(1)),
+		{ anchor: body(w(1), h(1/2)), end: 1/2 }
+	)
+)
+`;
+/* eslint-enable @stylistic/no-tabs */
+
 /**
  * @typedef Model
  * @property {string} name
@@ -482,7 +500,7 @@ class App extends HTMLElement {
     const name = location.hash.slice(1);
 
     if (!name) {
-      let model = getModels()[0] ?? createModel({ name: "", text: "" });
+      let model = getModels()[0] ?? createModel({ name: "", text: EXAMPLE });
       location.hash = `#${model.name}`;
       this.#loadModel();
       return;
