@@ -59,15 +59,15 @@ class App extends HTMLElement {
   /** @type {Model} */
   #currentModel = { name: "", text: "" };
 
-  #nameInput;
+  #nameH1;
   #textarea;
 
   constructor() {
     super();
 
-    let element = document.querySelector("header input");
-    assert(element instanceof HTMLInputElement);
-    this.#nameInput = element;
+    let element = document.querySelector("header h1");
+    assert(element instanceof HTMLHeadingElement);
+    this.#nameH1 = element;
 
     element = document.querySelector("textarea");
     if (!(element instanceof HTMLTextAreaElement)) {
@@ -109,7 +109,7 @@ class App extends HTMLElement {
       return;
     }
     this.#currentModel = model;
-    this.#nameInput.value = model.name;
+    this.#nameH1.textContent = model.name;
     this.#textarea.value = model.text;
   }
 }

@@ -30,6 +30,14 @@
                 padding: 0.5rem;
             }
 
+            header {
+                display: flex;
+            }
+
+            header > h1 {
+                flex: auto;
+            }
+
             .contextual {
                 position: relative;
                 white-space: nowrap;
@@ -55,6 +63,10 @@
             studio-app {
                 display: flex;
                 flex-flow: column;
+            }
+
+            header h1 {
+                font-size: 1rem;
             }
 
             main {
@@ -90,7 +102,7 @@
         <studio-app>
             <header>
                 &nbsp;
-                <input type="text"></input>
+                <h1></h1>
                 <div class="contextual">
                     <button>Menu</button>
                     <ul>
