@@ -217,6 +217,16 @@ describe("Ellipse", function () {
     });
   });
 
+  describe("renderX", function () {
+    it("should render shape", function () {
+      const shape = new Ellipse(new Ellipse());
+      shape.render(p);
+      expect(canvas.commands.map(command => command.type)).to.deep.equal(
+        ["fill", "stroke", "fill", "stroke"],
+      );
+    });
+  });
+
   describe("render", function () {
     it("should render shape", function () {
       const ellipse = new Ellipse(px(canvas.width), px(canvas.height));

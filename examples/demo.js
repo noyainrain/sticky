@@ -2,7 +2,7 @@ import p5 from "p5";
 import { Ellipse, px } from "#sticky";
 
 new p5((p) => {
-  const model = new Ellipse(px(180), px(180));
+  const model = new Ellipse(px(180), px(180), new Ellipse(px(90), px(90)));
 
   p.setup = () => {
     p.createCanvas(640, 360);

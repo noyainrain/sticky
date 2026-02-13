@@ -295,6 +295,9 @@ export class Shape {
    */
   render(p) {
     this.renderShape(p);
+    for (const link of this.links) {
+      link.render(p);
+    }
   }
 
   /**
