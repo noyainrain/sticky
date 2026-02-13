@@ -54,6 +54,25 @@ function createModel(model) {
   return model;
 }
 
+// call("POST", "/models/{id}/renames", ...);
+/**
+ * @param {Model} model
+ * @param {string} name
+ * @returns {Model}
+ */
+function renameModel(model, name) {
+  /** @type {string[]} */
+  const names = JSON.parse(localStorage.models ?? "[]");
+  if (names.includes(name)) {
+    throw new Error(`Existing model ${name}`);
+  }
+  const i = names.findIndex(name => name === model.name);
+  names[i] = name;
+  localStorage.models = JSON.stringify(names);
+  delete localStorage[`model:${model.name}`];
+  return updateModel({ ...model, name });
+}
+
 /**
  * ...
  */
@@ -85,25 +104,73 @@ class OpenModelDialog extends HTMLElement {
 customElements.define("studio-open-model-dialog", OpenModelDialog);
 
 class RenameDialog extends HTMLElement {
+  #dialog;
+  #input;
+
+  constructor() {
+    super();
+
+    /** @type {?HTMLElement} */
+    let element = this.querySelector("dialog");
+    assert(element instanceof HTMLDialogElement);
+    this.#dialog = element;
+
+    element = this.querySelector("input");
+    assert(element instanceof HTMLInputElement);
+    this.#input = element;
+
+    const button = this.querySelector("button");
+    assert(button instanceof HTMLButtonElement);
+    button.addEventListener("click", () => {
+      const name = this.#input.value.trim();
+      // TODO form validation
+      if (name) {
+        try {
+          app.rename(name);
+          this.#dialog.close();
+        } catch (e) {
+          console.log("error should be form validation", e);
+        }
+      }
+    });
+  }
+
   /** ... */
   open() {
-    const dialog = this.querySelector("dialog");
-    assert(dialog instanceof HTMLDialogElement);
-    dialog.showModal();
+    this.#input.value = app.currentModel.name;
+    this.#dialog.showModal();
   }
 }
 customElements.define("studio-rename-dialog", RenameDialog);
+
+/** @type {App} */
+let app;
 
 /** ... */
 class App extends HTMLElement {
   /** @type {Model} */
   #currentModel = { name: "", text: "" };
+  // TODO refactor ^
+  get currentModel() {
+    return this.#currentModel;
+  }
+
+  /**
+   * ...
+   * @param {string} name
+   */
+  rename(name) {
+    this.#currentModel = renameModel(this.#currentModel, name);
+    location.hash = `#${name}`;
+  }
 
   #nameH1;
   #textarea;
 
   constructor() {
     super();
+
+    app = this;
 
     let element = document.querySelector("header h1");
     assert(element instanceof HTMLHeadingElement);
