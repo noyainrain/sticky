@@ -1,6 +1,72 @@
 /** Library for describing and rendering 2D models made entirely of simple shapes. */
 
 /**
+ * @template T
+ * @typedef {new (...args: never[]) => T} Constructor
+ */
+
+/**
+ * @template T
+ * @typedef {
+     T extends Constructor<infer R>
+       ? R
+       : T extends "number"
+         ? number
+         : T extends "string"
+           ? string
+           : never
+  } ConcreteType
+ */
+
+/**
+ * @template T
+ * @callback TestCallback
+ * @param {T} arg
+ * @returns {boolean}
+ */
+
+// no callback bc typescript @template doesn't support generic function signature
+/**
+ * @typedef {
+     <T extends Constructor<unknown> | "number">(type: T, test?: TestCallback<ConcreteType<T>>)
+       => IteratorResult<ConcreteType<T> | undefined, ConcreteType<T> | undefined>
+   } NextCallback
+ */
+
+/**
+ * ...
+ * @param {unknown[]} values
+ * @returns {NextCallback}
+ */
+export function argumentStream(values) {
+  let i = 0;
+  /**
+   * @template {Constructor<unknown> | "number"} T
+   * @param {T} type
+   * @param {TestCallback<ConcreteType<T>>} [test]
+   * @returns {IteratorResult<ConcreteType<T> | undefined, ConcreteType<T> | undefined>}
+   */
+  return (type, test) => {
+    const arg = values[i];
+    if (arg === undefined) {
+      return { value: undefined, done: true };
+    }
+    let value;
+    if (
+      (
+        (type === "number" && typeof arg === type)
+        || (type !== "number" && arg instanceof /** @type {Constructor<unknown>} */ (type))
+      )
+      && (!test || test(/** @type {ConcreteType<T>} */ (arg)))
+    ) {
+      value = /** @type {ConcreteType<T>} */ (arg);
+      i++;
+    }
+    return { value, done: false };
+  };
+}
+
+/**
  * Result type of each dynamic value type.
  * @typedef ValueTypes
  * @property {number} length - Length quantity.
