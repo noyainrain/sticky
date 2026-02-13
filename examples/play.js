@@ -84,6 +84,16 @@ class OpenModelDialog extends HTMLElement {
 }
 customElements.define("studio-open-model-dialog", OpenModelDialog);
 
+class RenameDialog extends HTMLElement {
+  /** ... */
+  open() {
+    const dialog = this.querySelector("dialog");
+    assert(dialog instanceof HTMLDialogElement);
+    dialog.showModal();
+  }
+}
+customElements.define("studio-rename-dialog", RenameDialog);
+
 /** ... */
 class App extends HTMLElement {
   /** @type {Model} */
@@ -128,6 +138,14 @@ class App extends HTMLElement {
       const openModelDialog = document.querySelector("studio-open-model-dialog");
       assert(openModelDialog instanceof OpenModelDialog);
       openModelDialog.open();
+    });
+
+    const openRenameDialogItem = document.querySelector("#open-rename-dialog");
+    assert(openRenameDialogItem instanceof HTMLLIElement);
+    openRenameDialogItem.addEventListener("click", () => {
+      const renameDialog = document.querySelector("studio-rename-dialog");
+      assert(renameDialog instanceof RenameDialog);
+      renameDialog.open();
     });
   }
 
