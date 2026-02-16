@@ -84,6 +84,7 @@ export function argumentStream(values) {
  * @property {number} scalar
  * @property {AUTO} auto
  * @property {number} length - Length quantity.
+ * @property {number} angle
  * @property {Point} position - Position, i.e. the description of a point in space.
  */
 
@@ -252,6 +253,42 @@ export class HeightLengthValue extends QuantityValue {
 export function h(value) {
   return new HeightLengthValue(value);
 }
+
+/**
+ * ...
+ * @extends {QuantityValue<"angle">}
+ */
+export class TurnAngleValue extends QuantityValue {
+  /**
+   * @param {number} value
+   */
+  constructor(value) {
+    super("angle", value);
+  }
+
+  compute() {
+    return this.value * 2 * Math.PI;
+  }
+}
+
+/**
+ * ...
+ * @param {number} value - ...
+ * @returns {TurnAngleValue}
+ */
+export function tr(value) {
+  return new TurnAngleValue(value);
+}
+
+/**
+ * ...
+ * @typedef {Value<"angle">} TurnAngle
+ */
+
+/**
+ * ...
+ * @typedef {TurnAngle} Angle
+ */
 
 /**
  * Position on the face of a reference shape in Cartesian coordinates.
