@@ -16,9 +16,16 @@
             }
 
             header,
-            p {
+            p,
+            .block {
+                display: block;
                 padding: 0.5rem;
                 margin: unset;
+            }
+
+            a.block {
+              color: unset;
+              text-decoration: unset;
             }
 
             ul {
@@ -137,6 +144,9 @@
                         <li id="open-rename-dialog" tabindex="0">Rename</li>
                         <li id="download" tabindex="0">Download</li>
                         <li id="open-record-dialog" tabindex="0">Record</li>
+                        <a class="block" href="/examples/documentation.html" target="_blank">
+                          Documentation
+                        </a>
                     </ul>
                 </div>
             </header>
