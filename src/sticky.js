@@ -534,6 +534,70 @@ export function body(x, y) {
   return new PointPositionValue(x, y);
 }
 
+// TODO better name?
+/**
+ * ...
+ * @extends {Value<"position">}
+ */
+export class PolarValue extends Value {
+  /**
+   * ...
+   * @type {Value<"length">}
+   */
+  r;
+  /**
+   * ...
+   * @type {Angle}
+   */
+  a;
+
+  /**
+   * @param {Value<"length">} r
+   * @param {Angle} a
+   */
+  constructor(r, a) {
+    super("position");
+    this.r = r;
+    this.a = a;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.r.bind(shape, reference);
+    this.a.bind(shape, reference);
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  compute(shape, reference) {
+    const r = this.r.evaluate();
+    // TODO handle canvas / root element better
+    const cx = reference instanceof p5 ? 0 : reference.width.evaluate() / 2;
+    const cy = reference instanceof p5 ? 0 : reference.height.evaluate() / 2;
+    const a = this.a.evaluate();
+    return new p5.Vector(cx + r * Math.cos(a), cy + r * Math.sin(a));
+  }
+
+  angle() {
+    return this.a.evaluate();
+  }
+}
+
+/**
+ * ...
+ * @param {Value<"length">} r - ...
+ * @param {Angle} a - ...
+ */
+export function polar(r, a) {
+  return new PolarValue(r, a);
+}
+
 // getEdges() -> curves (basically every curve is an axis)
 // getCartesianCoordinateSystem() -> origin, xAxis, yAxis
 // getPolarCoordinateSystem() -> pole, axis

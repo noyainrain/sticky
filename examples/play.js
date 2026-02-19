@@ -5,7 +5,7 @@ import {
   // eslint-disable-next-line no-unused-vars
   AUTO, Ellipse, Rectangle, Shape, Text, Triangle, add, assert, body, e, ease, easeOn, easeOut,
   // eslint-disable-next-line no-unused-vars
-  edge, h, linear, multiply, px, repeated, scalar, tween, w,
+  edge, h, linear, multiply, polar, px, repeated, scalar, tr, tween, w,
 } from "#sticky";
 
 /* eslint-disable @stylistic/no-tabs */
