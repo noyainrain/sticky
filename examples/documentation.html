@@ -3,10 +3,167 @@
     <head>
         <meta charset="utf-8" />
         <title>Sticky Documentation</title>
+
+        <style>
+            h3 span {
+                font-weight: normal;
+            }
+
+            code {
+                display: block;
+                margin: 0.5rem;
+                white-space: pre;
+            }
+        </style>
     </head>
 
     <body>
         <h1>Sticky Documentation</h1>
         <p>Library for describing and rendering 2D models made entirely of simple shapes.</p>
+
+        <!--OQ default values where?-->
+
+        <h2>Shapes</h2>
+
+        <h3>
+            new Shape<span>({<em>width</em>, <em>height</em>, <em>at</em>, <em>orientation</em>,
+            <em>anchor</em>, <em>fill</em>, <em>stroke</em>, <em>blur</em>, <em>start</em>,
+            <em>end</em>, <em>viewport</em>}, <em>links...</em>)</span>
+        </h3>
+        <p>
+            For convenience, <em>width</em>, <em>height</em> and <em>at</em> can be given without a
+            name.
+        </p>
+        <p>Other shapes attached to the shape are given by <em>links</em>.</p>
+        <p>
+            <em>width</em> and <em>height</em> (<a href="#length">length</a>) define the size of the
+            shape. They are relative to the base shape or the canvas.
+        </p>
+        <p>
+            The position is given by <em>at</em> (<a href="#positions">position</a>), relative to
+            the base shape or canvas. The <em>anchor</em> defines the point on the shape itself used
+            for positioning.
+        </p>
+        <p><em>orientation</em> (<a href="#angle">angle</a>) is the angle the shape points to.</p>
+        <p>
+            The shape is filled with a <em>fill</em> color and stroked with a <em>stroke</em> color.
+        </p>
+        <p>
+            The shape can be blured with a radius of <em>blur</em>. (<a href="#length">length</a>)
+        </p>
+        <p>A partial shape can be defined with <em>start</em> and <em>end</em>.</p>
+        <p>
+            <em>viewport</em> is the height of the optimal viewport in pixels. This only applies to
+            the root shape and scales the model to the canvas.
+        </p>
+        <code>// Pink ellipse half the width and height of the canvas with two triangles attached
+new Ellipse(
+    w(1/2), h(1/2), {fill: "pink"},
+    new Triangle(),
+    new Triangle()
+);</code>
+
+        <h3>new Triangle<span>(<em>...</em>)</span></h3>
+        <p>Triangle shape.</p>
+        <code>new Triangle()</code>
+
+        <h3>new Rectangle<span>(<em>...</em>)</span></h3>
+        <p>Rectangle shape.</p>
+        <code>new Rectangle()</code>
+
+        <h3>new Ellipse<span>(<em>...</em>)</span></h3>
+        <p>Ellipse shape.</p>
+        <code>new Ellipse()</code>
+
+        <h3>new Text<span>({<em>content</em>, <em>...</em>})</span></h3>
+        <p>Text, where <em>content</em> is the text to draw.</p>
+        <p>For convenience, <em>content</em> can be given without a name.</p>
+        <code>new Text("Meow!")</code>
+
+        <h2>Quantities</h2>
+        <p>Value with a unit.</p>
+        <p id="length">Length quantities:</p>
+        <dl>
+            <dt id="px">px(<em>value</em>)</dt>
+            <dd>Length in pixels.</dd>
+            <dt id="w">w(<em>value</em>)</dt>
+            <dd>Fraction of the width of a reference shape.</dd>
+            <dt id="h">h(<em>value</em>)</dt>
+            <dd>Fraction of the height of a reference shape.</dd>
+            <dt id="e">e(<em>index</em>, <em>value</em>)</dt>
+            <dd>Fraction of an edge length of a reference shape.</dd>
+        </dl>
+        <p id="angle">Angle quantities:</p>
+        <dl>
+            <dt id="tr">t(<em>value</em>)</dt>
+            <dd>Angle in turns.</dd>
+        </dl>
+
+        <!--<h2>Variables</h2>
+        <h3>variable<span>(<em>name</em>)</span></h3>
+        <p>Get a variable by <em>name</em>.</p>
+        <code>new Ellipse({width: variable("size")})</code>-->
+
+        <h2>Math</h2>
+
+        <p>Basic math operations:</p>
+        <dl>
+            <dt>add(<em>values...</em>)</dt>
+            <dd>Add two or more values.</dd>
+            <dt>multiply(<em>values...</em>)</dt>
+            <dd>Multiply two or more values.</dd>
+        </dl>
+        <code>multiply(2, h(4))</code>
+
+        <h2 id="positions">Positions</h2>
+
+        <p>There are different ways to position a shape.</p>
+
+        <h3>body<span>(<em>x</em>, <em>y</em>)</span></h3>
+        <p>
+            Position at <em>x</em> and <em>y</em> coordinates relative to the bounding box of the
+            shape.
+        </p>
+        <code>// Center of the canvas
+new Ellipse({at: body(w(1/2), h(1/2))})</code>
+
+        <h3>edge<span>(<em>index</em>, <em>offset</em>, <em>crossOffset</em>)</span></h3>
+        <p>
+            Position at <em>offset</em> along the edge with <em>index</em>. Additional
+            <em>crossOffset</em> is perpendicular to the edge.
+        </p>
+        <code>// Center of the first edge of the canvas
+new Ellipse({at: edge(0, e(1/2))})</code>
+
+        <h2>Effects</h2>
+
+        <p>Dynamic values can achieve cool effects.</p>
+        <h3>
+            tween<span>(<em>from</em>, <em>to</em>, <em>duration</em>, {<em>offset</em>,
+            <em>easing</em>, <em>yoyo</em>})</span>
+        </h3>
+        <p>
+            Animation between <em>from</em> and <em>to</em> in the given <em>duration</em>.
+        </p>
+        <p><em>offset</em> is the point in time the animation starts at.</p>
+        <p><em>yoyo</em> makes the animation go back and forth.</p>
+        <p><em>easing</em> determines the transition between values:</p>
+        <dl>
+            <dt>ease</dt>
+            <dd>Smooth transition based on cosine.</dd>
+            <dt>linear</dt>
+            <dd>Uniform transition.</dd>
+        <dl>
+        <code>// Move from left to right in 2 seconds
+new Ellipse({at: body(tween(w(0), w(1), 2), h(1/2))})</code>
+
+        <h2>Shape Operations</h2>
+
+        <h3>repeated<span>({<em>count</em>, <em>...</em>}, <em>shapes...</em>)</span></h3>
+        <p>One or more <em>shapes</em> are repeated <em>count</em> times.</p>
+        <p>Any shape options are inherited by the repeated shapes.</p>
+        <p>For convenience, <em>count</em> can be given without a name.</p>
+        <code>// Seven circles
+repeated(7, new Ellipse())</code>
     </body>
 </html>
