@@ -86,6 +86,7 @@ export function argumentStream(values) {
  * @property {number} length - Length quantity.
  * @property {number} angle
  * @property {Point} position - Position, i.e. the description of a point in space.
+ * @property {p5.Color} color
  */
 
 /**
@@ -361,6 +362,85 @@ export function body(x, y) {
   y = typeof y === "number" ? h(y) : y;
   return new PointPositionValue(x, y);
 }
+
+// TODO OQ p5.Color, right? use whatever fill() accepts and _doesnt_ convert - IIRC tuples or
+// strings are converted to p5.Color internally by fill
+
+/**
+ * ...
+ * @extends {Value<"color">}
+ */
+export class ColorValue extends Value {
+  /**
+   * ...
+   * @type {Angle}
+   */
+  hue;
+
+  /**
+   * ...
+   * @type {Scalar}
+   */
+  saturation;
+
+  /**
+   * ...
+   * @type {Scalar}
+   */
+  lightness;
+
+  /**
+   * @param {Angle} hue
+   * @param {Scalar | number} saturation
+   * @param {Scalar | number} lightness
+   */
+  constructor(hue, saturation, lightness) {
+    super("color");
+    this.hue = hue ?? tr(0);
+    this.saturation = typeof saturation === "number" ? scalar(saturation) : saturation;
+    this.lightness = typeof lightness === "number" ? scalar(lightness) : lightness;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.hue.bind(shape, reference);
+    this.saturation.bind(shape, reference);
+    this.lightness.bind(shape, reference);
+  }
+
+  /**
+   * @param {Shape} shape
+   */
+  compute(shape) {
+    if (!shape.p) {
+      throw new Error(`Unrendered shape ${shape}`);
+    }
+    // OQ
+    shape.p.colorMode(shape.p.HSL);
+    return shape.p.color(
+      // this.hue.evaluate() * 360 / (2 * Math.PI),
+      (this.hue.evaluate() * 360 / (2 * Math.PI)) % 360,
+      this.saturation.evaluate() * 100, this.lightness.evaluate() * 100,
+    );
+  }
+}
+
+/**
+ * ...
+ * @param {Angle} hue - ...
+ * @param {Scalar | number} saturation - ...
+ * @param {Scalar | number} lightness - ...
+ * @returns {ColorValue}
+ */
+export function color(hue, saturation, lightness) {
+  return new ColorValue(hue, saturation, lightness);
+}
+
+/** @typedef {Value<"color">} Color */
 
 /**
  * ...

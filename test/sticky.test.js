@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import p5 from "p5";
-import { Ellipse, Rectangle, Triangle, argumentStream, h, px, scalar, tr, w } from "#sticky";
+import { Ellipse, Rectangle, Triangle, argumentStream, color, h, px, scalar, tr, w } from "#sticky";
 
 // OQ or just path in general?
 /** @typedef {[string, ...unknown[]]} PathCommand */
@@ -280,6 +280,26 @@ describe("TurnAngleValue", function () {
       value.bind(shape, shape);
       const result = value.evaluate();
       expect(result).to.equal(Math.PI);
+    });
+  });
+});
+
+describe("ColorValue", function () {
+  /** @type {p5} */
+  let p;
+
+  beforeEachSetUpSketch((newP) => {
+    p = newP;
+  });
+
+  describe("evaluate", function () {
+    it("should determine value", function () {
+      const shape = new Ellipse();
+      shape.render(p);
+      const value = color(tr(1 / 2), 1, 1 / 2);
+      value.bind(shape, shape);
+      const result = value.evaluate();
+      expect(result).to.deep.equal(p.color(180, 100, 50));
     });
   });
 });
