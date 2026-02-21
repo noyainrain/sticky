@@ -98,6 +98,7 @@ export function argumentStream(values) {
  * @property {number} angle
  * @property {Point} position - Position, i.e. the description of a point in space.
  * @property {p5.Color} color
+ * @property {CanvasGradient} linear-gradient
  */
 
 /**
@@ -756,6 +757,91 @@ export function color(hue, saturation, lightness) {
 /** @typedef {Value<"color">} Color */
 
 /**
+ * @typedef LinearGradientOptions
+ * @property {Value<"position">} [from]
+ * @property {Value<"position">} [to]
+ */
+
+/**
+ * ...
+ * @extends {Value<"linear-gradient">}
+ */
+export class LinearGradientValue extends Value {
+  /** @type {Value<"position">} */
+  from;
+  /** @type {Value<"position">} */
+  to;
+  /** @type {Color[]} */
+  colors;
+
+  /**
+   * @param {LinearGradientOptions | Color} [options]
+   * @param {...Color} colors
+   */
+  constructor(options = {}, ...colors) {
+    super("linear-gradient");
+    if (options instanceof Value) {
+      colors.unshift(options);
+      options = {};
+    }
+    this.from = options.from ?? body(w(0), h(1 / 2));
+    this.to = options.to ?? body(w(1), h(1 / 2));
+    this.colors = colors;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.from.bind(shape, reference);
+    this.to.bind(shape, reference);
+    for (const color of this.colors) {
+      color.bind(shape, reference);
+    }
+  }
+
+  /**
+   * @param {Shape} shape
+   */
+  compute(shape) {
+    if (!shape.p) {
+      throw new Error(`Unrendered shape ${shape}`);
+    }
+    // TODO rather if? okay to return null? throw error?
+    assert(shape.p.drawingContext instanceof CanvasRenderingContext2D);
+    const from = this.from.evaluate();
+    const to = this.to.evaluate();
+    const gradient = shape.p.drawingContext.createLinearGradient(from.x, from.y, to.x, to.y);
+    for (const [i, color] of this.colors.entries()) {
+      gradient.addColorStop(i / (this.colors.length - 1), color.evaluate().toString());
+    }
+    return gradient;
+  }
+}
+
+/**
+ * ...
+ * @param {LinearGradientOptions | Color} [options]
+ * @param {...Color} colors
+ * @returns LinearGradientValue
+ */
+export function linearGradient(options = {}, ...colors) {
+  return new LinearGradientValue(options, ...colors);
+}
+
+/**
+ * ...
+ * @typedef {Value<"linear-gradient">} LinearGradient
+ */
+
+/**
+ * ...
+ * @typedef {LinearGradient} Gradient
+ */
+
+/**
  * ...
  * @template {Numeric} T
  * @extends {Value<T>}
@@ -1017,8 +1103,8 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Value<"position">} [at]
  * @property {Scalar | number} [orientation]
  * @property {Value<"position">} [anchor]
- * @property {?string | Auto} [fill]
- * @property {?string | Auto} [stroke]
+ * @property {?string | Auto | Gradient} [fill]
+ * @property {?string | Auto | Gradient} [stroke]
  * @property {Value<"length">} [blur]
  * @property {number} [start]
  * @property {number} [end]
@@ -1098,12 +1184,12 @@ export class Shape {
   anchor;
   /**
    * TODO.
-   * @type {?string | Auto}
+   * @type {?string | Auto | Gradient}
    */
   fill;
   /**
    * TODO.
-   * @type {?string | Auto}
+   * @type {?string | Auto | Gradient}
    */
   stroke;
   /**
@@ -1304,10 +1390,22 @@ export class Shape {
     }
 
     p.push();
-    if (!(this.fill instanceof Value)) {
+    if (this.fill instanceof Value) {
+      const fill = this.fill.evaluate();
+      if (fill !== AUTO && p.drawingContext instanceof CanvasRenderingContext2D) {
+        p.fill(0);
+        p.drawingContext.fillStyle = fill;
+      }
+    } else {
       p.fill(this.fill ?? "transparent");
     }
-    if (!(this.stroke instanceof Value)) {
+    if (this.stroke instanceof Value) {
+      const stroke = this.stroke.evaluate();
+      if (stroke !== AUTO && p.drawingContext instanceof CanvasRenderingContext2D) {
+        p.stroke(0);
+        p.drawingContext.strokeStyle = stroke;
+      }
+    } else {
       p.stroke(this.stroke ?? "transparent");
     }
 

@@ -3,9 +3,9 @@
 import p5 from "p5";
 import {
   // eslint-disable-next-line no-unused-vars
-  AUTO, Ellipse, Rectangle, Shape, Text, Triangle, add, assert, body, e, ease, easeOn, easeOut,
+  AUTO, Ellipse, Rectangle, Shape, Text, Triangle, add, assert, body, color, e, ease, easeOn,
   // eslint-disable-next-line no-unused-vars
-  edge, h, linear, multiply, polar, px, repeated, scalar, tr, tween, w,
+  easeOut, edge, h, linear, linearGradient, multiply, polar, px, repeated, scalar, tr, tween, w,
 } from "#sticky";
 
 /* eslint-disable @stylistic/no-tabs */
