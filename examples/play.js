@@ -1,6 +1,11 @@
 /** ... */
 
-import { assert } from "#sticky";
+import {
+  // eslint-disable-next-line no-unused-vars
+  AUTO, Ellipse, Rectangle, Shape, Text, Triangle, add, assert, body, e, ease, easeOn, easeOut,
+  // eslint-disable-next-line no-unused-vars
+  edge, h, linear, multiply, px, repeated, scalar, tween, w,
+} from "#sticky";
 
 /**
  * @typedef Model
@@ -148,6 +153,8 @@ let app;
 
 /** ... */
 class App extends HTMLElement {
+  #catchError = false;
+
   /** @type {Model} */
   #currentModel = { name: "", text: "" };
   // TODO refactor ^
@@ -165,6 +172,7 @@ class App extends HTMLElement {
   }
 
   #nameH1;
+  #header;
   #textarea;
 
   constructor() {
@@ -175,6 +183,34 @@ class App extends HTMLElement {
     let element = document.querySelector("header h1");
     assert(element instanceof HTMLHeadingElement);
     this.#nameH1 = element;
+
+    element = document.querySelector("header span");
+    assert(element instanceof HTMLElement);
+    this.#header = element;
+
+    addEventListener("error", (event) => {
+      if (!this.#catchError) {
+        return;
+      }
+      this.#catchError = false;
+      event.stopImmediatePropagation();
+
+      let loc = "?";
+      // ff: "play.js" (*), chrome: "play.html" (syntax), "" (*)
+      // (#sourceURL not useful, ff uses only in stack, not in filename)
+      if (!event.filename || event.filename.search(/play.(js|html)/) !== -1) {
+        const i = this.#textarea.value.split("\n").slice(0, event.lineno - 1).reduce(
+          (offset, line) => offset + line.length + 1, 0,
+        )
+        + event.colno - 1;
+        // .match(/.+?\b/);
+        // maybe don't guess token and just match single character or complete line?
+        // maybe at end of line error (produce with ") match last character or complete line?
+        const match = this.#textarea.value.slice(i).match(/\w+|./);
+        loc = `${match}@${event.lineno}:${event.colno}`;
+      }
+      this.#header.textContent = `${event.error} (${loc})`;
+    });
 
     addEventListener("hashchange", () => {
       this.#loadModel();
@@ -188,6 +224,7 @@ class App extends HTMLElement {
     this.#textarea.addEventListener("input", () => {
       // localStorage.text = textarea.value;
       this.#currentModel = updateModel({ ...this.#currentModel, text: this.#textarea.value });
+      this.#update();
     });
 
     const createModelLi = document.querySelector("#create-model");
@@ -247,6 +284,24 @@ class App extends HTMLElement {
     this.#currentModel = model;
     this.#nameH1.textContent = model.name;
     this.#textarea.value = model.text;
+    this.#update();
+  }
+
+  #update() {
+    // error contains position only via stack
+    // stack of SyntaxError does not contain position inside eval code
+    // -> use global error handler as hack to get error position
+    setTimeout(
+      () => {
+        this.#catchError = true;
+        // let func = new Function(`return ${text};`);
+        // model = eval("//# sourceURL=stickyeval.js\n" + textarea.value);
+        eval(this.#textarea.value);
+        this.#catchError = false;
+        this.#header.textContent = "";
+      },
+      0,
+    );
   }
 }
 customElements.define("studio-app", App);
