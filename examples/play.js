@@ -1,5 +1,6 @@
 /** ... */
 
+import p5 from "p5";
 import {
   // eslint-disable-next-line no-unused-vars
   AUTO, Ellipse, Rectangle, Shape, Text, Triangle, add, assert, body, e, ease, easeOn, easeOut,
@@ -188,6 +189,8 @@ let app;
 
 /** ... */
 class App extends HTMLElement {
+  /** @type {?Shape} */
+  #model = null;
   #catchError = false;
 
   /** @type {Model} */
@@ -310,6 +313,29 @@ class App extends HTMLElement {
       a.download = this.#currentModel.name;
       a.click();
     });
+
+    const container = document.querySelector("#canvas");
+    if (!(container instanceof HTMLDivElement)) {
+      throw new Error("Assertion failed");
+    }
+
+    new p5((p) => {
+      p.setup = () => {
+        p.createCanvas(640, 360);
+        // this.#update();
+      };
+
+      p.draw = () => {
+        p.background(0);
+        if (this.#model) {
+          try {
+            this.#model.render(p);
+          } catch (e) {
+            this.#errorP.textContent = `${e} (?)`;
+          }
+        }
+      };
+    }, container);
   }
 
   connectedCallback() {
@@ -346,7 +372,7 @@ class App extends HTMLElement {
         this.#catchError = true;
         // let func = new Function(`return ${text};`);
         // model = eval("//# sourceURL=stickyeval.js\n" + textarea.value);
-        eval(this.#textarea.value);
+        this.#model = eval(this.#textarea.value);
         this.#catchError = false;
         this.#errorP.textContent = "";
       },

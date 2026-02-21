@@ -78,7 +78,7 @@
 
             textarea {
                 display: block;
-                flex: auto;
+                width: 80ch;
                 border: none;
                 overflow: scroll;
                 white-space: pre;
@@ -95,6 +95,11 @@
             footer p {
                 color: red;
                 background: pink;
+            }
+
+            #canvas {
+                /*min-width: 0;
+                flex: 1 1 0;*/
             }
         </style>
 
@@ -126,6 +131,7 @@
             </header>
             <main>
                 <textarea spellcheck="false"></textarea>
+                <div id="canvas"></div>
             </main>
             <footer>
                 <p></p>
