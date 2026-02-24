@@ -777,6 +777,14 @@ export function ease(progress) {
 
 /**
  * ...
+ * @param {number} progress
+ */
+export function easeOut(progress) {
+  return Math.sin(progress * Math.PI / 2);
+}
+
+/**
+ * ...
  * @callback EasingCallback
  * @param {number} progress - ...
  * @returns {number}
