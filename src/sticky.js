@@ -814,6 +814,8 @@ export class TweenValue extends Value {
    * @type {Scalar}
    */
   offset;
+  /** @type {Scalar} */
+  pause;
 
   /**
    * @param {Value<T> | number} from
@@ -821,10 +823,11 @@ export class TweenValue extends Value {
    * @param {Scalar | number} duration
    * @param {Object} [options]
    * @param {Scalar | number} [options.offset]
+   * @param {Scalar | number} [options.pause]
    * @param {EasingCallback} [options.easing]
    * @param {boolean} [options.yoyo]
    */
-  constructor(from, to, duration, { offset = 0, easing = ease, yoyo = false } = {}) {
+  constructor(from, to, duration, { offset = 0, pause = 0, easing = ease, yoyo = false } = {}) {
     if (typeof from === "number") {
       from = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(from)));
     }
@@ -837,6 +840,7 @@ export class TweenValue extends Value {
     this.easing = easing;
     this.yoyo = yoyo;
     this.offset = typeof offset === "number" ? scalar(offset) : offset;
+    this.pause = typeof pause === "number" ? scalar(pause) : pause;
   }
 
   /**
@@ -849,6 +853,7 @@ export class TweenValue extends Value {
     this.to.bind(shape, reference);
     this.duration.bind(shape, reference);
     this.offset.bind(shape, reference);
+    this.pause.bind(shape, reference);
   }
 
   /**
@@ -859,7 +864,14 @@ export class TweenValue extends Value {
   compute(shape, reference) {
     const time = (reference instanceof p5 ? reference : reference.p)?.millis() ?? 0;
     const duration = this.duration.evaluate();
-    let p = (time / 1000 + this.offset.evaluate()) / duration % 1;
+    const pause = this.pause.evaluate();
+    let p = (time / 1000 + this.offset.evaluate()) / (duration + pause) % 1;
+    // TODO OQ could also % (this.duration + pause), then if >= duration 0, then scale to 1 with /
+    // duration, hmm....
+    p = p * (duration + pause) / duration;
+    if (p >= 1) {
+      p = 0;
+    }
     if (this.yoyo) {
       p = p * 2;
       p = p >= 1 ? 2 - p : p;
@@ -878,12 +890,13 @@ export class TweenValue extends Value {
  * @param {Scalar | number} duration
  * @param {Object} [options]
  * @param {Scalar | number} [options.offset]
+ * @param {Scalar | number} [options.pause]
  * @param {EasingCallback} [options.easing]
  * @param {boolean} [options.yoyo]
  * @returns {TweenValue<T>}
  */
-export function tween(from, to, duration, { offset = 0, easing = ease, yoyo = false } = {}) {
-  return new TweenValue(from, to, duration, { offset, easing, yoyo });
+export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease, yoyo = false } = {}) {
+  return new TweenValue(from, to, duration, { offset, pause, easing, yoyo });
 }
 
 /**
