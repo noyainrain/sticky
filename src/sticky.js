@@ -757,6 +757,66 @@ export function color(hue, saturation, lightness) {
 /** @typedef {Value<"color">} Color */
 
 /**
+ * ...
+ * @extends {Value<"color">}
+ */
+export class HuedValue extends Value {
+  /**
+   * ...
+   * @type {Color}
+   */
+  color;
+  /**
+   * ...
+   * @type {Angle}
+   */
+  rotation;
+
+  /**
+   * @param {Color} color
+   * @param {Angle} rotation
+   */
+  constructor(color, rotation) {
+    super("color");
+    this.color = color;
+    this.rotation = rotation;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.color.bind(shape, reference);
+    this.rotation.bind(shape, reference);
+  }
+
+  /**
+   * @param {Shape} shape
+   */
+  compute(shape) {
+    if (!shape.p) {
+      throw new Error(`Unrendered shape ${shape}`);
+    }
+    const color = this.color.evaluate();
+    return shape.p.color(
+      ((shape.p.hue(color) + shape.p.degrees(this.rotation.evaluate())) % 360 + 360) % 360,
+      shape.p.saturation(color), shape.p.lightness(color),
+    );
+  }
+}
+
+/**
+ * ...
+ * @param {Color} color
+ * @param {Angle} rotation
+ */
+export function hued(color, rotation) {
+  return new HuedValue(color, rotation);
+}
+
+/**
  * @typedef LinearGradientOptions
  * @property {Value<"position">} [from]
  * @property {Value<"position">} [to]
