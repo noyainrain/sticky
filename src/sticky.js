@@ -1227,6 +1227,7 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Value<"position">} [anchor]
  * @property {?string | Auto | Gradient} [fill]
  * @property {?string | Auto | Gradient} [stroke]
+ * @property {Value<"length"> | Auto} [strokeWidth]
  * @property {Value<"length">} [blur]
  * @property {number} [start]
  * @property {number} [end]
@@ -1314,6 +1315,11 @@ export class Shape {
    * @type {?string | Auto | Gradient}
    */
   stroke;
+  /**
+   * ...
+   * @type {Value<"length"> | Auto}
+   */
+  strokeWidth;
   /**
    * ...
    * @type {Value<"length">}
@@ -1434,6 +1440,7 @@ export class Shape {
     this.anchor = attributes.anchor ?? body(1 / 2, 1 / 2);
     this.fill = attributes.fill === undefined ? auto() : attributes.fill;
     this.stroke = attributes.stroke === undefined ? auto() : attributes.stroke;
+    this.strokeWidth = attributes.strokeWidth === undefined ? auto() : attributes.strokeWidth;
     this.blur = attributes.blur ?? h(0);
     this.start = attributes.start ?? 0;
     this.end = attributes.end ?? -0;
@@ -1504,6 +1511,7 @@ export class Shape {
     if (this.stroke instanceof Value) {
       this.stroke.bind(this, this);
     }
+    this.strokeWidth.bind(this, this);
     this.blur.bind(this, this.base ?? p);
 
     for (const variable of this.#variables.values()) {
@@ -1529,6 +1537,10 @@ export class Shape {
       }
     } else {
       p.stroke(this.stroke ?? "transparent");
+    }
+    const strokeWidth = this.strokeWidth.evaluate();
+    if (strokeWidth !== AUTO) {
+      p.strokeWeight(strokeWidth);
     }
 
     const blur = this.blur.evaluate();
