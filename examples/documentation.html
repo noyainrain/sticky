@@ -127,6 +127,13 @@ new Ellipse(
         <code>// Center of the canvas
 new Ellipse({at: body(w(1/2), h(1/2))})</code>
 
+        <h3>polar<span>(<em>r</em>, <em>a</em>)</span></h3>
+        <p>
+            Position at the radius <em>r</em> and angle <em>a</em> from the center of the shape.
+        </p>
+        <code>// Center-Right of the canvas
+new Ellipse({at: polar(w(1), tr(0))})</code>
+
         <h3>edge<span>(<em>index</em>, <em>offset</em>, <em>crossOffset</em>)</span></h3>
         <p>
             Position at <em>offset</em> along the edge with <em>index</em>. Additional
@@ -136,21 +143,53 @@ new Ellipse({at: body(w(1/2), h(1/2))})</code>
 new Ellipse({at: edge(0, e(1/2))})</code>
 
         <h2>Effects</h2>
-
         <p>Dynamic values can achieve cool effects.</p>
+
+        <h3>color<span>(<em>hue</em>, <em>saturation</em>, <em>lightness</em>)</h3>
+        <p>
+            Color defined by a <em>hue</em> (<a href="#angle">angle</a>), <em>saturation</em> and
+            <em>lightness</em> (from 0 to 1).
+        </p>
+        <code>// Cyan
+new Ellipse({fill: color(tr(1/2), 1, 1/2)});</code>
+
+        <h3>hued<span>(<em>color</em>, <em>rotation</em>)</h3>
+        <p>A <em>color</em> with hue rotated by <em>rotation</em> (<a href="#angle">angle</a>).
+        <code>// Cyan
+new Ellipse({fill: hued(red, tr(1/2))});</code>
+
+        <h3>shaded<span>(<em>color</em>, <em>scale</em>)</h3>
+        <p>A shaded (or tinted) <em>color</em> with a lightness of <em>scale</em>.</p>
+        <code>// Dark red
+new Ellipse({fill: shaded(red, 1/2)});</code>
+
+        <h3>linearGradient<span>({<em>from</em>, <em>to</em>}, <em>colors...</em>)</h3>
+        <p>Linear gradient between <em>colors</em>.</p>
+        <p>
+            The gradient runs from <em>from</em> to <em>to</em> (<a href="#length">length</a>). By
+            default it goes from left to right.
+        </p>
+        <code>// Gradient between red and cyan
+new Ellipse({fill: linearGradient(red, cyan)})</code>
+
         <h3>
             tween<span>(<em>from</em>, <em>to</em>, <em>duration</em>, {<em>offset</em>,
-            <em>easing</em>, <em>yoyo</em>})</span>
+            <em>easing</em>, <em>yoyo</em>, <em>pause</em>})</span>
         </h3>
         <p>
             Animation between <em>from</em> and <em>to</em> in the given <em>duration</em>.
         </p>
-        <p><em>offset</em> is the point in time the animation starts at.</p>
+        <p>
+            <em>offset</em> is the point in time the animation starts at. <em>pause</em> is an
+            optional duration between loops.
+        </p>
         <p><em>yoyo</em> makes the animation go back and forth.</p>
         <p><em>easing</em> determines the transition between values:</p>
         <dl>
             <dt>ease</dt>
             <dd>Smooth transition based on cosine.</dd>
+            <dt>easeOut</dt>
+            <dd>Transition starting rapidly and smoothing towards the end.</dd>
             <dt>linear</dt>
             <dd>Uniform transition.</dd>
         <dl>
