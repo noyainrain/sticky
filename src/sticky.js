@@ -817,6 +817,68 @@ export function hued(color, rotation) {
 }
 
 /**
+ * ...
+ * @extends {Value<"color">}
+ */
+export class ShadedValue extends Value {
+  /**
+   * ...
+   * @type {Color}
+   */
+  color;
+  // TODO OQ better name?
+  /**
+   * ...
+   * @type {Scalar}
+   */
+  scale;
+
+  /**
+   * @param {Color} color
+   * @param {Scalar | number} scale
+   */
+  constructor(color, scale) {
+    super("color");
+    this.color = color;
+    this.scale = typeof scale === "number" ? scalar(scale) : scale;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.color.bind(shape, reference);
+    this.scale.bind(shape, reference);
+  }
+
+  /**
+   * @param {Shape} shape
+   */
+  compute(shape) {
+    if (!shape.p) {
+      throw new Error(`Unrendered shape ${shape}`);
+    }
+    const color = this.color.evaluate();
+    return shape.p.color(
+      shape.p.hue(color), shape.p.saturation(color),
+      shape.p.lightness(color) * this.scale.evaluate(),
+    );
+  }
+}
+
+/**
+ * ...
+ * @param {Color} color - ...
+ * @param {Scalar | number} scale - ...
+ * @returns {ShadedValue}
+ */
+export function shaded(color, scale) {
+  return new ShadedValue(color, scale);
+}
+
+/**
  * @typedef LinearGradientOptions
  * @property {Value<"position">} [from]
  * @property {Value<"position">} [to]
