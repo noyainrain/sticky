@@ -1247,6 +1247,8 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Color | Gradient | Auto} [stroke]
  * @property {Value<"length"> | Auto} [strokeWidth]
  * @property {Scalar | number} [opacity]
+ * @property {Color} [shadow]
+ * @property {Value<"length">} [shadowBlur]
  * @property {Value<"length">} [blur]
  * @property {number} [start]
  * @property {number} [end]
@@ -1339,6 +1341,16 @@ export class Shape {
    * @type {Value<"length"> | Auto}
    */
   strokeWidth;
+  /**
+   * ...
+   * @type {Color}
+   */
+  shadow;
+  /**
+   * ...
+   * @type {Value<"length">}
+   */
+  shadowBlur;
   /**
    * ...
    * @type {Value<"length">}
@@ -1465,6 +1477,8 @@ export class Shape {
     if (attributes.opacity !== undefined) {
       this.opacity = attributes.opacity;
     }
+    this.shadow = attributes.shadow === undefined ? transparent() : attributes.shadow;
+    this.shadowBlur = attributes.shadowBlur === undefined ? h(0) : attributes.shadowBlur;
     this.blur = attributes.blur ?? h(0);
     this.start = attributes.start ?? 0;
     this.end = attributes.end ?? -0;
@@ -1548,6 +1562,8 @@ export class Shape {
     this.stroke.bind(this, this);
     this.strokeWidth.bind(this, this);
     this.#opacity.bind(this, this);
+    this.shadow.bind(this, this);
+    this.shadowBlur.bind(this, this);
     this.blur.bind(this, this.base ?? p);
 
     for (const variable of this.#variables.values()) {
@@ -1608,6 +1624,13 @@ export class Shape {
       p.strokeWeight(strokeWidth);
     }
 
+    const shadow = this.shadow.evaluate();
+    const shadowAlpha = p.alpha(shadow);
+    if (shadowAlpha !== 0 && p.drawingContext instanceof CanvasRenderingContext2D) {
+      p.drawingContext.shadowColor = shadow.toString();
+      // stddev = blur / 2 (see https://html.spec.whatwg.org/multipage/canvas.html#shadows)
+      p.drawingContext.shadowBlur = 2 * this.shadowBlur.evaluate() * p.pixelDensity();
+    }
     const blur = this.blur.evaluate();
     if (blur && p.drawingContext instanceof CanvasRenderingContext2D) {
       p.drawingContext.filter = `blur(${blur * p.pixelDensity()}px)`;
@@ -1616,6 +1639,10 @@ export class Shape {
     // Draw
     this.renderShape(p);
 
+    if (shadowAlpha !== 0 && p.drawingContext instanceof CanvasRenderingContext2D) {
+      p.drawingContext.shadowColor = "transparent";
+      p.drawingContext.shadowBlur = 0;
+    }
     if (blur && p.drawingContext instanceof CanvasRenderingContext2D) {
       p.drawingContext.filter = "none";
     }
