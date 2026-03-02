@@ -321,10 +321,10 @@ describe("ColorValue", function () {
     it("should determine value", function () {
       const shape = new Ellipse();
       shape.render(p);
-      const value = color(tr(1 / 2), 1, 1 / 2);
+      const value = color(tr(1 / 2), 1, 1 / 2, { alpha: 1 / 4 });
       value.bind(shape, shape);
       const result = value.evaluate();
-      expect(result).to.deep.equal(p.color(180, 100, 50));
+      expect(result.toString()).to.equal("hsl(180 100% 50% / 0.25)");
     });
   });
 });

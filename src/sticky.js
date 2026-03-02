@@ -690,29 +690,35 @@ export class ColorValue extends Value {
    * @type {Angle}
    */
   hue;
-
   /**
    * ...
    * @type {Scalar}
    */
   saturation;
-
   /**
    * ...
    * @type {Scalar}
    */
   lightness;
+  /**
+   * ...
+   * @type {Scalar}
+   */
+  alpha;
 
   /**
    * @param {Angle} hue
    * @param {Scalar | number} saturation
    * @param {Scalar | number} lightness
+   * @param {Object} options
+   * @param {Scalar | number} [options.alpha]
    */
-  constructor(hue, saturation, lightness) {
+  constructor(hue, saturation, lightness, { alpha = scalar(1) } = {}) {
     super("color");
     this.hue = hue ?? tr(0);
     this.saturation = typeof saturation === "number" ? scalar(saturation) : saturation;
     this.lightness = typeof lightness === "number" ? scalar(lightness) : lightness;
+    this.alpha = typeof alpha === "number" ? scalar(alpha) : alpha;
   }
 
   /**
@@ -724,6 +730,7 @@ export class ColorValue extends Value {
     this.hue.bind(shape, reference);
     this.saturation.bind(shape, reference);
     this.lightness.bind(shape, reference);
+    this.alpha.bind(shape, reference);
   }
 
   /**
@@ -739,6 +746,7 @@ export class ColorValue extends Value {
       // this.hue.evaluate() * 360 / (2 * Math.PI),
       (this.hue.evaluate() * 360 / (2 * Math.PI)) % 360,
       this.saturation.evaluate() * 100, this.lightness.evaluate() * 100,
+      this.alpha.evaluate(),
     );
   }
 }
@@ -748,10 +756,20 @@ export class ColorValue extends Value {
  * @param {Angle} hue - ...
  * @param {Scalar | number} saturation - ...
  * @param {Scalar | number} lightness - ...
+ * @param {Object} options
+ * @param {Scalar | number} [options.alpha] - ...
  * @returns {ColorValue}
  */
-export function color(hue, saturation, lightness) {
-  return new ColorValue(hue, saturation, lightness);
+export function color(hue, saturation, lightness, { alpha = scalar(1) } = {}) {
+  return new ColorValue(hue, saturation, lightness, { alpha });
+}
+
+/**
+ * ...
+ * @returns {ColorValue}
+ */
+export function transparent() {
+  return new ColorValue(tr(0), 0, 0, { alpha: 0 });
 }
 
 /** @typedef {Value<"color">} Color */
