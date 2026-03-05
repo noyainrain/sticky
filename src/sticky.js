@@ -1243,8 +1243,8 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Value<"position">} [at]
  * @property {Scalar | number} [orientation]
  * @property {Value<"position">} [anchor]
- * @property {?string | Auto | Gradient} [fill]
- * @property {?string | Auto | Gradient} [stroke]
+ * @property {Color | Gradient | Auto} [fill]
+ * @property {Color | Gradient | Auto} [stroke]
  * @property {Value<"length"> | Auto} [strokeWidth]
  * @property {Value<"length">} [blur]
  * @property {number} [start]
@@ -1325,12 +1325,12 @@ export class Shape {
   anchor;
   /**
    * TODO.
-   * @type {?string | Auto | Gradient}
+   * @type {Color | Gradient | Auto}
    */
   fill;
   /**
    * TODO.
-   * @type {?string | Auto | Gradient}
+   * @type {Color | Gradient | Auto}
    */
   stroke;
   /**
@@ -1523,12 +1523,8 @@ export class Shape {
     this.at.bind(this, this.base ?? p);
     this.#orientation.bind(this, this.base ?? p);
     this.anchor.bind(this, this);
-    if (this.fill instanceof Value) {
-      this.fill.bind(this, this);
-    }
-    if (this.stroke instanceof Value) {
-      this.stroke.bind(this, this);
-    }
+    this.fill.bind(this, this);
+    this.stroke.bind(this, this);
     this.strokeWidth.bind(this, this);
     this.blur.bind(this, this.base ?? p);
 
@@ -1538,23 +1534,23 @@ export class Shape {
     }
 
     p.push();
-    if (this.fill instanceof Value) {
-      const fill = this.fill.evaluate();
-      if (fill !== AUTO && p.drawingContext instanceof CanvasRenderingContext2D) {
-        p.fill(0);
-        p.drawingContext.fillStyle = fill;
-      }
-    } else {
-      p.fill(this.fill ?? "transparent");
+    const fill = this.fill.evaluate();
+    if (fill instanceof p5.Color) {
+      p.fill(fill);
+    } else if (
+      fill instanceof CanvasGradient && p.drawingContext instanceof CanvasRenderingContext2D
+    ) {
+      p.fill(0);
+      p.drawingContext.fillStyle = fill;
     }
-    if (this.stroke instanceof Value) {
-      const stroke = this.stroke.evaluate();
-      if (stroke !== AUTO && p.drawingContext instanceof CanvasRenderingContext2D) {
-        p.stroke(0);
-        p.drawingContext.strokeStyle = stroke;
-      }
-    } else {
-      p.stroke(this.stroke ?? "transparent");
+    const stroke = this.stroke.evaluate();
+    if (stroke instanceof p5.Color) {
+      p.stroke(stroke);
+    } else if (
+      stroke instanceof CanvasGradient && p.drawingContext instanceof CanvasRenderingContext2D
+    ) {
+      p.stroke(0);
+      p.drawingContext.strokeStyle = stroke;
     }
     const strokeWidth = this.strokeWidth.evaluate();
     if (strokeWidth !== AUTO) {

@@ -1,33 +1,39 @@
 import p5 from "p5";
-import { Ellipse, Rectangle, Triangle, body, px } from "#sticky";
+import { Ellipse, Rectangle, Triangle, assert, body, color, px, tr, variable } from "#sticky";
 
 const SHAPES = [
   { Shape: Triangle, edges: 3 }, { Shape: Rectangle, edges: 4 }, { Shape: Ellipse, edges: 1 },
 ];
 
+// https://en.wikipedia.org/wiki/Color_Graphics_Adapter#Color_palette
 const PALETTE = {
-  black: "#000",
-  blue: "#00a",
-  green: "#0a0",
-  cyan: "#0aa",
-  red: "#a00",
-  magenta: "#a0a",
-  brown: "#a50",
-  lightGray: "#aaa",
-  darkGray: "#555",
-  lightBlue: "#55f",
-  lightGreen: "#5f5",
-  lightCyan: "#5ff",
-  lightRed: "#f55",
-  lightMagenta: "#f5f",
-  yellow: "#ff5",
-  white: "#fff",
+  black: color(tr(0), 0, 0),
+  blue: color(tr(4 / 6), 1, 1 / 3),
+  green: color(tr(2 / 6), 1, 1 / 3),
+  cyan: color(tr(3 / 6), 1, 1 / 3),
+  red: color(tr(0 / 6), 1, 1 / 3),
+  magenta: color(tr(5 / 6), 1, 1 / 3),
+  brown: color(tr(1 / 12), 1, 1 / 3),
+  lightGray: color(tr(0), 0, 2 / 3),
+  darkGray: color(tr(0), 0, 1 / 3),
+  lightBlue: color(tr(4 / 6), 1, 2 / 3),
+  lightGreen: color(tr(2 / 6), 1, 2 / 3),
+  lightCyan: color(tr(3 / 6), 1, 2 / 3),
+  lightRed: color(tr(0 / 6), 1, 2 / 3),
+  lightMagenta: color(tr(5 / 6), 1, 2 / 3),
+  yellow: color(tr(1 / 6), 1, 2 / 3),
+  white: color(tr(0), 0, 3 / 3),
 };
-const palette = Object.values(PALETTE);
+// const palette = Object.values(PALETTE);
+const palette = Object.keys(PALETTE);
 
 new p5((p) => {
   const size = px(360 / 8);
   const model = new Ellipse(px(640), px(360));
+  // TODO vars in constr
+  for (const [name, color] of Object.entries(PALETTE)) {
+    model.setVariable(name, color);
+  }
 
   const target = 1000 / 60;
   const f = 1.01;
@@ -70,12 +76,16 @@ new p5((p) => {
       for (let i = 0; i < diff; i++) {
         const meta = p.random(SHAPES);
         const color = Math.trunc(p.random(0, 8));
+        const strokeName = palette[color];
+        assert(strokeName);
+        const fillName = palette[color + 8];
+        assert(fillName);
         const shape = new meta.Shape(
           size, size, body(p.random(), p.random()),
           {
             orientation: p.random(),
-            fill: palette[color + 8],
-            stroke: palette[color],
+            fill: variable(fillName, "color"),
+            stroke: variable(strokeName, "color"),
             // OQ maybe partial should be something to activate? introduces additional shape points
             // - seems like extra feature?
             end: p.random(meta.edges / 2, meta.edges),

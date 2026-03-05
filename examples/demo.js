@@ -1,6 +1,7 @@
 import p5 from "p5";
 import {
-  Ellipse, Rectangle, Text, Triangle, body, edge, h, multiply, px, repeated, tween, variable, w,
+  Ellipse, Rectangle, Text, Triangle, body, color, edge, h, multiply, px, repeated, tr, transparent,
+  tween, variable, w,
 } from "#sticky";
 
 // XXX cant assigne to multiple
@@ -13,12 +14,12 @@ new p5((p) => {
   const earW = w(1 / 3 / 2);
   const earH = h(3 / 4 * earW.value);
   const model = new Rectangle(
-    { fill: "black", stroke: null },
+    { fill: variable("black", "color"), stroke: transparent() },
 
     // Stars
     ...[...Array(128)].map(() => {
       const r = px(p.random(1, 4));
-      return new Ellipse(r, r, body(p.random(), p.random()), { fill: "white" });
+      return new Ellipse(r, r, body(p.random(), p.random()), { fill: variable("white", "color") });
     }),
     // repeated(
     //   128,
@@ -32,11 +33,11 @@ new p5((p) => {
       body(
         w(1 / 2), tween(h(1 / 2 - 1 / 2 / 16 / 2), h(1 / 2 + 1 / 2 / 16 / 2), 2, { yoyo: true }),
       ),
-      { stroke: "pink", fill: "black" },
+      { stroke: variable("pink", "color"), fill: variable("black", "color") },
       // Tail
       new Ellipse(
         w(1 / 16), h(1), body(1 / 2, 1 - 1 / 16 / 2),
-        { orientation: 12 / 16, stroke: "pink", start: 1 / 2 },
+        { orientation: 12 / 16, stroke: variable("pink", "color"), start: 1 / 2 },
         // new Ellipse(
         //   1 / 3, 1 / 3, body(1 / 2, 1 / 3 / 16),
         //   { orientation: 1 / 16, stroke: "pink", start: 1 / 2 },
@@ -46,28 +47,36 @@ new p5((p) => {
       new Ellipse(),
       // Face
       new Ellipse(
-        w(1 / 2), h(1 / 2), TOP(), { anchor: TOP(), stroke: null, fill: null },
+        w(1 / 2), h(1 / 2), TOP(), { anchor: TOP(), stroke: transparent(), fill: transparent() },
         // Eyes
         new Ellipse(
-          w(1 / 4), h(1 / 4), body(1 / 4, 1 / 2), { stroke: "pink", fill: "black" },
-          new Ellipse(w(1 / 2), h(1 / 2), { fill: "pink" }),
+          w(1 / 4), h(1 / 4), body(1 / 4, 1 / 2),
+          { stroke: variable("pink", "color"), fill: variable("black", "color") },
+          new Ellipse(w(1 / 2), h(1 / 2), { fill: variable("pink", "color") }),
         ),
         new Ellipse(
-          w(1 / 4), h(1 / 4), body(3 / 4, 1 / 2), { stroke: "pink", fill: "black" },
-          new Ellipse(w(1 / 2), h(1 / 2), { fill: "pink" }),
+          w(1 / 4), h(1 / 4), body(3 / 4, 1 / 2),
+          { stroke: variable("pink", "color"), fill: variable("black", "color") },
+          new Ellipse(w(1 / 2), h(1 / 2), { fill: variable("pink", "color") }),
         ),
         // Sleepy eyes
         new Ellipse(
-          w(1 / 4), h(1 / 4), body(1 / 4, 1 / 2), { stroke: "pink", end: 1 / 2 },
+          w(1 / 4), h(1 / 4), body(1 / 4, 1 / 2), { stroke: variable("pink", "color"), end: 1 / 2 },
         ),
         new Ellipse(
-          w(1 / 4), h(1 / 4), body(3 / 4, 1 / 2), { stroke: "pink", end: 1 / 2 },
+          w(1 / 4), h(1 / 4), body(3 / 4, 1 / 2), { stroke: variable("pink", "color"), end: 1 / 2 },
         ),
         // Mouth
         new Ellipse(
           w(1 / 8), h(1 / 8), body(1 / 2, 5 / 6), {},
-          new Ellipse(w(1), h(1), body(0, 0), { stroke: "pink", fill: "black", end: 1 / 2 }),
-          new Ellipse(w(1), h(1), body(1, 0), { stroke: "pink", fill: "black", end: 1 / 2 }),
+          new Ellipse(
+            w(1), h(1), body(0, 0),
+            { stroke: variable("pink", "color"), fill: variable("black", "color"), end: 1 / 2 },
+          ),
+          new Ellipse(
+            w(1), h(1), body(1, 0),
+            { stroke: variable("pink", "color"), fill: variable("black", "color"), end: 1 / 2 },
+          ),
           // new Triangle(
           //   1 / 2, 1 / 2, body(1 / 2, -1 / 2 / 2), { orientation: 1 / 2, fill: "pink" }
           // ),
@@ -94,16 +103,25 @@ new p5((p) => {
       5,
       new Ellipse(
         h(1 / 8), h(1 / 8), body(multiply(h(1 / 8), variable("i", "scalar")), 1 / 2),
-        { fill: "green" },
+        { fill: variable("pink", "color") },
       ),
     ),
 
     // huh, only shows from 21px on, so proabably line height?
     new Text(
       "Sticky Demo 0.1", w(1), px(24), body(0, 1), // body(px(640 / 2 + 24), px(360 - 24 - 24 / 2)),
-      { anchor: body(h(-1), 2), fill: "white", stroke: "black" },
+      {
+        anchor: body(h(-1), 2),
+        fill: variable("white", "color"),
+        stroke: variable("black", "color"),
+      },
     ),
   );
+
+  // TODO variables: {...}
+  model.setVariable("black", color(tr(0), 1, 0));
+  model.setVariable("white", color(tr(0), 1, 1));
+  model.setVariable("pink", color(tr(350 / 360), 100 / 100, 88 / 100));
 
   p.setup = () => {
     p.createCanvas(640, 360);
@@ -161,7 +179,7 @@ new p5((p) => {
     } else {
       t = easeOn(t);
     }
-    const color = t ? null : "pink";
+    const color = t ? transparent() : variable("pink", "color");
 
     // @ts-ignore
     model.links[128].links[0].orientation = orientation;
