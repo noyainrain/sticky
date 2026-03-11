@@ -1246,6 +1246,7 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Color | Gradient | Auto} [fill]
  * @property {Color | Gradient | Auto} [stroke]
  * @property {Value<"length"> | Auto} [strokeWidth]
+ * @property {Scalar | number} [opacity]
  * @property {Value<"length">} [blur]
  * @property {number} [start]
  * @property {number} [end]
@@ -1374,6 +1375,8 @@ export class Shape {
    */
   p = null;
 
+  /** @type {Scalar} */
+  #opacity = scalar(1);
   /** @type {Map<string, Value<keyof ValueTypes>>} */
   #variables = new Map();
 
@@ -1459,6 +1462,9 @@ export class Shape {
     this.fill = attributes.fill === undefined ? auto() : attributes.fill;
     this.stroke = attributes.stroke === undefined ? auto() : attributes.stroke;
     this.strokeWidth = attributes.strokeWidth === undefined ? auto() : attributes.strokeWidth;
+    if (attributes.opacity !== undefined) {
+      this.opacity = attributes.opacity;
+    }
     this.blur = attributes.blur ?? h(0);
     this.start = attributes.start ?? 0;
     this.end = attributes.end ?? -0;
@@ -1498,6 +1504,21 @@ export class Shape {
   }
 
   /**
+   * ...
+   * @returns {Scalar}
+   */
+  get opacity() {
+    return this.#opacity;
+  }
+
+  /**
+   * @param {Scalar | number} value
+   */
+  set opacity(value) {
+    this.#opacity = typeof value === "number" ? scalar(value) : value;
+  }
+
+  /**
    * Unlink one or more shapes from the shape.
    * @param {...Shape} shapes - Shapes to unstick.
    */
@@ -1526,6 +1547,7 @@ export class Shape {
     this.fill.bind(this, this);
     this.stroke.bind(this, this);
     this.strokeWidth.bind(this, this);
+    this.#opacity.bind(this, this);
     this.blur.bind(this, this.base ?? p);
 
     for (const variable of this.#variables.values()) {
@@ -1533,7 +1555,36 @@ export class Shape {
       variable.evaluate();
     }
 
-    p.push();
+    // Set up global drawing state
+    this.p.push();
+    this.#transform();
+
+    // Prepare compositing
+    const opacity = this.#opacity.evaluate();
+    const composited = opacity < 1;
+    if (composited) {
+      if (opacity < 1) {
+        // OQ draws twice internally, should we optimize?
+        // OQ why is opacity range 0 - 1, docs say something else
+        this.p.tint(255, opacity);
+      }
+
+      p = this.p.createGraphics(this.width.evaluate(), this.height.evaluate());
+      if (
+        p.drawingContext instanceof CanvasRenderingContext2D
+        && this.p.drawingContext instanceof CanvasRenderingContext2D
+      ) {
+        p.drawingContext.fillStyle = this.p.drawingContext.fillStyle;
+        p.drawingContext.strokeStyle = this.p.drawingContext.strokeStyle;
+        p.drawingContext.lineWidth = this.p.drawingContext.lineWidth;
+      }
+      // OQ
+      p.textFont(this.p.textFont(), this.p.textSize());
+      p.textStyle(this.p.textStyle());
+      p.textLeading(this.p.textLeading());
+    }
+
+    // Set up local drawing state
     const fill = this.fill.evaluate();
     if (fill instanceof p5.Color) {
       p.fill(fill);
@@ -1561,8 +1612,8 @@ export class Shape {
     if (blur && p.drawingContext instanceof CanvasRenderingContext2D) {
       p.drawingContext.filter = `blur(${blur * p.pixelDensity()}px)`;
     }
-    this.#transform();
 
+    // Draw
     this.renderShape(p);
 
     if (blur && p.drawingContext instanceof CanvasRenderingContext2D) {
@@ -1572,7 +1623,14 @@ export class Shape {
     for (const link of this.links) {
       link.render(p);
     }
-    p.pop();
+
+    // Composite
+    if (composited) {
+      this.p.image(p, 0, 0);
+    }
+
+    // Reset drawing state
+    this.p.pop();
   }
 
   #transform() {
@@ -1816,6 +1874,7 @@ export class Triangle extends Polygon {
         orientation: this.orientation,
         stroke: this.stroke,
         fill: this.fill,
+        opacity: this.opacity,
         blur: this.blur,
         start: this.start,
         end: this.end,
@@ -1915,6 +1974,7 @@ export class Ellipse extends Shape {
         orientation: this.orientation,
         stroke: this.stroke,
         fill: this.fill,
+        opacity: this.opacity,
         blur: this.blur,
         start: this.start,
         end: this.end,
