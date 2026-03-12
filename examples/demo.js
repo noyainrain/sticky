@@ -1,7 +1,7 @@
 import p5 from "p5";
 import {
   Ellipse, Rectangle, Text, Triangle, body, color, edge, h, multiply, px, repeated, tr, transparent,
-  tween, variable, w,
+  tween, variable, w, wave, linear,
 } from "#sticky";
 
 // XXX cant assigne to multiple
@@ -14,7 +14,16 @@ new p5((p) => {
   const earW = w(1 / 3 / 2);
   const earH = h(3 / 4 * earW.value);
   const model = new Rectangle(
-    { fill: variable("black", "color"), stroke: transparent() },
+    {
+      // water
+      // length + tween duration determine time frequency, e.g. now 1/4s
+      warp: wave(h(1), tween(h(0), h(1), 4, { easing: linear })),
+      // glitch/line
+      // warp: wave(px(4), tween(h(0), h(1), 2, { easing: linear })),
+      fill: transparent(),
+      // fill: variable("black", "color"),
+      stroke: transparent(),
+    },
 
     // Stars
     ...[...Array(128)].map(() => {
@@ -129,6 +138,8 @@ new p5((p) => {
   };
 
   p.draw = () => {
+    p.background("black");
+    // p.clear();
     p.textFont("sans-serif", 16);
     p.textStyle(p.ITALIC);
     p.textLeading(3 / 2 * 16);

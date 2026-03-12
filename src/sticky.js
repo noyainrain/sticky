@@ -99,6 +99,7 @@ export function argumentStream(values) {
  * @property {Point} position - Position, i.e. the description of a point in space.
  * @property {p5.Color} color
  * @property {CanvasGradient} linear-gradient
+ * @property {WaveCallback} wave
  */
 
 /**
@@ -1236,6 +1237,75 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
 }
 
 /**
+ * @extends {Value<"wave">}
+ * @callback WaveCallback
+ * @param {number} y
+ * @returns {number}
+ */
+export class WaveValue extends Value {
+  /** @type {Value<"length">} */
+  length;
+  /** @type {Value<"length">} */
+  amplitude;
+
+  /**
+   * @param {Value<"length">} length
+   * @param {Value<"length">} amplitude
+   */
+  constructor(length, amplitude) {
+    super("wave");
+    this.length = length;
+    this.amplitude = amplitude;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.length.bind(shape, reference);
+    this.amplitude.bind(shape, reference);
+  }
+
+  compute() {
+    /** @param {number} y */
+    // return y => Math.sin(2 * Math.PI * y / this.length.evaluate()) * this.amplitude.evaluate();
+    // XXX just for testing amplitude = phase
+    const phase = this.amplitude.evaluate();
+    const length = this.length.evaluate();
+    // XXX just for testing, gap should be set by user
+    const gap = 360 - length; // this.length.evaluate();
+    /** @param {number} y */
+    return (y) => {
+      y = (y + phase) / (length + gap) % 1;
+      y = y * (length + gap) / length;
+      if (y >= 1) {
+        y = 0;
+      }
+      return Math.sin(2 * Math.PI * y) * 128;
+    };
+  }
+}
+
+/**
+ * @param {Value<"length">} length - ...
+ * @param {Value<"length">} amplitude - ...
+ * @returns {WaveValue}
+ */
+export function wave(length, amplitude) {
+  return new WaveValue(length, amplitude);
+}
+
+/**
+ * @typedef {Value<"wave">} Wave
+ */
+
+/**
+ * @typedef {Wave} WarpMethod
+ */
+
+/**
  * Shape attributes.
  * @typedef ShapeAttributes
  * @property {Value<"length">} [width]
@@ -1247,6 +1317,7 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Color | Gradient | Auto} [stroke]
  * @property {Value<"length"> | Auto} [strokeWidth]
  * @property {Scalar | number} [opacity]
+ * @property {WarpMethod | Auto} [warp]
  * @property {Color} [shadow]
  * @property {Value<"length">} [shadowBlur]
  * @property {Value<"length">} [blur]
@@ -1342,6 +1413,13 @@ export class Shape {
    */
   strokeWidth;
   /**
+  // TODO none
+  /**
+   * ...
+   * @type {WarpMethod | Auto}
+   */
+  warp;
+  /**
    * ...
    * @type {Color}
    */
@@ -1391,6 +1469,18 @@ export class Shape {
   #opacity = scalar(1);
   /** @type {Map<string, Value<keyof ValueTypes>>} */
   #variables = new Map();
+
+  #composited = false;
+  /** @type {?p5.Graphics} */
+  #compositeP = null;
+
+  #warpOn = false;
+  /** @type {?SVGSVGElement} */
+  #warpSVG = null;
+  /** @type {?SVGFEImageElement} */
+  #warpImage = null;
+  /** @type {?p5.Graphics} */
+  #warpP = null;
 
   /**
    * ...
@@ -1477,6 +1567,7 @@ export class Shape {
     if (attributes.opacity !== undefined) {
       this.opacity = attributes.opacity;
     }
+    this.warp = attributes.warp === undefined ? auto() : attributes.warp;
     this.shadow = attributes.shadow === undefined ? transparent() : attributes.shadow;
     this.shadowBlur = attributes.shadowBlur === undefined ? h(0) : attributes.shadowBlur;
     this.blur = attributes.blur ?? h(0);
@@ -1562,6 +1653,7 @@ export class Shape {
     this.stroke.bind(this, this);
     this.strokeWidth.bind(this, this);
     this.#opacity.bind(this, this);
+    this.warp.bind(this, this);
     this.shadow.bind(this, this);
     this.shadowBlur.bind(this, this);
     this.blur.bind(this, this.base ?? p);
@@ -1575,17 +1667,104 @@ export class Shape {
     this.p.push();
     this.#transform();
 
-    // Prepare compositing
+    const warp = this.warp.evaluate();
+    const warpOn = warp !== AUTO;
+    if (warpOn !== this.#warpOn) {
+      this.#warpOn = warpOn;
+      // Invalidate cache
+      if (this.#warpSVG && this.#warpP) {
+        this.#warpSVG.remove();
+        this.#warpP.remove();
+        this.#warpSVG = null;
+        this.#warpImage = null;
+        this.#warpP = null;
+      }
+    }
+
     const opacity = this.#opacity.evaluate();
-    const composited = opacity < 1;
+    const composited = opacity < 1 || warpOn;
+    // TODO width + height dependency
+    if (composited !== this.#composited) {
+      console.log("COMPOSITED");
+      this.#composited = composited;
+      // XXX this was a memory leak in compositing ouch BACKPORT
+      // Invalidate cache
+      if (this.#compositeP) {
+        this.#compositeP.remove();
+        this.#compositeP = null;
+      }
+    }
+
+    // Prepare compositing
     if (composited) {
       if (opacity < 1) {
         // OQ draws twice internally, should we optimize?
         // OQ why is opacity range 0 - 1, docs say something else
         this.p.tint(255, opacity);
       }
+      if (warpOn) {
+        if (!(this.#warpSVG && this.#warpImage && this.#warpP)) {
+          this.#warpSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+          filter.id = "meowfilter";
+          filter.setAttribute("filterUnits", "userSpaceOnUse");
+          // OQ
+          filter.setAttribute("color-interpolation-filters", "srgb");
+          this.#warpImage = document.createElementNS("http://www.w3.org/2000/svg", "feImage");
+          this.#warpImage.setAttribute("result", "map");
+          this.#warpImage.setAttribute("preserveAspectRatio", "none");
+          // const image = document.createElementNS("http://www.w3.org/2000/svg", "feFlood");
+          // image.setAttribute("flood-color", "blue");
+          const displacementMap = document.createElementNS("http://www.w3.org/2000/svg", "feDisplacementMap");
+          displacementMap.setAttribute("in", "SourceGraphic");
+          displacementMap.setAttribute("in2", "map");
+          displacementMap.setAttribute("xChannelSelector", "R");
+          displacementMap.setAttribute("scale", "23"); // h(1/8) / 2, pixels are interpreted from -0.5 to 0.5
+          filter.append(this.#warpImage, displacementMap);
+          this.#warpSVG.append(filter);
+          document.body.append(this.#warpSVG);
 
-      p = this.p.createGraphics(this.width.evaluate(), this.height.evaluate());
+          const height = this.height.evaluate();
+          // const width = this.width.evaluate();
+          const width = 1;
+          this.#warpP = this.p.createGraphics(width, height);
+          this.#warpP.loadPixels();
+        }
+
+        for (let y = 0; y < this.#warpP.height; y++) {
+          for (let x = 0; x < this.#warpP.width; x++) {
+            this.#warpP.pixels[y * this.#warpP.width * 4 + x * 4] = warp(y) + 128;
+            // this.#warpP.pixels[y * this.#warpP.width * 4 + x * 4 + 1] = 128;
+            // this.#warpP.pixels[y * this.#warpP.width * 4 + x * 4 + 2] = 128;
+            this.#warpP.pixels[y * this.#warpP.width * 4 + x * 4 + 3] = 128;
+          }
+        }
+        this.#warpP.updatePixels();
+        // this seems async in firefox, thus it seems we _need_ to cache the filter, otherwise it
+        // won't work at all or flicker
+        // if (!this.#warpImage.getAttribute("href")) {
+        assert(this.#warpP.drawingContext.canvas instanceof HTMLCanvasElement);
+        // OQ might work with canvas ID in chrome? (standard says href takes everything that <use>
+        // can take, so svg elements, maybe html elements?)
+        // But not in FF: https://bugzilla.mozilla.org/show_bug.cgi?id=455986
+        this.#warpImage.setAttribute("href", this.#warpP.drawingContext.canvas.toDataURL());
+        // }
+
+        if (this.p.drawingContext instanceof CanvasRenderingContext2D) {
+          this.p.drawingContext.filter = "url(#meowfilter)";
+        }
+        // (async () => {
+        //   assert(offscreenP.drawingContext.canvas instanceof OffscreenCanvas);
+        //   const blob = await offscreenP.drawingContext.canvas.convertToBlob();
+        //   image.setAttribute("href", URL.createObjectURL(blob));
+        // })();
+      }
+
+      if (!this.#compositeP) {
+        this.#compositeP = this.p.createGraphics(this.width.evaluate(), this.height.evaluate());
+      }
+      p = this.#compositeP;
+      p.push();
       if (
         p.drawingContext instanceof CanvasRenderingContext2D
         && this.p.drawingContext instanceof CanvasRenderingContext2D
@@ -1653,6 +1832,7 @@ export class Shape {
 
     // Composite
     if (composited) {
+      p.pop();
       this.p.image(p, 0, 0);
     }
 
