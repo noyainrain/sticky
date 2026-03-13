@@ -1040,6 +1040,74 @@ export function multiply(a, b, ...values) {
 
 /**
  * ...
+ * @template {Numeric} [T = "scalar"]
+ * @extends {Value<T>}
+ */
+export class LerpValue extends Value {
+  /**
+   * ...
+   * @type {Value<T>} from
+   */
+  from;
+  /**
+   * ...
+   * @type {Value<T>} to
+   */
+  to;
+  /**
+   * ...
+   * @type {Scalar} t
+   */
+  t;
+
+  /**
+   * @param {Value<T> | number} from
+   * @param {Value<T> | number} to
+   * @param {Scalar | number} t
+   */
+  constructor(from, to, t) {
+    if (typeof from === "number") {
+      from = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(from)));
+    }
+    super(from.type);
+    this.from = from;
+    this.to = typeof to === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(to)))
+      : to;
+    this.t = typeof t === "number" ? scalar(t) : t;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.from.bind(shape, reference);
+    this.to.bind(shape, reference);
+    this.t.bind(shape, reference);
+  }
+
+  compute() {
+    const t = this.t.evaluate();
+    return (1 - t) * this.from.evaluate() + t * this.to.evaluate();
+  }
+}
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
+ * @param {Value<T> | number} from
+ * @param {Value<T> | number} to
+ * @param {Scalar | number} t
+ * @returns {LerpValue<T>}
+ */
+export function lerp(from, to, t) {
+  return new LerpValue(from, to, t);
+}
+
+/**
+ * ...
  * @template {keyof ValueTypes} T
  * @extends {Value<T>}
  */

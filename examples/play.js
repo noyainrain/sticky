@@ -5,7 +5,9 @@ import {
   // eslint-disable-next-line no-unused-vars
   AUTO, Ellipse, Rectangle, Shape, Text, Triangle, add, assert, body, color, e, ease, easeOn,
   // eslint-disable-next-line no-unused-vars
-  easeOut, edge, h, hued, linear, linearGradient, multiply, polar, px, repeated, scalar, shaded, tr, tween, w,
+  easeOut, edge, h, hued, linear, linearGradient, lerp, multiply, polar, px, repeated, scalar,
+  // eslint-disable-next-line no-unused-vars
+  shaded, tr, transparent, tween, variable, w,
 } from "#sticky";
 
 /* eslint-disable @stylistic/no-tabs */
