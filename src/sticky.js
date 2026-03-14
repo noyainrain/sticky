@@ -2262,6 +2262,7 @@ export class Ellipse extends Shape {
 /**
  * @typedef TextAttributesProperties
  * @property {string} [content]
+ * @property {Value<"length"> | Auto} [fontSize]
  * @typedef {ShapeAttributes & TextAttributesProperties} TextAttributes
  */
 
@@ -2316,15 +2317,25 @@ export class Text extends Shape {
 
     super(attributes, ...links);
     this.content = attributes.content ?? "";
+    this.fontSize = attributes.fontSize === undefined ? auto() : attributes.fontSize;
   }
 
   /**
    * @param {p5} p
    */
   renderShape(p) {
+    this.fontSize.bind(this, this);
+
     // TODO textSize option
     // TODO textFont option
     // TODO 0 0 once we have anchor
+    const fontSize = this.fontSize.evaluate();
+    if (fontSize !== AUTO) {
+      p.textFont("sans-serif", fontSize);
+      // p.textLeading(3 / 2 * fontSize);
+      p.textLeading(fontSize);
+    }
+
     p.textAlign(p.CENTER, p.CENTER);
     p.textAlign(p.LEFT, p.TOP);
     p.text(this.content, 0, 0, this.width.evaluate(), this.height.evaluate());
