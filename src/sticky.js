@@ -2332,6 +2332,89 @@ export class Text extends Shape {
 }
 
 /**
+ * @typedef ImageAttributeProperties
+ * @property {string} [url]
+ * @typedef {ShapeAttributes & ImageAttributeProperties} ImageAttributes
+ */
+
+/**
+ * ...
+ */
+export class Image extends Shape {
+  /**
+   * @overload
+   * @param {ImageAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} url
+   * @param {ImageAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} url
+   * @param {Value<"length">} width
+   * @param {ImageAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} url
+   * @param {Value<"length">} width
+   * @param {Value<"length">} height
+   * @param {ImageAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} url
+   * @param {Value<"length">} width
+   * @param {Value<"length">} height
+   * @param {Position} at
+   * @param {ImageAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @function
+   * @param {...unknown} args
+   */
+  constructor(...args) {
+    const next = argumentStream(args);
+    /** @type {ImageAttributes} */
+    const attributes = {};
+    const url = next("string");
+    if (url.value !== undefined) {
+      attributes.url = url.value;
+      Object.assign(attributes, readShapeShortcutArguments(next));
+    }
+    Object.assign(attributes, next(Object, arg => !(arg instanceof Shape)).value ?? {});
+    const links = readShapeArguments(next);
+
+    super(attributes, ...links);
+    this.url = attributes.url ?? "";
+  }
+
+  /** @type {?p5.Image} */
+  #image = null;
+  #imageURL = "";
+
+  /**
+   * @param {p5} p
+   */
+  renderShape(p) {
+    if (this.url !== this.#imageURL) {
+      this.#imageURL = this.url;
+      // OQ destroy/remove?
+      this.#image = null;
+    }
+    if (!this.#image) {
+      // OQ maybe this fetches it multiple times meh
+      if (this.url) {
+        (async () => {
+          this.#image = await p.loadImage(this.url);
+        })();
+      }
+    }
+
+    if (this.#image) {
+      p.image(this.#image, 0, 0, this.width.evaluate(), this.height.evaluate());
+    }
+  }
+}
+
+/**
  * @typedef RepeatedShapeAttributesProperties
  * @property {Scalar | number} [count]
  * @typedef {ShapeAttributes & RepeatedShapeAttributesProperties} RepeatedShapeAttributes
