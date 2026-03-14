@@ -13,8 +13,9 @@ import {
 /* eslint-disable @stylistic/no-tabs */
 const EXAMPLE = `
 // Example <3
+var pink = color(tr(350 / 360), 100 / 100, 88 / 100);
 new Triangle(
-	h(1/2), h(1/3), { orientation: 1/2, stroke: "pink", fill: null, start: 1},
+	h(1/2), h(1/3), { orientation: 1/2, stroke: pink, fill: transparent(), start: 1},
 	
 	new Ellipse(
 		w(1/2), w(1/2), body(w(0), h(1)),
