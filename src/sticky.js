@@ -1392,6 +1392,7 @@ export function wave(length, amplitude) {
  * @property {number} [start]
  * @property {number} [end]
  * @property {?number} [viewport]
+ * @property {Object<string, Value<keyof ValueTypes>>} [variables]
  */
 
 /**
@@ -1642,6 +1643,11 @@ export class Shape {
     this.start = attributes.start ?? 0;
     this.end = attributes.end ?? -0;
     this.viewport = attributes.viewport ?? null;
+
+    for (const [name, value] of Object.entries(attributes.variables ?? {})) {
+      this.setVariable(name, value);
+    }
+
     this.stick(...links);
   }
 
@@ -2153,6 +2159,7 @@ export class Triangle extends Polygon {
         blur: this.blur,
         start: this.start,
         end: this.end,
+        variables: Object.fromEntries([...this.variables].map(([name, variable]) => [name, variable.clone()])),
       },
       ...this.links.map(link => link.clone()),
     );
@@ -2253,6 +2260,7 @@ export class Ellipse extends Shape {
         blur: this.blur,
         start: this.start,
         end: this.end,
+        variables: Object.fromEntries([...this.variables].map(([name, variable]) => [name, variable.clone()])),
       },
       ...this.links.map(link => link.clone()),
     );
