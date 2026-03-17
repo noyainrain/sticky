@@ -1107,6 +1107,70 @@ export function lerp(from, to, t) {
 }
 
 /**
+ * @template {Numeric} T
+ * @extends {Value<T>}
+ */
+export class RandomValue extends Value {
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  from;
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  to;
+
+  #random = Math.random();
+
+  /**
+   * @param {Value<T> | number} from
+   * @param {Value<T> | number} to
+   */
+  constructor(from, to) {
+    from = typeof from === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(from)))
+      : from;
+    super(from.type);
+    this.from = from;
+    this.to = typeof to === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(to)))
+      : to;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.from.bind(shape, reference);
+    this.to.bind(shape, reference);
+  }
+
+  compute() {
+    return (1 - this.#random) * this.from.evaluate() + this.#random * this.to.evaluate();
+  }
+
+  clone() {
+    // TODO throw new Error("Abstract method");
+    return new RandomValue(this.from.clone(), this.to.clone());
+  }
+}
+
+/**
+ * ...
+ * @template {Numeric} T
+ * @param {Value<T> | number} from
+ * @param {Value<T> | number} to
+ * @returns {RandomValue<T>}
+ */
+export function random(from, to) {
+  return new RandomValue(from, to);
+}
+
+/**
  * ...
  * @template {keyof ValueTypes} T
  * @extends {Value<T>}
