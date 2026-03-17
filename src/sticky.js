@@ -1445,6 +1445,7 @@ export function wave(length, amplitude) {
  * @property {Value<"position">} [at]
  * @property {Scalar | number} [orientation]
  * @property {Value<"position">} [anchor]
+ * @property {Scalar | number} [z]
  * @property {Color | Gradient | Auto} [fill]
  * @property {Color | Gradient | Auto} [stroke]
  * @property {Value<"length"> | Auto} [strokeWidth]
@@ -1599,6 +1600,8 @@ export class Shape {
   p = null;
 
   /** @type {Scalar} */
+  #z = scalar(0);
+  /** @type {Scalar} */
   #opacity = scalar(1);
   /** @type {Map<string, Value<keyof ValueTypes>>} */
   #variables = new Map();
@@ -1694,6 +1697,9 @@ export class Shape {
       this.orientation = attributes.orientation;
     }
     this.anchor = attributes.anchor ?? body(1 / 2, 1 / 2);
+    if (attributes.z !== undefined) {
+      this.z = attributes.z;
+    }
     this.fill = attributes.fill === undefined ? auto() : attributes.fill;
     this.stroke = attributes.stroke === undefined ? auto() : attributes.stroke;
     this.strokeWidth = attributes.strokeWidth === undefined ? auto() : attributes.strokeWidth;
@@ -1744,6 +1750,21 @@ export class Shape {
    */
   get orientation() {
     return this.#orientation;
+  }
+
+  /**
+   * ...
+   * @returns {Scalar}
+   */
+  get z() {
+    return this.#z;
+  }
+
+  /**
+   * @param {Scalar | number} value
+   */
+  set z(value) {
+    this.#z = typeof value === "number" ? scalar(value) : value;
   }
 
   /**
@@ -2012,6 +2033,21 @@ export class Shape {
     throw new Error("Unimplemented method");
   }
 
+  // OQ should this return number? what would getBoundingBox() return?
+  /**
+   * ...
+   * @param {p5} p - ...
+   * @returns {number}
+   */
+  getZ(p) {
+    this.p = p;
+    this.z.bind(this, this.base ?? p);
+    for (const variable of this.#variables.values()) {
+      variable.bind(this, this);
+    }
+    return this.z.evaluate();
+  }
+
   /**
    * ...
    *
@@ -2213,10 +2249,11 @@ export class Triangle extends Polygon {
 
   clone() {
     return new Triangle(
-      this.width, this.height, this.at,
+      this.width, this.height, this.at.clone(),
       {
         anchor: this.anchor,
         orientation: this.orientation,
+        z: this.z.clone(),
         stroke: this.stroke,
         fill: this.fill,
         opacity: this.opacity,
@@ -2318,6 +2355,7 @@ export class Ellipse extends Shape {
       {
         anchor: this.anchor,
         orientation: this.orientation,
+        z: this.z.clone(),
         stroke: this.stroke,
         fill: this.fill,
         opacity: this.opacity,
@@ -2562,6 +2600,8 @@ export class RepeatedShape extends Shape {
    * @type {?Shape[]}
    */
   #shadow = null;
+  /** @type {?[Shape, number][]} */
+  #shadowStack = null;
 
   /**
    * @param {p5} p
@@ -2583,8 +2623,9 @@ export class RepeatedShape extends Shape {
     //    clones size changes (bc of var), we have to rerun the layout anyway, because fill/wrap
     //    might be different
     // TODO OQ how to cache internal deps?
-    if (!this.#shadow) {
+    if (!(this.#shadow && this.#shadowStack)) {
       this.#shadow = [];
+      this.#shadowStack = [];
       // let offset = 0;
       for (let i = 0; i < this.count.evaluate(); i++) {
         // for (const [j, shape] of this.shapes.entries()) {
@@ -2595,6 +2636,7 @@ export class RepeatedShape extends Shape {
           // clone.setVariable("i", scalar(i * this.shapes.length + j));
           clone.setVariable("i", scalar(i));
           this.#shadow.push(clone);
+          this.#shadowStack.push([clone, 0]);
         }
       }
 
@@ -2626,7 +2668,12 @@ export class RepeatedShape extends Shape {
       // }
     }
 
-    for (const shape of this.#shadow) {
+    for (const item of this.#shadowStack) {
+      item[1] = item[0].getZ(p);
+    }
+    this.#shadowStack.sort(([, a], [, b]) => a - b);
+
+    for (const [shape] of this.#shadowStack) {
       shape.render(p);
     }
   }
