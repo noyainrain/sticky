@@ -1118,6 +1118,11 @@ export class Shape {
     return this.base.getVariable(name, type);
   }
 
+  // TODO public + accept map in constructor?
+  get variables() {
+    return this.#variables;
+  }
+
   /**
    * @overload
    * @param {ShapeAttributes | Shape} [attributes]
