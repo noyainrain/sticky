@@ -171,6 +171,15 @@ export class Value {
   compute(shape, reference) {
     throw new Error("Abstract method");
   }
+
+  /**
+   * ...
+   * @returns {Value<T>}
+   */
+  clone() {
+    // TODO throw new Error("Abstract method");
+    return this;
+  }
 }
 
 /**
@@ -468,6 +477,10 @@ export class PointPositionValue extends Value {
 
   compute() {
     return { x: this.x.evaluate(), y: this.y.evaluate() };
+  }
+
+  clone() {
+    return new BodyValue(this.x.clone(), this.y.clone());
   }
 
   // XXX
