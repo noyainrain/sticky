@@ -2748,3 +2748,62 @@ export class AddValue extends Value {
 export function add(a, b, ...values) {
   return new AddValue(a, b, ...values);
 }
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
+ * @extends {Value<T>}
+ */
+export class SubtractValue extends Value {
+  /**
+   * ...
+   * @type {Value<T>[]}
+   */
+  values;
+
+  // OQ how to not allow mixing and matching of number and other Values?
+  /**
+   * @param {Value<T> | number} a
+   * @param {Value<NoInfer<T>> | number} b
+   * @param {(Value<NoInfer<T>> | number)[]} values
+   */
+  constructor(a, b, ...values) {
+    if (typeof a === "number") {
+      a = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(a)));
+    }
+    super(a.type);
+    this.values = [
+      a, ...[b, ...values].map(
+        value => typeof value === "number"
+          ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(value)))
+          : value,
+      ),
+    ];
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    for (const value of this.values) {
+      value.bind(shape, reference);
+    }
+  }
+
+  compute() {
+    return this.values.map(value => value.evaluate()).reduce((a, b) => a - b);
+  }
+}
+
+/**
+ * @template {Numeric} [T = "scalar"]
+ * @param {Value<T> | number} a
+ * @param {Value<NoInfer<T>> | number} b
+ * @param {(Value<NoInfer<T>> | number)[]} values
+ * @returns {SubtractValue<T>}
+ */
+export function subtract(a, b, ...values) {
+  return new SubtractValue(a, b, ...values);
+}

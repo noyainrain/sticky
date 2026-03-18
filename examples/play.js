@@ -7,7 +7,7 @@ import {
   // eslint-disable-next-line no-unused-vars
   easeOut, edge, h, hued, linear, linearGradient, lerp, multiply, polar, px, random, repeated,
   // eslint-disable-next-line no-unused-vars
-  scalar, shaded, tr, transparent, tween, variable, w,
+  scalar, shaded, subtract, tr, transparent, tween, variable, w,
 } from "#sticky";
 
 /* eslint-disable @stylistic/no-tabs */
