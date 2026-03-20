@@ -78,6 +78,7 @@ export function argumentStream(values) {
 /**
  * Result type of each dynamic value type.
  * @typedef ValueTypes
+ * @property {number} scalar
  * @property {number} length - Length quantity.
  * @property {Point} position - Position, i.e. the description of a point in space.
  */
@@ -308,6 +309,39 @@ export function body(x, y) {
   y = typeof y === "number" ? h(y) : y;
   return new PointPositionValue(x, y);
 }
+
+/**
+ * ...
+ * @template {keyof ValueTypes} T
+ * @extends {Value<T>}
+ */
+export class ConstValue extends Value {
+  /**
+   * @param {T} type
+   * @param {ValueTypes[T]} value
+   */
+  constructor(type, value) {
+    super(type);
+    this.value = value;
+  }
+
+  compute() {
+    return this.value;
+  }
+}
+
+/**
+ * ...
+ * @param {number} value
+ * @returns {ConstValue<"scalar">}
+ */
+export function scalar(value) {
+  return new ConstValue("scalar", value);
+}
+
+/**
+ * @typedef {Value<"scalar">} Scalar
+ */
 
 /**
  * Shape attributes.

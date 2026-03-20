@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import p5 from "p5";
-import { Ellipse, Rectangle, Triangle, argumentStream, h, px, w } from "#sticky";
+import { Ellipse, Rectangle, Triangle, argumentStream, h, px, scalar, w } from "#sticky";
 
 // OQ or just path in general?
 /** @typedef {[string, ...unknown[]]} PathCommand */
@@ -191,6 +191,18 @@ function itShouldBehaveLikeValue(makeValue) {
     });
   });
 }
+
+describe("ConstValue", function () {
+  describe("evaluate", function () {
+    it("should determine value", function () {
+      const reference = new Ellipse();
+      const value = scalar(7);
+      value.bind(reference);
+      const result = value.evaluate();
+      expect(result).to.equal(value.value);
+    });
+  });
+});
 
 describe("PixelLengthValue", function () {
   itShouldBehaveLikeValue(() => px(360));
