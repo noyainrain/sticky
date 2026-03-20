@@ -539,6 +539,8 @@ export class EdgeValue extends Value {
    * @param {Shape | p5} reference
    */
   compute(shape, reference) {
+    // OQ getedgepoint was shape.base, crossoffset was shape, now it's the same (shape.base), but I
+    // think that makes more sense right?
     return reference instanceof p5
       ? new p5.Vector()
       : reference.getEdgePoint(this.index, this.offset, this.crossOffset.evaluate());
@@ -685,6 +687,7 @@ export function auto() {
  * @property {Value<"length">} [width]
  * @property {Value<"length">} [height]
  * @property {Value<"position">} [at]
+ * @property {Scalar | number} [orientation]
  * @property {?string | Auto} [fill]
  * @property {?string | Auto} [stroke]
  * @property {number} [start]
@@ -752,6 +755,11 @@ export class Shape {
    * @type {Value<"position">}
    */
   at;
+  /**
+   * ...
+   * @type {Scalar}
+   */
+  #orientation = scalar(0);
   /**
    * TODO.
    * @type {?string | Auto}
@@ -861,8 +869,11 @@ export class Shape {
     this.width = attributes.width ?? w(1);
     this.height = attributes.height ?? h(1);
     this.at = attributes.at ?? point(w(1 / 2), h(1 / 2));
-    this.fill = attributes.fill ?? auto();
-    this.stroke = attributes.stroke ?? auto();
+    if (attributes.orientation !== undefined) {
+      this.orientation = attributes.orientation;
+    }
+    this.fill = attributes.fill === undefined ? auto() : attributes.fill;
+    this.stroke = attributes.stroke === undefined ? auto() : attributes.stroke;
     this.start = attributes.start ?? 0;
     this.end = attributes.end ?? -0;
     this.stick(...links);
@@ -882,6 +893,21 @@ export class Shape {
       this.links.push(shape);
       shape.base = this;
     }
+  }
+
+  /**
+   * @param {Scalar | number} value
+   */
+  set orientation(value) {
+    this.#orientation = typeof value === "number" ? scalar(value) : value;
+  }
+
+  /**
+   * ...
+   * @returns {Scalar}
+   */
+  get orientation() {
+    return this.#orientation;
   }
 
   /**
@@ -908,6 +934,7 @@ export class Shape {
     this.width.bind(this, this.base ?? p);
     this.height.bind(this, this.base ?? p);
     this.at.bind(this, this.base ?? p);
+    this.#orientation.bind(this, this.base ?? p);
     if (this.fill instanceof Value) {
       this.fill.bind(this, this);
     }
@@ -929,6 +956,7 @@ export class Shape {
     }
     const at = this.at.evaluate();
     p.translate(at.x, at.y);
+    p.rotate(this.orientation.evaluate());
     p.translate(-this.width.evaluate() / 2, -this.height.evaluate() / 2);
 
     this.renderShape(p);

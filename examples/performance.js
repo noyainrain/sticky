@@ -73,6 +73,7 @@ new p5((p) => {
         const shape = new meta.Shape(
           size, size, body(p.random(), p.random()),
           {
+            orientation: p.random(),
             fill: palette[color + 8],
             stroke: palette[color],
             // OQ maybe partial should be something to activate? introduces additional shape points
