@@ -99,6 +99,11 @@ export class Value {
    */
   type;
   /**
+   * ...
+   * @type {?Shape}
+   */
+  shape = null;
+  /**
    * Reference shape or canvas for relative values. `null` if the value is unbound.
    * @type {?Shape | p5}
    */
@@ -116,9 +121,11 @@ export class Value {
 
   /**
    * Bind the value to a reference shape or canvas.
+   * @param {Shape} shape - ...
    * @param {Shape | p5} reference - Reference shape or canvas for relative values.
    */
-  bind(reference) {
+  bind(shape, reference) {
+    this.shape = shape;
     this.reference = reference;
     this.#cache = undefined;
   }
@@ -129,21 +136,22 @@ export class Value {
    */
   evaluate() {
     if (this.#cache === undefined) {
-      if (!this.reference) {
+      if (!(this.shape && this.reference)) {
         throw new Error("Unbound value");
       }
-      this.#cache = this.compute(this.reference);
+      this.#cache = this.compute(this.shape, this.reference);
     }
     return this.#cache;
   }
 
   /**
    * Subclass: Compute the value in viewport units.
+   * @param {Shape} shape - ...
    * @param {Shape | p5} reference - Reference shape or canvas for relative values.
    * @returns {ValueTypes[T]}
    */
   // eslint-disable-next-line no-unused-vars
-  compute(reference) {
+  compute(shape, reference) {
     throw new Error("Abstract method");
   }
 }
@@ -209,9 +217,10 @@ export class WidthLengthValue extends QuantityValue {
   }
 
   /**
+   * @param {Shape} shape
    * @param {Shape | p5} reference
    */
-  compute(reference) {
+  compute(shape, reference) {
     return this.value * (reference instanceof p5 ? reference.width : reference.width.evaluate());
   }
 }
@@ -238,9 +247,10 @@ export class HeightLengthValue extends QuantityValue {
   }
 
   /**
+   * @param {Shape} shape
    * @param {Shape | p5} reference
    */
-  compute(reference) {
+  compute(shape, reference) {
     return this.value * (reference instanceof p5 ? reference.height : reference.height.evaluate());
   }
 }
@@ -317,12 +327,13 @@ export class PointPositionValue extends Value {
   }
 
   /**
+   * @param {Shape} shape
    * @param {Shape | p5} reference
    */
-  bind(reference) {
-    super.bind(reference);
-    this.x.bind(reference);
-    this.y.bind(reference);
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.x.bind(shape, reference);
+    this.y.bind(shape, reference);
   }
 
   compute() {
@@ -561,9 +572,9 @@ export class Shape {
    */
   render(p) {
     this.p = p;
-    this.width.bind(this.base ?? p);
-    this.height.bind(this.base ?? p);
-    this.at.bind(this.base ?? p);
+    this.width.bind(this, this.base ?? p);
+    this.height.bind(this, this.base ?? p);
+    this.at.bind(this, this.base ?? p);
 
     p.push();
     const at = this.at.evaluate();

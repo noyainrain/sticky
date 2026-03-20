@@ -186,7 +186,7 @@ function itShouldBehaveLikeValue(makeValue) {
     it("should bind value", function () {
       const reference = new Ellipse();
       const value = makeValue();
-      value.bind(reference);
+      value.bind(reference, reference);
       expect(value.reference).to.equal(reference);
     });
   });
@@ -197,7 +197,7 @@ describe("ConstValue", function () {
     it("should determine value", function () {
       const reference = new Ellipse();
       const value = scalar(7);
-      value.bind(reference);
+      value.bind(reference, reference);
       const result = value.evaluate();
       expect(result).to.equal(value.value);
     });
@@ -211,7 +211,7 @@ describe("PixelLengthValue", function () {
     it("should determine value", function () {
       const shape = new Ellipse();
       const value = px(360);
-      value.bind(shape);
+      value.bind(shape, shape);
       const result = value.evaluate();
       expect(result).to.equal(value.value);
     });
@@ -238,7 +238,7 @@ describe("WidthLengthValue", function () {
     it("should determine value", function () {
       const shape = new Ellipse();
       shape.render(p);
-      value.bind(shape);
+      value.bind(shape, shape);
       const result = value.evaluate();
       expect(result).to.equal(p.width / 2);
     });
@@ -265,7 +265,7 @@ describe("HeightLengthValue", function () {
     it("should determine value", function () {
       const shape = new Ellipse();
       shape.render(p);
-      value.bind(shape);
+      value.bind(shape, shape);
       const result = value.evaluate();
       expect(result).to.equal(p.height / 2);
     });
@@ -277,7 +277,7 @@ describe("TurnAngleValue", function () {
     it("should determine value", function () {
       const shape = new Ellipse();
       const value = tr(1 / 2);
-      value.bind(shape);
+      value.bind(shape, shape);
       const result = value.evaluate();
       expect(result).to.equal(Math.PI);
     });
