@@ -2,6 +2,9 @@
 
 import p5 from "p5";
 
+/** TODO. */
+export const AUTO = Symbol();
+
 /**
  * @template T
  * @typedef {new (...args: never[]) => T} Constructor
@@ -79,6 +82,7 @@ export function argumentStream(values) {
  * Result type of each dynamic value type.
  * @typedef ValueTypes
  * @property {number} scalar
+ * @property {AUTO} auto
  * @property {number} length - Length quantity.
  * @property {Point} position - Position, i.e. the description of a point in space.
  */
@@ -344,11 +348,24 @@ export function scalar(value) {
  */
 
 /**
+ * ...
+ * @returns {ConstValue<"auto">}
+ */
+export function auto() {
+  return new ConstValue("auto", AUTO);
+}
+
+/**
+ * @typedef {Value<"auto">} Auto
+ */
+
+/**
  * Shape attributes.
  * @typedef ShapeAttributes
  * @property {Value<"length">} [width]
  * @property {Value<"length">} [height]
  * @property {Value<"position">} [at]
+ * @property {Auto} [fill]
  */
 
 /**
@@ -413,6 +430,11 @@ export class Shape {
    */
   at;
   /**
+   * TODO.
+   * @type {Auto}
+   */
+  fill;
+  /**
    * Base the shape is linked to, if any.
    * @type {?Shape}
    */
@@ -461,6 +483,7 @@ export class Shape {
     this.width = attributes.width ?? w(1);
     this.height = attributes.height ?? h(1);
     this.at = attributes.at ?? point(w(1 / 2), h(1 / 2));
+    this.fill = attributes.fill ?? auto();
     this.stick(...links);
   }
 
