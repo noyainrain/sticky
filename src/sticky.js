@@ -44,7 +44,7 @@ export function assert(condition) {
 // no callback bc typescript @template doesn't support generic function signature
 /**
  * @typedef {
-     <T extends Constructor<unknown> | "number">(type: T, test?: TestCallback<ConcreteType<T>>)
+     <T extends Constructor<unknown> | "number" | "string">(type: T, test?: TestCallback<ConcreteType<T>>)
        => IteratorResult<ConcreteType<T> | undefined, ConcreteType<T> | undefined>
    } NextCallback
  */
@@ -57,7 +57,7 @@ export function assert(condition) {
 export function argumentStream(values) {
   let i = 0;
   /**
-   * @template {Constructor<unknown> | "number"} T
+   * @template {Constructor<unknown> | "number" | "string"} T
    * @param {T} type
    * @param {TestCallback<ConcreteType<T>>} [test]
    * @returns {IteratorResult<ConcreteType<T> | undefined, ConcreteType<T> | undefined>}
@@ -70,8 +70,8 @@ export function argumentStream(values) {
     let value;
     if (
       (
-        (type === "number" && typeof arg === type)
-        || (type !== "number" && arg instanceof /** @type {Constructor<unknown>} */ (type))
+        (typeof type === "string" && typeof arg === type)
+        || (typeof type !== "string" && arg instanceof /** @type {Constructor<unknown>} */ (type))
       )
       && (!test || test(/** @type {ConcreteType<T>} */ (arg)))
     ) {
