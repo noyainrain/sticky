@@ -1500,6 +1500,78 @@ export class Ellipse extends Shape {
 }
 
 /**
+ * @typedef TextAttributesProperties
+ * @property {string} [content]
+ * @typedef {ShapeAttributes & TextAttributesProperties} TextAttributes
+ */
+
+/** ... */
+export class Text extends Shape {
+  /**
+   * ...
+   * @type {string}
+   */
+  content;
+
+  /**
+   * @overload
+   * @param {TextAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} content
+   * @param {TextAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} content
+   * @param {Value<"length">} width
+   * @param {TextAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} content
+   * @param {Value<"length">} width
+   * @param {Value<"length">} height
+   * @param {TextAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @overload
+   * @param {string} content
+   * @param {Value<"length">} width
+   * @param {Value<"length">} height
+   * @param {Position} at
+   * @param {TextAttributes | Shape} [attributes]
+   * @param {...Shape[]} links
+   * @function
+   * @param {...unknown} args
+   */
+  constructor(...args) {
+    const next = argumentStream(args);
+    /** @type {TextAttributes} */
+    const attributes = {};
+    const content = next("string");
+    if (content.value !== undefined) {
+      attributes.content = content.value;
+      Object.assign(attributes, readShapeShortcutArguments(next));
+    }
+    Object.assign(attributes, next(Object, arg => !(arg instanceof Shape)).value ?? {});
+    const links = readShapeArguments(next);
+
+    super(attributes, ...links);
+    this.content = attributes.content ?? "";
+  }
+
+  /**
+   * @param {p5} p
+   */
+  renderShape(p) {
+    // TODO textSize option
+    // TODO textFont option
+    // TODO 0 0 once we have anchor
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textAlign(p.LEFT, p.TOP);
+    p.text(this.content, 0, 0, this.width.evaluate(), this.height.evaluate());
+  }
+}
+
+/**
  * @typedef RepeatedShapeAttributesProperties
  * @property {Scalar | number} [count]
  * @typedef {ShapeAttributes & RepeatedShapeAttributesProperties} RepeatedShapeAttributes

@@ -1,6 +1,6 @@
 import p5 from "p5";
 import {
-  Ellipse, Rectangle, Triangle, body, edge, h, multiply, px, repeated, tween, variable, w,
+  Ellipse, Rectangle, Text, Triangle, body, edge, h, multiply, px, repeated, tween, variable, w,
 } from "#sticky";
 
 new p5((p) => {
@@ -88,6 +88,12 @@ new p5((p) => {
         { fill: "green" },
       ),
     ),
+
+    // huh, only shows from 21px on, so proabably line height?
+    new Text(
+      "Sticky Demo 0.1", w(1), px(24), body(px(640 / 2 + 24), px(360 - 24 - 24 / 2)),
+      { fill: "white", stroke: "black" },
+    ),
   );
 
   p.setup = () => {
@@ -96,6 +102,11 @@ new p5((p) => {
   };
 
   p.draw = () => {
+    p.textFont("sans-serif", 16);
+    p.textStyle(p.ITALIC);
+    p.textLeading(3 / 2 * 16);
+    // p.textSize(16);
+
     /**
      * @param {number} progress
      */
