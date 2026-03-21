@@ -1447,3 +1447,54 @@ export class Ellipse extends Shape {
     }
   }
 }
+
+/**
+ * ...
+ * @template {Numeric} T
+ * @extends {Value<T>}
+ */
+export class AddValue extends Value {
+  /**
+   * ...
+   * @type {Value<T>[]}
+   */
+  values;
+
+  /**
+   * @param {Value<T>} a
+   * @param {Value<T>} b
+   * @param {Value<T>[]} values
+   */
+  constructor(a, b, ...values) {
+    super(a.type);
+    this.values = [a, b, ...values];
+  }
+
+  // TODO design without chaining
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    for (const value of this.values) {
+      value.bind(shape, reference);
+    }
+  }
+
+  compute() {
+    return this.values.map(value => value.evaluate()).reduce((a, b) => a + b);
+  }
+}
+
+/**
+ * ...
+ * @template {Numeric} T
+ * @param {Value<T>} a
+ * @param {Value<NoInfer<T>>} b
+ * @param {Value<NoInfer<T>>[]} values
+ * @returns {AddValue<T>}
+ */
+export function add(a, b, ...values) {
+  return new AddValue(a, b, ...values);
+}
