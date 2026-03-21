@@ -1,5 +1,7 @@
 import p5 from "p5";
-import { Ellipse, Rectangle, Triangle, body, edge, h, px, tween, w } from "#sticky";
+import {
+  Ellipse, Rectangle, Triangle, body, edge, h, multiply, px, repeated, tween, variable, w,
+} from "#sticky";
 
 new p5((p) => {
   const verbose = "verbose" in p.getURLParams();
@@ -77,6 +79,14 @@ new p5((p) => {
       // Paws
       new Ellipse(w(1 / 8), h(1 / 8), body(1 / 2 - 1 / 8 / 2, 1 - 1 / 8 / 4), { end: 1 / 2 }),
       new Ellipse(w(1 / 8), h(1 / 8), body(1 / 2 + 1 / 8 / 2, 1 - 1 / 8 / 4), { end: 1 / 2 }),
+    ),
+
+    repeated(
+      5,
+      new Ellipse(
+        h(1 / 8), h(1 / 8), body(multiply(h(1 / 8), variable("i", "scalar")), 1 / 2),
+        { fill: "green" },
+      ),
     ),
   );
 

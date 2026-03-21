@@ -1252,6 +1252,14 @@ export class Shape {
     throw new Error("Unimplemented method");
   }
 
+  /**
+   * ...
+   * @returns {Shape}
+   */
+  clone() {
+    throw new Error("Abstract method");
+  }
+
   toString() {
     const path = [];
     /** @type {?Shape} */
@@ -1376,6 +1384,21 @@ export class Triangle extends Polygon {
     super.renderShape(p);
     // TODO orientation positive x I think or positive y, right?
   }
+
+  clone() {
+    return new Triangle(
+      this.width, this.height, this.at,
+      {
+        orientation: this.orientation,
+        stroke: this.stroke,
+        fill: this.fill,
+        blur: this.blur,
+        start: this.start,
+        end: this.end,
+      },
+      ...this.links.map(link => link.clone()),
+    );
+  }
 }
 
 /**
@@ -1459,6 +1482,175 @@ export class Ellipse extends Shape {
       return 0;
     }
   }
+
+  clone() {
+    return new Ellipse(
+      this.width, this.height, this.at.clone(),
+      {
+        orientation: this.orientation,
+        stroke: this.stroke,
+        fill: this.fill,
+        blur: this.blur,
+        start: this.start,
+        end: this.end,
+      },
+      ...this.links.map(link => link.clone()),
+    );
+  }
+}
+
+/**
+ * @typedef RepeatedShapeAttributesProperties
+ * @property {Scalar | number} [count]
+ * @typedef {ShapeAttributes & RepeatedShapeAttributesProperties} RepeatedShapeAttributes
+ */
+
+/**
+ * Shape repeated multiple times.
+ */
+export class RepeatedShape extends Shape {
+  /**
+   * One or more repeated shapes.
+   * @type {Shape[]}
+   */
+  shapes;
+  /**
+   * Count of repetitions.
+   * @type {Scalar}
+   */
+  count;
+
+  // OQ what about with and height? - not applicable? ignored?
+  // position - children placed relatively?
+  // -> don't specify size and position, should always match parent
+  // OQ what about blur? opacity? fill? stroke? - applied to all children?
+  // OQ  start /end? - not applicable?
+
+  /**
+   * @overload
+   * @param {RepeatedShapeAttributes | Shape} [attributes]
+   * @param {...Shape[]} shapes
+   * @overload
+   * @param {Scalar | number} count
+   * @param {RepeatedShapeAttributes | Shape} [attributes]
+   * @param {...Shape[]} shapes
+   * @function
+   * @param {...unknown} args
+   */
+  constructor(...args) {
+    const next = argumentStream(args);
+
+    /** @type {RepeatedShapeAttributes} */
+    const attributes = {};
+    /** @type {IteratorResult<Value<keyof ValueTypes> | number | undefined, Value<keyof ValueTypes> | number | undefined>} */
+    let count = next("number");
+    if (count.value === undefined) {
+      count = next(Value, arg => arg.type === "scalar");
+    }
+    if (count.value !== undefined) {
+      attributes.count = /** @type {Scalar | number} */ (count.value);
+    }
+    Object.assign(attributes, next(Object, arg => !(arg instanceof Shape)).value ?? {});
+    const shapes = readShapeArguments(next);
+
+    super(attributes);
+    this.count = typeof attributes.count === "number"
+      ? scalar(attributes.count)
+      : attributes.count ?? scalar(1);
+    this.shapes = shapes;
+  }
+
+  /**
+   * @type {?Shape[]}
+   */
+  #shadow = null;
+
+  /**
+   * @param {p5} p
+   */
+  renderShape(p) {
+    this.count.bind(this, this);
+
+    // TODO a) for now only support simple iteration n / x y
+    // layout (for align and fill algorithms) might be overkill (we don't do layout anywhere else in
+    // the library), maybe we're just no layout library, maybe in future
+    // approach:
+    // a) for each new clone, chain offset using prev clone.width directly (implemented below)
+    //    cool, but only works for simple align algorithm, we can't do any advanced math with Length
+    // b) layout is done in render coordinates
+    //    seems fair
+    //    we can do all math we need for line-wrapping and filling space etc. because we dont use
+    //    prev clone.width directly, if its size changes the layout will not be updated
+    //    automatically like with chaining - but its no problem, as soon as base or one of the
+    //    clones size changes (bc of var), we have to rerun the layout anyway, because fill/wrap
+    //    might be different
+    // TODO OQ how to cache internal deps?
+    if (!this.#shadow) {
+      this.#shadow = [];
+      // let offset = 0;
+      for (let i = 0; i < this.count.evaluate(); i++) {
+        // for (const [j, shape] of this.shapes.entries()) {
+        for (const shape of this.shapes) {
+          const clone = shape.clone();
+          // TODO OQ how to chain base?
+          clone.base = this;
+          // clone.setVariable("i", scalar(i * this.shapes.length + j));
+          clone.setVariable("i", scalar(i));
+          this.#shadow.push(clone);
+        }
+      }
+
+      // let offset = w(0);
+      // for (let i = 0; i < this.count; i++) {
+      //   // OQ how to handle multiple shapes? only expect single one, right, hmmm?
+      //   // -> nah, cycle through them, nice for alternating shapes :)
+      //   for (const shape of this.shapes) {
+      //     const clone = shape.clone();
+      //     clone.base = this;
+      //     // offset = add(offset, clone.width)
+      //     // clone.at = body(0.5 - offset, 0.5);
+      //     // clone.at = body(px(offset), 0.5);
+      //     clone.at = body(offset, 0.5);
+
+      //     this.#shadow.push(clone);
+      //     // const width = evaluate(clone.width);
+      //     // TODO how to get width of clone?
+      //     // offset += clone.width;
+      //     // offset += 0.1;
+
+      //     // OQ why is typing broken here?
+      //     // @ts-ignore
+      //     offset = add(offset, clone.width);
+
+      //     // clone.render(p);
+      //     // offset += clone.renderWidth;
+      //   }
+      // }
+    }
+
+    for (const shape of this.#shadow) {
+      shape.render(p);
+    }
+  }
+}
+
+/**
+ * Shape repeated multiple times.
+ * @overload
+ * @param {RepeatedShapeAttributes | Shape} [attributes]
+ * @param {...Shape[]} shapes
+ * @returns RepeatedShape
+ * @overload
+ * @param {Scalar | number} count
+ * @param {RepeatedShapeAttributes | Shape} [attributes]
+ * @param {...Shape[]} shapes
+ * @returns RepeatedShape
+ * @function
+ * @param {...unknown} args
+ * @returns RepeatedShape
+ */
+export function repeated(...args) {
+  return new RepeatedShape(...(/** @type {[]} */ (args)));
 }
 
 /**
