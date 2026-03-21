@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Ellipse, Rectangle, Triangle, body, edge, h, px, w } from "#sticky";
+import { Ellipse, Rectangle, Triangle, body, edge, h, px, tween, w } from "#sticky";
 
 new p5((p) => {
   const verbose = "verbose" in p.getURLParams();
@@ -22,7 +22,9 @@ new p5((p) => {
     // TODO add rectangle ground (?)
     // Cat
     new Ellipse(
-      h(1 / 2), h(1 / 2), body(1 / 2, 1 / 2), { stroke: "pink", fill: "black" },
+      h(1 / 2), h(1 / 2),
+      body(w(1 / 2), tween(h(1 / 2 - 1 / 2 / 16 / 2), h(1 / 2 + 1 / 2 / 16 / 2), 2, true)),
+      { stroke: "pink", fill: "black" },
       // Tail
       new Ellipse(
         w(1 / 16), h(1), body(1 / 2, 1 - 1 / 16 / 2),

@@ -756,6 +756,101 @@ export function auto() {
  */
 
 /**
+ * @param {number} progress
+ */
+function ease(progress) {
+  return (1 - Math.cos(progress * Math.PI)) / 2;
+}
+
+// OQ the typing with T = "scalar" is cool, but it allows mixing of to:Value/from:number still
+// a more complex version with @param {V} to/from and @extends {Value<ValueType<V>, number>} is
+// possible and also works :) - but maybe overkill for now...
+// * @template T
+// * @typedef {
+//     T extends Value<infer O, number>
+//       ? O
+//       : T extends number
+//         ? "scalar"
+//         : never
+//   } ValueType
+// *
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
+ * @extends {Value<T>}
+ */
+export class TweenValue extends Value {
+  /** @type {Value<T>} */
+  from;
+  /** @type {Value<T>} */
+  to;
+  /** @type {Scalar} */
+  duration;
+
+  /**
+   * @param {Value<T> | number} from
+   * @param {Value<NoInfer<T>> | number} to
+   * @param {Scalar | number} duration
+   * @param {boolean} [yoyo]
+   */
+  constructor(from, to, duration, yoyo = false) {
+    if (typeof from === "number") {
+      from = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(from)));
+    }
+    super(from.type);
+    this.from = from;
+    this.to = typeof to === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(to)))
+      : to;
+    this.duration = typeof duration === "number" ? scalar(duration) : duration;
+    this.yoyo = yoyo;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.from.bind(shape, reference);
+    this.to.bind(shape, reference);
+    this.duration.bind(shape, reference);
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   * @returns {number}
+   */
+  compute(shape, reference) {
+    const time = (reference instanceof p5 ? reference : reference.p)?.millis() ?? 0;
+    const duration = this.duration.evaluate();
+    let p = (time / 1000) / duration % 1;
+    if (this.yoyo) {
+      p = p * 2;
+      p = p >= 1 ? 2 - p : p;
+    }
+    const progress = ease(p);
+    const v = (1 - progress) * this.from.evaluate() + progress * this.to.evaluate();
+    // console.log("v", (canvas.millis() / 1000).toFixed(2), v);
+    return v;
+  }
+}
+
+/**
+ * @template {Numeric} [T = "scalar"]
+ * @param {Value<T> | number} from
+ * @param {Value<NoInfer<T>> | number} to
+ * @param {Scalar | number} duration
+ * @param {boolean} yoyo
+ * @returns {TweenValue<T>}
+ */
+export function tween(from, to, duration, yoyo = false) {
+  return new TweenValue(from, to, duration, yoyo);
+}
+
+/**
  * Shape attributes.
  * @typedef ShapeAttributes
  * @property {Value<"length">} [width]
