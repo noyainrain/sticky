@@ -101,6 +101,11 @@ export function argumentStream(values) {
  */
 
 /**
+ * ...
+ * @typedef {"scalar" | "length" | "angle"} Numeric
+ */
+
+/**
  * Dynamic value.
  * @template {keyof ValueTypes} T
  */
@@ -648,6 +653,62 @@ export function color(hue, saturation, lightness) {
 }
 
 /** @typedef {Value<"color">} Color */
+
+/**
+ * ...
+ * @template {Numeric} T
+ * @extends {Value<T>}
+ */
+export class MultiplyValue extends Value {
+  /**
+   * ...
+   * @type {[Value<T>, ...Scalar[]]}
+   */
+  values;
+
+  /**
+   * @param {Value<T> | number} a
+   * @param {Scalar | number} b
+   * @param {(Scalar | number)[]} values
+   */
+  constructor(a, b, ...values) {
+    if (typeof a === "number") {
+      a = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(a)));
+    }
+    super(a.type);
+    this.values = [
+      a, ...[b, ...values].map(value => typeof value === "number" ? scalar(value) : value),
+    ];
+  }
+
+  // TODO design without chaining
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    for (const value of this.values) {
+      value.bind(shape, reference);
+    }
+  }
+
+  compute() {
+    return this.values.map(value => value.evaluate()).reduce((a, b) => a * b);
+  }
+}
+
+/**
+ * ...
+ * @template {Numeric} T
+ * @param {Value<T> | number} a
+ * @param {Scalar | number} b
+ * @param {(Scalar | number)[]} values
+ * @returns {MultiplyValue<T>}
+ */
+export function multiply(a, b, ...values) {
+  return new MultiplyValue(a, b, ...values);
+}
 
 /**
  * ...
