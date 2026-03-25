@@ -1220,6 +1220,51 @@ export function random(from, to) {
 
 /**
  * ...
+ * @extends {Value<"scalar">}
+ */
+export class NoiseValue extends Value {
+  /**
+   * ...
+   * @type {Value<"scalar">}
+   */
+  x;
+
+  /**
+   * @param {Value<"scalar"> | number} x
+   */
+  constructor(x) {
+    super("scalar");
+    this.x = typeof x === "number" ? scalar(x) : x;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.x.bind(shape, reference);
+  }
+
+  compute() {
+    const x = this.x.evaluate();
+    const floor = Math.floor(x);
+    const t = x % 1;
+    return (1 - t) * rand(floor) + t * rand(floor + 1);
+  }
+}
+
+/**
+ * ...
+ * @param {Value<"scalar"> | number} x
+ * @returns {NoiseValue}
+ */
+export function noise(x) {
+  return new NoiseValue(x);
+}
+
+/**
+ * ...
  * @template {keyof ValueTypes} T
  * @extends {Value<T>}
  */
