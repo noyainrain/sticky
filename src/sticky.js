@@ -16,6 +16,54 @@ export function assert(condition) {
   }
 }
 
+// https://squaresrng.wixsite.com/rand
+// inline static uint32_t squares32(uint64_t ctr, uint64_t key) {
+//    uint64_t x, y, z;
+//    y = x = ctr * key; z = y + key;
+//    x = x*x + y; x = (x>>32) | (x<<32);       /* round 1 */
+//    x = x*x + z; x = (x>>32) | (x<<32);       /* round 2 */
+//    x = x*x + y; x = (x>>32) | (x<<32);       /* round 3 */
+//    return (x*x + z) >> 32;                   /* round 4 */
+// }
+
+const SQUARES_32_KEY = BigInt("0xc8e4fd154ce32f6d");
+
+// TODO a good test for this is running it against the original code with a high counter number
+/**
+ * @param {bigint} counter
+ * @param {bigint} key
+ * @returns {bigint} counter
+ */
+function squares32(counter, key) {
+  let x = BigInt.asUintN(64, counter * key);
+  let y = x;
+  let z = BigInt.asUintN(64, y + key);
+  x = BigInt.asUintN(64, x * x + y);
+  x = BigInt.asUintN(64, x >> 32n | x << 32n);
+  x = BigInt.asUintN(64, x * x + z);
+  x = BigInt.asUintN(64, x >> 32n | x << 32n);
+  x = BigInt.asUintN(64, x * x + y);
+  x = BigInt.asUintN(64, x >> 32n | x << 32n);
+  x = BigInt.asUintN(64, x * x + z);
+  return x >> 32n;
+}
+
+// // for (let i = 2n << 62n; i < 20n + (2n << 62n); i++) {
+// for (let i = 0n; i < 20n; i++) {
+//   console.log(squares32(BigInt(i), SQUARES_32_KEY));
+// }
+// for (let i = 0; i < 10; i++) {
+//   console.log(rand(i));
+// }
+
+/**
+ * @param {number} counter
+ * @returns {number}
+ */
+export function rand(counter) {
+  return Number(squares32(BigInt(counter), SQUARES_32_KEY)) / (2 ** 32);
+}
+
 /**
  * @template T
  * @typedef {new (...args: never[]) => T} Constructor
