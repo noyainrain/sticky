@@ -27,8 +27,9 @@
 
         <h3>
             new Shape<span>({<em>width</em>, <em>height</em>, <em>at</em>, <em>orientation</em>,
-            <em>anchor</em>, <em>fill</em>, <em>stroke</em>, <em>blur</em>, <em>start</em>,
-            <em>end</em>, <em>viewport</em>}, <em>links...</em>)</span>
+            <em>anchor</em>, <em>fill</em>, <em>stroke</em>, <em>strokeWidth</em>, <em>opacity</em>,
+            <em>blur</em>, <em>start</em>, <em>end</em>, <em>viewport</em>},
+            <em>links...</em>)</span>
         </h3>
         <p>
             For convenience, <em>width</em>, <em>height</em> and <em>at</em> can be given without a
@@ -46,7 +47,11 @@
         </p>
         <p><em>orientation</em> (<a href="#angle">angle</a>) is the angle the shape points to.</p>
         <p>
-            The shape is filled with a <em>fill</em> color and stroked with a <em>stroke</em> color.
+            The shape is filled with a <em>fill</em> color and stroked with a <em>stroke</em> color
+            with <em>strokeWidth</em>.
+        </p>
+        <p>
+            Transparency is controlled by <em>opacity</em> (from 0 to 1).
         </p>
         <p>
             The shape can be blured with a radius of <em>blur</em>. (<a href="#length">length</a>)
@@ -142,13 +147,32 @@ new Ellipse({at: polar(w(1), tr(0))})</code>
         <code>// Center of the first edge of the canvas
 new Ellipse({at: edge(0, e(1/2))})</code>
 
+        <h2>Utilities</h2>
+        <h3>random<span>(<em>from</em>, <em>to</em>)</h3>
+        <p>Random value between <em>from</em> and <em>to</em>.</p>
+        <code>// Circle at random position
+new Ellipse({at: body(random(w(0), w(1)), h(1/2))});</code>
+
+        <h3>noise<span>(<em>x</em>)</h3>
+        <p>Value noise with an amplitude of 1 at position <em>x</em>.</p>
+        <p>Random values are sampled with a frequency of 1 and are interpolated inbetween.</p>
+        <code>// Circle at random position
+new Ellipse({at: body(multiply(w(1), noise(0)), h(1/2))});</code>
+
+        <h3>time<span>()</span></h3>
+        <p>Time elapsed since canvas creation in seconds.</p>
+        <code>// Rotate over time
+new Ellipse({orientation: multiply(tr(1), time())})</code>
+
         <h2>Effects</h2>
         <p>Dynamic values can achieve cool effects.</p>
 
-        <h3>color<span>(<em>hue</em>, <em>saturation</em>, <em>lightness</em>)</h3>
+        <h3>
+          color<span>(<em>hue</em>, <em>saturation</em>, <em>lightness</em>, {<em>alpha</em>})
+        </h3>
         <p>
-            Color defined by a <em>hue</em> (<a href="#angle">angle</a>), <em>saturation</em> and
-            <em>lightness</em> (from 0 to 1).
+            Color defined by a <em>hue</em> (<a href="#angle">angle</a>), <em>saturation</em>,
+            <em>lightness</em> and <em>alpha</em> (from 0 to 1).
         </p>
         <code>// Cyan
 new Ellipse({fill: color(tr(1/2), 1, 1/2)});</code>
