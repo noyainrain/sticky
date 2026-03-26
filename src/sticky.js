@@ -1089,6 +1089,80 @@ export function multiply(a, b, ...values) {
 /**
  * ...
  * @template {Numeric} [T = "scalar"]
+ * @extends Value<T>
+ */
+export class WrapValue extends Value {
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  value;
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  min;
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  max;
+
+  /**
+   * @param {Value<T> | number} min
+   * @param {Value<T> | number} value
+   * @param {Value<T> | number} max
+   */
+  constructor(min, value, max) {
+    if (typeof value === "number") {
+      value = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(value)));
+    }
+    super(value.type);
+    this.value = value;
+    this.min = typeof min === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(min)))
+      : min;
+    this.max = typeof max === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(max)))
+      : max;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.value.bind(shape, reference);
+    this.min.bind(shape, reference);
+    this.max.bind(shape, reference);
+  }
+
+  compute() {
+    const value = this.value.evaluate();
+    const min = this.min.evaluate();
+    const max = this.max.evaluate();
+    const range = max - min;
+    // TODO modulo good or floor impl?
+    // TODO what if max < min?
+    return ((value - min) % range + range) % range + min;
+  }
+}
+
+/**
+ * @template {Numeric} [T = "scalar"]
+ * @param {Value<T> | number} min
+ * @param {Value<T> | number} value
+ * @param {Value<T> | number} max
+ * @returns {WrapValue<T>}
+ */
+export function wrap(min, value, max) {
+  return new WrapValue(min, value, max);
+}
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
  * @extends {Value<T>}
  */
 export class LerpValue extends Value {
