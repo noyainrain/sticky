@@ -475,6 +475,9 @@ class App extends HTMLElement {
       throw new Error("Assertion failed");
     }
 
+    const fpsSpan = document.querySelector("#fps");
+    assert(fpsSpan instanceof HTMLSpanElement);
+
     this.#p = new p5((p) => {
       p.setup = () => {
         p.createCanvas(640, 360);
@@ -491,6 +494,7 @@ class App extends HTMLElement {
             this.#errorP.textContent = `${e} (?)`;
           }
         }
+        fpsSpan.textContent = `${p.frameRate().toFixed()} fps`;
       };
     }, container);
   }
