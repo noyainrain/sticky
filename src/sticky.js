@@ -1269,6 +1269,34 @@ export function noise(x) {
 
 /**
  * ...
+ * @extends {Value<"scalar">}
+ */
+export class TimeValue extends Value {
+  constructor() {
+    super("scalar");
+  }
+
+  /**
+   * @param {Shape} shape
+   */
+  compute(shape) {
+    if (!shape.p) {
+      throw new Error(`Unrendered shape ${shape}`);
+    }
+    return shape.p.millis() / 1000;
+  }
+}
+
+/**
+ * ...
+ * @returns {TimeValue}
+ */
+export function time() {
+  return new TimeValue();
+}
+
+/**
+ * ...
  * @template {keyof ValueTypes} T
  * @extends {Value<T>}
  */
