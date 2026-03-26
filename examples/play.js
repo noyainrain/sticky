@@ -478,6 +478,26 @@ class App extends HTMLElement {
     const fpsSpan = document.querySelector("#fps");
     assert(fpsSpan instanceof HTMLSpanElement);
 
+    const fullscreenButton = document.querySelector("#fullscreen");
+    assert(fullscreenButton instanceof HTMLButtonElement);
+    fullscreenButton.addEventListener("click", async () => {
+      this.#p.resizeCanvas(screen.width, screen.height);
+      // OQ why doesn't this work??
+      // this.#p.fullscreen(true);
+      if (this.#p.drawingContext.canvas instanceof HTMLCanvasElement) {
+        await this.#p.drawingContext.canvas.requestFullscreen();
+        // TODO why oh why?
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        addEventListener(
+          "fullscreenchange",
+          () => {
+            this.#p.resizeCanvas(640, 360);
+          },
+          { once: true },
+        );
+      }
+    });
+
     this.#p = new p5((p) => {
       p.setup = () => {
         p.createCanvas(640, 360);
