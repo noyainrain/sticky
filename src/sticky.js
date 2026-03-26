@@ -1218,6 +1218,10 @@ export function random(from, to) {
   return new RandomValue(from, to);
 }
 
+// TODO compute this per shape and inherit I think
+// float max, half for seed and half for counter
+const SEED = rand(new Date().valueOf()) * (2 ** 52);
+
 /**
  * ...
  * @extends {Value<"scalar">}
@@ -1247,7 +1251,7 @@ export class NoiseValue extends Value {
   }
 
   compute() {
-    const x = this.x.evaluate();
+    const x = this.x.evaluate() + SEED;
     const floor = Math.floor(x);
     const t = x % 1;
     return (1 - t) * rand(floor) + t * rand(floor + 1);
