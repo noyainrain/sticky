@@ -1089,6 +1089,54 @@ export function multiply(a, b, ...values) {
 /**
  * ...
  * @template {Numeric} [T = "scalar"]
+ * @extends {Value<T>}
+ */
+export class RoundedValue extends Value {
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  value;
+
+  /**
+   * @param {Value<T> | number} value
+   */
+  constructor(value) {
+    if (typeof value === "number") {
+      value = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(value)));
+    }
+    super(value.type);
+    this.value = value;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.value.bind(shape, reference);
+  }
+
+  compute() {
+    // TODO multiple rounding methods of course
+    return Math.floor(this.value.evaluate());
+  }
+}
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
+ * @param {Value<T> | number} value - ...
+ * @returns {RoundedValue<T>}
+ */
+export function rounded(value) {
+  return new RoundedValue(value);
+}
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
  * @extends Value<T>
  */
 export class WrapValue extends Value {
