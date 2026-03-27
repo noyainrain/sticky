@@ -2362,12 +2362,36 @@ export class Shape {
     throw new Error("Unimplemented method");
   }
 
+  // TODO on shape, children can overwrite and chain if needed
+  cloneAttributes() {
+    return {
+      width: this.width.clone(),
+      height: this.height.clone(),
+      at: this.at.clone(),
+      anchor: this.anchor.clone(),
+      orientation: this.orientation.clone(),
+      z: this.z.clone(),
+      stroke: this.stroke.clone(),
+      fill: this.fill.clone(),
+      opacity: this.opacity.clone(),
+      blur: this.blur.clone(),
+      start: this.start,
+      end: this.end,
+      variables: Object.fromEntries([...this.variables].map(([name, variable]) => [name, variable.clone()])),
+    };
+  }
+
+  cloneLinks() {
+    return this.links.map(link => link.clone());
+  }
+
   /**
    * ...
    * @returns {Shape}
    */
   clone() {
-    throw new Error("Abstract method");
+    // @ts-ignore
+    return new this.constructor(this.cloneAttributes(), ...this.cloneLinks());
   }
 
   toString() {
@@ -2532,31 +2556,6 @@ export class Rectangle extends Polygon {
       new p5.Vector(0, height),
     ];
     super.renderShape(p);
-  }
-
-  // TODO on shape, children can overwrite and chain if needed
-  cloneAttributes() {
-    return {
-      width: this.width.clone(),
-      height: this.height.clone(),
-      at: this.at.clone(),
-      anchor: this.anchor.clone(),
-      orientation: this.orientation.clone(),
-      z: this.z.clone(),
-      stroke: this.stroke.clone(),
-      fill: this.fill.clone(),
-      opacity: this.opacity.clone(),
-      blur: this.blur.clone(),
-      start: this.start,
-      end: this.end,
-      variables: Object.fromEntries([...this.variables].map(([name, variable]) => [name, variable.clone()])),
-    };
-  }
-
-  // TODO just generic on shape
-  clone() {
-    // @ts-ignore
-    return new this.constructor(this.cloneAttributes(), ...this.links.map(link => link.clone()));
   }
 }
 
@@ -2949,6 +2948,17 @@ export class RepeatedShape extends Shape {
     for (const [shape] of this.#shadowStack) {
       shape.render(p);
     }
+  }
+
+  cloneAttributes() {
+    return {
+      count: this.count.clone(),
+      ...super.cloneAttributes(),
+    };
+  }
+
+  cloneLinks() {
+    return this.shapes.map(shape => shape.clone());
   }
 }
 
