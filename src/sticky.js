@@ -2447,7 +2447,7 @@ export class Image extends Shape {
    * @param {string} url
    * @param {Value<"length">} width
    * @param {Value<"length">} height
-   * @param {Position} at
+   * @param {Value<"position">} at
    * @param {ImageAttributes | Shape} [attributes]
    * @param {...Shape[]} links
    * @function
