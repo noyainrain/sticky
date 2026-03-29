@@ -919,7 +919,7 @@ export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease
  * @property {Value<"length">} [height]
  * @property {Value<"position">} [at]
  * @property {Scalar | number} [orientation]
- * @property {Position} [anchor]
+ * @property {Value<"position">} [anchor]
  * @property {?string | Auto} [fill]
  * @property {?string | Auto} [stroke]
  * @property {Value<"length">} [blur]
@@ -995,7 +995,7 @@ export class Shape {
   #orientation = scalar(0);
   /**
    * Anchor for positioning. Relative to the shape itself.
-   * @type {Position}
+   * @type {Value<"position">}
    */
   anchor;
   /**
@@ -1219,7 +1219,8 @@ export class Shape {
     // (internal prop), for the user the position is at renderAt with renderAnchor; b) via canvas
     // test, but I guess like in a, renderAt and renderAnchor are passed individually, so it becomes
     // c) renderer test, i.e. have right svg props been called, has right translate call been made
-    p.translate(p5.Vector.mult(this.anchor.evaluate(), -1));
+    const anchor = this.anchor.evaluate();
+    p.translate(-anchor.x, -anchor.y);
 
     this.renderShape(p);
 
