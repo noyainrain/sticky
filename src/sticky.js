@@ -480,7 +480,7 @@ export class PointPositionValue extends Value {
   }
 
   clone() {
-    return new BodyValue(this.x.clone(), this.y.clone());
+    return new PointPositionValue(this.x.clone(), this.y.clone());
   }
 
   // XXX
