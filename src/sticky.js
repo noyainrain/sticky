@@ -1552,7 +1552,7 @@ export class Text extends Shape {
    * @param {string} content
    * @param {Value<"length">} width
    * @param {Value<"length">} height
-   * @param {Position} at
+   * @param {Value<"position">} at
    * @param {TextAttributes | Shape} [attributes]
    * @param {...Shape[]} links
    * @function
