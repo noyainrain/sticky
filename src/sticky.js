@@ -1463,6 +1463,33 @@ export function auto() {
  * @typedef {Value<"auto">} Auto
  */
 
+// TODO move after color (and also const/scalar to top)
+/**
+ * ...
+ */
+export const CGA_PALETTE = {
+  red: color(tr(0 / 6), 1, 1 / 3),
+  brown: color(tr(1 / 12), 1, 1 / 3),
+  yellow: color(tr(1 / 6), 1, 2 / 3),
+  green: color(tr(2 / 6), 1, 1 / 3),
+  cyan: color(tr(3 / 6), 1, 1 / 3),
+  blue: color(tr(4 / 6), 1, 1 / 3),
+  magenta: color(tr(5 / 6), 1, 1 / 3),
+
+  lightRed: color(tr(0 / 6), 1, 2 / 3),
+  lightBrown: color(tr(1 / 12), 1, 2 / 3),
+  lightYellow: color(tr(1 / 6), 1, 2 / 3),
+  lightGreen: color(tr(2 / 6), 1, 2 / 3),
+  lightCyan: color(tr(3 / 6), 1, 2 / 3),
+  lightBlue: color(tr(4 / 6), 1, 2 / 3),
+  lightMagenta: color(tr(5 / 6), 1, 2 / 3),
+
+  black: color(tr(0), 0, 0),
+  darkGray: color(tr(0), 0, 1 / 3),
+  lightGray: color(tr(0), 0, 2 / 3),
+  white: color(tr(0), 0, 3 / 3),
+};
+
 /**
  * @param {number} progress
  */
