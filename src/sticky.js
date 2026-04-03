@@ -1480,7 +1480,7 @@ export function auto() {
 export const CGA_PALETTE = {
   red: color(tr(0 / 6), 1, 1 / 3),
   brown: color(tr(1 / 12), 1, 1 / 3),
-  yellow: color(tr(1 / 6), 1, 2 / 3),
+  yellow: color(tr(1 / 6), 1, 1 / 3),
   green: color(tr(2 / 6), 1, 1 / 3),
   cyan: color(tr(3 / 6), 1, 1 / 3),
   blue: color(tr(4 / 6), 1, 1 / 3),
