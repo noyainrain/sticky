@@ -1735,6 +1735,7 @@ export function wave(length, amplitude) {
  * @property {Color | Gradient | Auto} [stroke]
  * @property {Value<"length"> | Auto} [strokeWidth]
  * @property {Scalar | number} [opacity]
+ * @property {Value<"scalar"> | number} [clip]
  * @property {WarpMethod | Auto} [warp]
  * @property {Color} [shadow]
  * @property {Value<"length">} [shadowBlur]
@@ -1888,6 +1889,8 @@ export class Shape {
   #z = scalar(0);
   /** @type {Scalar} */
   #opacity = scalar(1);
+  /** @type {Value<"scalar">} */
+  #clip = scalar(0);
   /** @type {Map<string, Value<keyof ValueTypes>>} */
   #variables = new Map();
 
@@ -1991,6 +1994,9 @@ export class Shape {
     if (attributes.opacity !== undefined) {
       this.opacity = attributes.opacity;
     }
+    if (attributes.clip !== undefined) {
+      this.clip = attributes.clip;
+    }
     this.warp = attributes.warp === undefined ? auto() : attributes.warp;
     this.shadow = attributes.shadow === undefined ? transparent() : attributes.shadow;
     this.shadowBlur = attributes.shadowBlur === undefined ? h(0) : attributes.shadowBlur;
@@ -2068,6 +2074,21 @@ export class Shape {
   }
 
   /**
+   * ...
+   * @returns {Value<"scalar">}
+   */
+  get clip() {
+    return this.#clip;
+  }
+
+  /**
+   * @param {Value<"scalar"> | number} value
+   */
+  set clip(value) {
+    this.#clip = typeof value === "number" ? scalar(value) : value;
+  }
+
+  /**
    * Unlink one or more shapes from the shape.
    * @param {...Shape} shapes - Shapes to unstick.
    */
@@ -2097,6 +2118,7 @@ export class Shape {
     this.stroke.bind(this, this);
     this.strokeWidth.bind(this, this);
     this.#opacity.bind(this, this);
+    this.#clip.bind(this, this);
     this.warp.bind(this, this);
     this.shadow.bind(this, this);
     this.shadowBlur.bind(this, this);
@@ -2245,6 +2267,13 @@ export class Shape {
     const strokeWidth = this.strokeWidth.evaluate();
     if (strokeWidth !== AUTO) {
       p.strokeWeight(strokeWidth);
+    }
+    // OQ this assumes clip is applied after filter, so we need to filter inside composite to get
+    // blur shadow etc
+    if (this.#clip.evaluate() >= 0.5) {
+      p.beginClip();
+      this.renderShape(p);
+      p.endClip();
     }
 
     const shadow = this.shadow.evaluate();
