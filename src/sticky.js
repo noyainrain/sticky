@@ -141,6 +141,7 @@ export function argumentStream(values) {
  * Result type of each dynamic value type.
  * @typedef ValueTypes
  * @property {number} scalar
+ * @property {boolean} bool
  * @property {AUTO} auto
  * @property {number} length - Length quantity.
  * @property {number} angle
@@ -1445,6 +1446,15 @@ export class ConstValue extends Value {
  */
 export function scalar(value) {
   return new ConstValue("scalar", value);
+}
+
+/**
+ * ...
+ * @param {boolean} value
+ * @returns {ConstValue<"bool">}
+ */
+export function bool(value) {
+  return new ConstValue("bool", value);
 }
 
 /**
