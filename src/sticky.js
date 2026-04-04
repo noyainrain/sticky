@@ -78,7 +78,9 @@ export function rand(counter) {
          ? number
          : T extends "string"
            ? string
-           : never
+           : T extends undefined
+             ? unknown
+             : never
   } ConcreteType
  */
 
@@ -92,7 +94,7 @@ export function rand(counter) {
 // no callback bc typescript @template doesn't support generic function signature
 /**
  * @typedef {
-     <T extends Constructor<unknown> | "number" | "string">(type: T, test?: TestCallback<ConcreteType<T>>)
+     <T extends Constructor<unknown> | "number" | "string" | undefined = undefined>(type?: T, test?: TestCallback<ConcreteType<T>>)
        => IteratorResult<ConcreteType<T> | undefined, ConcreteType<T> | undefined>
    } NextCallback
  */
@@ -105,8 +107,8 @@ export function rand(counter) {
 export function argumentStream(values) {
   let i = 0;
   /**
-   * @template {Constructor<unknown> | "number" | "string"} T
-   * @param {T} type
+   * @template {Constructor<unknown> | "number" | "string" | undefined} [T = undefined]
+   * @param {T} [type]
    * @param {TestCallback<ConcreteType<T>>} [test]
    * @returns {IteratorResult<ConcreteType<T> | undefined, ConcreteType<T> | undefined>}
    */
@@ -117,11 +119,14 @@ export function argumentStream(values) {
     }
     let value;
     if (
-      (
-        (typeof type === "string" && typeof arg === type)
-        || (typeof type !== "string" && arg instanceof /** @type {Constructor<unknown>} */ (type))
+      type === undefined
+      || (
+        (
+          (typeof type === "function" && arg instanceof /** @type {Constructor<unknown>} */ (type))
+          || (typeof type === "string" && typeof arg === type)
+        )
+        && (!test || test(/** @type {ConcreteType<T>} */ (arg)))
       )
-      && (!test || test(/** @type {ConcreteType<T>} */ (arg)))
     ) {
       value = /** @type {ConcreteType<T>} */ (arg);
       i++;

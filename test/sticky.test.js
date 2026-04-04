@@ -169,6 +169,11 @@ describe("argumentStream", function () {
       expect(b.value).to.not.equal(undefined);
     });
 
+    it("should match any", function () {
+      const a = next();
+      expect(a.value).to.equal(args[0]);
+    });
+
     it("should end", function () {
       next(Array);
       next(Date);
