@@ -1752,7 +1752,7 @@ export function wave(length, amplitude) {
  * @property {number} [start]
  * @property {number} [end]
  * @property {?number} [viewport]
- * @property {Object<string, Value<keyof ValueTypes>>} [variables]
+ * @property {Object<string, Value<keyof ValueTypes> | number>} [variables]
  */
 
 /**
@@ -1914,7 +1914,7 @@ export class Shape {
   /**
    * ...
    * @param {string} name
-   * @param {Value<keyof ValueTypes>} value
+   * @param {Value<keyof ValueTypes> | number} value
    */
   setVariable(name, value) {
     // TODO this has to be bound on render also, right?
@@ -1922,6 +1922,9 @@ export class Shape {
     // passing it explicitly again, but then we would need cache per reference which is super ugly
     // :/ )
     // value.bind(this, this);
+    if (typeof value === "number") {
+      value = scalar(value);
+    }
     this.#variables.set(name, value);
   }
 
