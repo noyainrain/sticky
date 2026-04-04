@@ -5,7 +5,7 @@ import {
   // eslint-disable-next-line no-unused-vars
   AUTO, CGA_PALETTE, Ellipse, Image, Rectangle, Shape, Text, Triangle, add, assert, body, color, e, ease, easeOn,
   // eslint-disable-next-line no-unused-vars
-  easeOut, edge, h, hued, linear, linearGradient, lerp, multiply, noise, polar, px, random,
+  easeOut, edge, h, hued, linear, linearGradient, lerp, multiply, noise, point, polar, px, random,
   // eslint-disable-next-line no-unused-vars
   repeated, rounded, scalar, shaded, subtract, time, tr, transparent, tween, variable, w, wrap,
 } from "#sticky";
