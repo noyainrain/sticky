@@ -236,6 +236,10 @@ export class Value {
     // TODO throw new Error("Abstract method");
     return this;
   }
+
+  toString() {
+    return [this.type, this.shape].filter(component => component).join("@");
+  }
 }
 
 /**
@@ -1783,12 +1787,8 @@ function readShapeArguments(next) {
   while ((shape = next(Shape)).value !== undefined) {
     shapes.push(shape.value);
   }
-  // TODO support any object
-  // TODO move out of function, if (!next().done) { ...
-  // OQ or maybe ignore because typescript checks this for us already...
-  // ^ yeah i think
   if (!shape.done) {
-    throw new TypeError(`Bad arguments item ${shape.value}`);
+    throw new TypeError(`Bad shapes item ${next().value}`);
   }
   return shapes;
 }
@@ -1979,7 +1979,7 @@ export class Shape {
     const next = argumentStream(args);
     const attributes = Object.assign(
       {}, readShapeShortcutArguments(next),
-      next(Object, arg => !(arg instanceof Shape)).value ?? {},
+      next(Object, arg => !(arg instanceof Value || arg instanceof Shape)).value ?? {},
     );
     const links = readShapeArguments(next);
 
