@@ -2719,6 +2719,7 @@ export class Ellipse extends Shape {
  * @typedef TextAttributesProperties
  * @property {string} [content]
  * @property {Value<"length"> | Auto} [fontSize]
+ * @property {Value<"scalar"> | number} [alignment]
  * @typedef {ShapeAttributes & TextAttributesProperties} TextAttributes
  */
 
@@ -2729,6 +2730,9 @@ export class Text extends Shape {
    * @type {string}
    */
   content;
+
+  /** @type {Value<"scalar">} */
+  #alignment = scalar(0.5);
 
   /**
    * @overload
@@ -2774,6 +2778,24 @@ export class Text extends Shape {
     super(attributes, ...links);
     this.content = attributes.content ?? "";
     this.fontSize = attributes.fontSize === undefined ? auto() : attributes.fontSize;
+    if (attributes.alignment !== undefined) {
+      this.alignment = attributes.alignment;
+    }
+  }
+
+  /**
+   * ...
+   * @returns {Value<"scalar">}
+   */
+  get alignment() {
+    return this.#alignment;
+  }
+
+  /**
+   * @param {Value<"scalar"> | number} value
+   */
+  set alignment(value) {
+    this.#alignment = typeof value === "number" ? scalar(value) : value;
   }
 
   /**
@@ -2781,6 +2803,7 @@ export class Text extends Shape {
    */
   renderShape(p) {
     this.fontSize.bind(this, this);
+    this.#alignment.bind(this, this);
 
     // we want to position at top left of bounding box, but that's not available as canvas baseline
     // / align, so leave at default and compute manually std
@@ -2807,7 +2830,7 @@ export class Text extends Shape {
     const baseline = fontAscent * scale;
 
     // Align
-    const x = (shapeWidth - width) / 2;
+    const x = this.#alignment.evaluate() * (shapeWidth - width);
     const y = (shapeHeight - height) / 2;
     const cursorX = x + offset;
     const cursorY = y + baseline;
