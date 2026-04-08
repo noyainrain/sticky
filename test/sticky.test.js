@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import p5 from "p5";
 import {
-  ConstValue, Ellipse, Rectangle, Triangle, argumentStream, assert, body, color, h, hued, px,
+  ConstValue, Ellipse, Rectangle, Text, Triangle, argumentStream, assert, body, color, h, hued, px,
   scalar, tr, tween, variable, w,
 } from "#sticky";
 
@@ -10,7 +10,7 @@ import {
 
 /**
  * @typedef DrawCommand
- * @property {"fill" | "stroke"} type
+ * @property {"fillText" | "fill" | "stroke"} type
  * @property {PathCommand[]} path
  */
 
@@ -38,6 +38,20 @@ function recordedCanvas(canvas) {
   // Inherit from anything but HTMLElement is forbidden
   // DOM does not accept Proxy objects, e.g. for append
   Object.defineProperties(context, {
+    fillText: {
+      /**
+       * @param {string} text
+       * @param {number} x
+       * @param {number} y
+       */
+      value: (text, x, y) => {
+        CanvasRenderingContext2D.prototype.fillText.call(context, text, x, y);
+        // TODO OQ using path here a hack and we should use command args? or just really okay/nice?
+        // could also do type: fill with just text path :)
+        commands.push({ type: "fillText", path: [["text", text, x, y]] });
+      },
+    },
+
     beginPath: {
       value: () => {
         CanvasRenderingContext2D.prototype.beginPath.call(context);
@@ -566,6 +580,36 @@ describe("Ellipse", function () {
       expect(path[6]).to.be.greaterThan(0);
       expect(path[7]).to.be.lessThan(2 * Math.PI);
       expect(canvas.commands[1]?.type).to.equal("stroke");
+    });
+  });
+});
+
+describe("Text", function () {
+  /** @type {p5} */
+  let p;
+  /** @type {RecordedCanvas} */
+  let canvas;
+
+  beforeEachSetUpSketch((newP, newCanvas) => {
+    p = newP;
+    canvas = newCanvas;
+  });
+
+  describe("render", function () {
+    it("should render shape", function () {
+      const text = new Text("A");
+      text.render(p);
+      const command = canvas.commands[0];
+      assert(command);
+      expect(command.type).to.equal("fillText");
+      const path = command.path[0];
+      assert(path);
+      expect(path.slice(0, 2)).to.deep.equal(["text", "A"]);
+      expect(path[2]).to.be.greaterThan(0);
+      expect(path[2]).to.be.lessThan(p.width / 2);
+      expect(path[3]).to.be.greaterThan(p.height / 2);
+      expect(path[3]).to.be.lessThan(p.height);
+      // TODO test stroke
     });
   });
 });

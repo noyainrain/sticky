@@ -2782,19 +2782,49 @@ export class Text extends Shape {
   renderShape(p) {
     this.fontSize.bind(this, this);
 
-    // TODO textSize option
-    // TODO textFont option
-    // TODO 0 0 once we have anchor
-    const fontSize = this.fontSize.evaluate();
-    if (fontSize !== AUTO) {
-      p.textFont("sans-serif", fontSize);
-      // p.textLeading(3 / 2 * fontSize);
-      p.textLeading(fontSize);
-    }
+    // we want to position at top left of bounding box, but that's not available as canvas baseline
+    // / align, so leave at default and compute manually std
 
-    p.textAlign(p.CENTER, p.CENTER);
-    p.textAlign(p.LEFT, p.TOP);
-    p.text(this.content, 0, 0, this.width.evaluate(), this.height.evaluate());
+    const FONT_UNITS = 1000;
+    const shapeWidth = this.width.evaluate();
+    const shapeHeight = this.height.evaluate();
+
+    // Measure font height and baseline
+    p.textSize(FONT_UNITS);
+    const fontAscent = p.fontAscent();
+    const fontDescent = p.fontDescent();
+    const fontHeight = fontAscent + fontDescent;
+
+    // Measure text width and offset
+    const textBox = p.textBounds(this.content, 0, 0);
+
+    // Scale to shape
+    const scale = Math.min(shapeWidth / textBox.w, shapeHeight / fontHeight);
+    const size = FONT_UNITS * scale;
+    const width = textBox.w * scale;
+    const height = fontHeight * scale;
+    const offset = -textBox.x * scale;
+    const baseline = fontAscent * scale;
+
+    // Align
+    const x = (shapeWidth - width) / 2;
+    const y = (shapeHeight - height) / 2;
+    const cursorX = x + offset;
+    const cursorY = y + baseline;
+
+    // console.log("F:ADH T:OW", fontAscent, fontDescent, fontHeight, textBox.x, textBox.w, "xS", scale, "=SOBWHXYXY", size, offset, baseline, width, height, x, y, cursorX, cursorY);
+    /*
+    p.push();
+    p.noFill();
+    p.stroke("blue");
+    p.rect(cursorX, y, width - offset, baseline);
+    p.rect(x, y, width, height);
+    p.rect(0, 0, shapeWidth, shapeHeight);
+    p.pop();
+    */
+
+    p.textSize(size);
+    p.text(this.content, cursorX, cursorY);
   }
 }
 
