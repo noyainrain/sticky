@@ -461,6 +461,8 @@ class App extends HTMLElement {
 
       p.draw = () => {
         p.background(0);
+        p.textFont("\"Noto Sans Variable\", sans-serif");
+
         if (this.#model) {
           this.#model.render(p);
         }
@@ -507,6 +509,8 @@ class App extends HTMLElement {
 
       p.draw = () => {
         p.background(0);
+        p.textFont("\"Noto Sans Variable\", sans-serif");
+
         if (this.#model) {
           try {
             this.#model.render(p);

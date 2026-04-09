@@ -5,10 +5,12 @@
         <title>Sticky Studio</title>
 
         <style>
+            @import "/node_modules/@fontsource-variable/noto-sans/wght.css";
+
             html,
             dialog {
                 background: gray;
-                font: medium / 1.5 sans-serif;
+                font: medium / 1.5 "Noto Sans Variable", sans-serif;
             }
 
             body {
@@ -21,6 +23,10 @@
                 display: block;
                 padding: 0.5rem;
                 margin: unset;
+            }
+
+            button {
+              font: unset;
             }
 
             a.block {
