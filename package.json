@@ -10,7 +10,8 @@
         "check": "npm run type && npm run test && npm run lint"
     },
     "dependencies": {
-        "p5": "^2.1"
+        "p5": "^2.1",
+        "@fontsource-variable/noto-sans": "^5.2"
     },
     "devDependencies": {
         "typescript": "^6.0",
