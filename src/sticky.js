@@ -956,6 +956,12 @@ export function shaded(color, scale) {
 }
 
 /**
+ * @typedef ColorStop
+ * @property {Value<"color">} color
+ * @property {Value<"auto">} x
+ */
+
+/**
  * @typedef LinearGradientOptions
  * @property {Value<"position">} [from]
  * @property {Value<"position">} [to]
@@ -970,22 +976,44 @@ export class LinearGradientValue extends Value {
   from;
   /** @type {Value<"position">} */
   to;
-  /** @type {Color[]} */
-  colors;
+  /** @type {ColorStop[]} */
+  stops;
 
   /**
    * @param {LinearGradientOptions | Color} [options]
-   * @param {...Color} colors
+   * @param {...Color | Value<"auto">} stops
    */
-  constructor(options = {}, ...colors) {
+  constructor(options = {}, ...stops) {
     super("linear-gradient");
     if (options instanceof Value) {
-      colors.unshift(options);
+      stops.unshift(options);
       options = {};
     }
     this.from = options.from ?? body(w(0), h(1 / 2));
     this.to = options.to ?? body(w(1), h(1 / 2));
-    this.colors = colors;
+
+    // Read color-x-pairs
+    this.stops = [];
+    let openColor = null;
+    for (const stop of stops) {
+      if (stop.type === "color") {
+        if (openColor) {
+          // Implicit automatic stop
+          this.stops.push({ color: openColor, x: auto() });
+        }
+        openColor = stop;
+      } else {
+        if (!openColor) {
+          // Implicit repeated color
+          openColor = this.stops.at(-1)?.color.clone() ?? color(tr(0), 0, 0);
+        }
+        this.stops.push({ color: openColor, x: stop });
+        openColor = null;
+      }
+    }
+    if (openColor) {
+      this.stops.push({ color: openColor, x: auto() });
+    }
   }
 
   /**
@@ -996,8 +1024,9 @@ export class LinearGradientValue extends Value {
     super.bind(shape, reference);
     this.from.bind(shape, reference);
     this.to.bind(shape, reference);
-    for (const color of this.colors) {
-      color.bind(shape, reference);
+    for (const stop of this.stops) {
+      stop.color.bind(shape, reference);
+      stop.x.bind(shape, reference);
     }
   }
 
@@ -1013,9 +1042,31 @@ export class LinearGradientValue extends Value {
     const from = this.from.evaluate();
     const to = this.to.evaluate();
     const gradient = shape.p.drawingContext.createLinearGradient(from.x, from.y, to.x, to.y);
-    for (const [i, color] of this.colors.entries()) {
-      gradient.addColorStop(i / (this.colors.length - 1), color.evaluate().toString());
+
+    let currentX = -1;
+    const interpolated = [];
+    for (const [i, stop] of this.stops.entries()) {
+      let x;
+      if (i === 0) {
+        x = 0;
+      } else if (i === this.stops.length - 1) {
+        x = 1;
+      } else {
+        interpolated.push(stop);
+        continue;
+      }
+
+      for (const [i, interStop] of interpolated.entries()) {
+        // buffer contains only midpoints, neither start nor end
+        const t = (i + 1) / (interpolated.length + 1);
+        gradient.addColorStop((1 - t) * currentX + t * x, interStop.color.evaluate().toString());
+      }
+
+      gradient.addColorStop(x, stop.color.evaluate().toString());
+      currentX = x;
+      interpolated.splice(0);
     }
+
     return gradient;
   }
 }
