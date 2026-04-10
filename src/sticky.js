@@ -958,7 +958,7 @@ export function shaded(color, scale) {
 /**
  * @typedef ColorStop
  * @property {Value<"color">} color
- * @property {Value<"auto">} x
+ * @property {Value<"scalar"> | Value<"auto">} x
  */
 
 /**
@@ -981,11 +981,11 @@ export class LinearGradientValue extends Value {
 
   /**
    * @param {LinearGradientOptions | Color} [options]
-   * @param {...Color | Value<"auto">} stops
+   * @param {...Color | Value<"scalar"> | Value<"auto"> | number} stops
    */
   constructor(options = {}, ...stops) {
     super("linear-gradient");
-    if (options instanceof Value) {
+    if (options instanceof Value || typeof options === "number") {
       stops.unshift(options);
       options = {};
     }
@@ -995,7 +995,10 @@ export class LinearGradientValue extends Value {
     // Read color-x-pairs
     this.stops = [];
     let openColor = null;
-    for (const stop of stops) {
+    for (let stop of stops) {
+      if (typeof stop === "number") {
+        stop = scalar(stop);
+      }
       if (stop.type === "color") {
         if (openColor) {
           // Implicit automatic stop
@@ -1046,14 +1049,16 @@ export class LinearGradientValue extends Value {
     let currentX = -1;
     const interpolated = [];
     for (const [i, stop] of this.stops.entries()) {
-      let x;
-      if (i === 0) {
-        x = 0;
-      } else if (i === this.stops.length - 1) {
-        x = 1;
-      } else {
-        interpolated.push(stop);
-        continue;
+      let x = stop.x.evaluate();
+      if (x === AUTO) {
+        if (i === 0) {
+          x = 0;
+        } else if (i === this.stops.length - 1) {
+          x = 1;
+        } else {
+          interpolated.push(stop);
+          continue;
+        }
       }
 
       for (const [i, interStop] of interpolated.entries()) {
