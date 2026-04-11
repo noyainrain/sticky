@@ -1098,20 +1098,20 @@ export function linearGradient(options = {}, ...colors) {
 
 /**
  * ...
- * @template {Numeric} T
+ * @template {Numeric} [T = "scalar"]
  * @extends {Value<T>}
  */
-export class MultiplyValue extends Value {
+export class SingleQuantityOperationValue extends Value {
   /**
    * ...
-   * @type {[Value<T>, ...Scalar[]]}
+   * @type {[Value<T>, ...Value<"scalar">[]]}
    */
   values;
 
   /**
    * @param {Value<T> | number} a
-   * @param {Scalar | number} b
-   * @param {(Scalar | number)[]} values
+   * @param {Value<"scalar"> | number} b
+   * @param {(Value<"scalar"> | number)[]} values
    */
   constructor(a, b, ...values) {
     if (typeof a === "number") {
@@ -1123,7 +1123,6 @@ export class MultiplyValue extends Value {
     ];
   }
 
-  // TODO design without chaining
   /**
    * @param {Shape} shape
    * @param {Shape | p5} reference
@@ -1134,7 +1133,14 @@ export class MultiplyValue extends Value {
       value.bind(shape, reference);
     }
   }
+}
 
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
+ * @extends {SingleQuantityOperationValue<T>}
+ */
+export class MultiplyValue extends SingleQuantityOperationValue {
   compute() {
     return this.values.map(value => value.evaluate()).reduce((a, b) => a * b);
   }
@@ -1142,10 +1148,10 @@ export class MultiplyValue extends Value {
 
 /**
  * ...
- * @template {Numeric} T
+ * @template {Numeric} [T = "scalar"]
  * @param {Value<T> | number} a
- * @param {Scalar | number} b
- * @param {(Scalar | number)[]} values
+ * @param {Value<"scalar"> | number} b
+ * @param {(Value<"scalar"> | number)[]} values
  * @returns {MultiplyValue<T>}
  */
 export function multiply(a, b, ...values) {
