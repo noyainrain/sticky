@@ -1161,6 +1161,29 @@ export function multiply(a, b, ...values) {
 /**
  * ...
  * @template {Numeric} [T = "scalar"]
+ * @extends {SingleQuantityOperationValue<T>}
+ */
+export class DivideValue extends SingleQuantityOperationValue {
+  compute() {
+    return this.values.map(value => value.evaluate()).reduce((a, b) => a / b);
+  }
+}
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
+ * @param {Value<T> | number} a
+ * @param {Value<"scalar"> | number} b
+ * @param {(Value<"scalar"> | number)[]} values
+ * @returns {DivideValue<T>}
+ */
+export function divide(a, b, ...values) {
+  return new DivideValue(a, b, ...values);
+}
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
  * @extends {Value<T>}
  */
 export class RoundedValue extends Value {
