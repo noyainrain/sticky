@@ -1513,37 +1513,16 @@ const SEED = rand(new Date().valueOf()) * (2 ** 32); // (2 ** 52);
 
 /**
  * ...
- * @extends {Value<"scalar">}
  */
-export class NoiseValue extends Value {
+export class NoiseValue extends SignalValue {
   /**
-   * ...
-   * @type {Value<"scalar">}
+   * @param {number} x
    */
-  x;
-
-  /**
-   * @param {Value<"scalar"> | number} x
-   */
-  constructor(x) {
-    super("scalar");
-    this.x = typeof x === "number" ? scalar(x) : x;
-  }
-
-  /**
-   * @param {Shape} shape
-   * @param {Shape | p5} reference
-   */
-  bind(shape, reference) {
-    super.bind(shape, reference);
-    this.x.bind(shape, reference);
-  }
-
-  compute() {
-    const x = this.x.evaluate() + SEED;
+  sample(x) {
+    x += SEED;
     const floor = Math.floor(x);
     const t = x % 1;
-    return (1 - t) * rand(floor) + t * rand(floor + 1);
+    return ((1 - t) * rand(floor) + t * rand(floor + 1)) * 2 - 1;
   }
 }
 
