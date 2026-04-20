@@ -1371,6 +1371,77 @@ export function lerp(from, to, t) {
   return new LerpValue(from, to, t);
 }
 
+// TODO
+// wave(x, length, scale, offset, octaves)
+// noise(x, length, scale, offset, octaves)
+// inspired by wave(x, period, amplitude, phase, octaves)
+// x and offset could point for 2d version
+
+/**
+ * ...
+ * @extends Value<"scalar">
+ */
+export class SignalValue extends Value {
+  /**
+   * ...
+   * @type {Value<"scalar">}
+   */
+  x;
+
+  /**
+   * @param {Value<"scalar"> | number} x
+   */
+  constructor(x) {
+    super("scalar");
+    this.x = typeof x === "number" ? scalar(x) : x;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.x.bind(shape, reference);
+  }
+
+  /**
+   * ...
+   * @param {number} x
+   * @returns {number}
+   */
+  // eslint-disable-next-line no-unused-vars
+  sample(x) {
+    throw new Error("Abstract method");
+  }
+
+  compute() {
+    return this.sample(this.x.evaluate());
+  }
+}
+
+/**
+ * ...
+ */
+export class SinValue extends SignalValue {
+  /**
+   * @param {number} x
+   */
+  sample(x) {
+    // TODO 2 PI? full period?
+    return Math.sin(x * Math.PI);
+  }
+}
+
+/**
+ * ...
+ * @param {Value<"scalar"> | number} x
+ * @returns SinValue
+ */
+export function sin(x) {
+  return new SinValue(x);
+}
+
 /**
  * @template {Numeric} T
  * @extends {Value<T>}

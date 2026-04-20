@@ -7,7 +7,7 @@ import {
   // eslint-disable-next-line no-unused-vars
   divide, e, ease, easeOn, easeOut, edge, h, hued, linear, linearGradient, lerp, multiply, noise,
   // eslint-disable-next-line no-unused-vars
-  point, polar, px, random, repeated, rounded, scalar, shaded, subtract, time, tr, transparent,
+  point, polar, px, random, repeated, rounded, scalar, shaded, sin, subtract, time, tr, transparent,
   // eslint-disable-next-line no-unused-vars
   tween, variable, w, wrap,
 } from "#sticky";
