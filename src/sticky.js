@@ -1392,16 +1392,23 @@ export class SignalValue extends Value {
    * @type {Value<"scalar">}
    */
   period;
+  /**
+   * ...
+   * @type {Value<"scalar">}
+   */
+  octaves;
 
   /**
    * @param {Value<"scalar"> | number} x
    * @param {Object} [options]
    * @param {Value<"scalar"> | number} [options.period]
+   * @param {Value<"scalar"> | number} [options.octaves]
    */
-  constructor(x, { period = 1 } = {}) {
+  constructor(x, { period = 1, octaves = 1 } = {}) {
     super("scalar");
     this.x = typeof x === "number" ? scalar(x) : x;
     this.period = typeof period === "number" ? scalar(period) : period;
+    this.octaves = typeof octaves === "number" ? scalar(octaves) : octaves;
   }
 
   /**
@@ -1412,6 +1419,7 @@ export class SignalValue extends Value {
     super.bind(shape, reference);
     this.x.bind(shape, reference);
     this.period.bind(shape, reference);
+    this.octaves.bind(shape, reference);
   }
 
   /**
@@ -1425,7 +1433,16 @@ export class SignalValue extends Value {
   }
 
   compute() {
-    return this.sample(this.x.evaluate() / this.period.evaluate());
+    const x = this.x.evaluate();
+    const period = this.period.evaluate();
+    let result = 0;
+    let norm = 0;
+    for (let i = 0; i < this.octaves.evaluate(); i++) {
+      const f = Math.pow(2, i);
+      result += this.sample(x / period * f) / f;
+      norm += 1 / f;
+    }
+    return result / norm;
   }
 }
 
@@ -1447,10 +1464,11 @@ export class SinValue extends SignalValue {
  * @param {Value<"scalar"> | number} x
  * @param {Object} [options]
  * @param {Value<"scalar"> | number} [options.period]
+ * @param {Value<"scalar"> | number} [options.octaves]
  * @returns SinValue
  */
-export function sin(x, { period = 1 } = {}) {
-  return new SinValue(x, { period });
+export function sin(x, { period = 1, octaves = 1 } = {}) {
+  return new SinValue(x, { period, octaves });
 }
 
 /**
@@ -1542,10 +1560,11 @@ export class NoiseValue extends SignalValue {
  * @param {Value<"scalar"> | number} x
  * @param {Object} [options]
  * @param {Value<"scalar"> | number} [options.period]
+ * @param {Value<"scalar"> | number} [options.octaves]
  * @returns {NoiseValue}
  */
-export function noise(x, { period = 1 } = {}) {
-  return new NoiseValue(x, { period });
+export function noise(x, { period = 1, octaves = 1 } = {}) {
+  return new NoiseValue(x, { period, octaves });
 }
 
 /**
