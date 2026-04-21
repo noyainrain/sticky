@@ -1387,13 +1387,21 @@ export class SignalValue extends Value {
    * @type {Value<"scalar">}
    */
   x;
+  /**
+   * ...
+   * @type {Value<"scalar">}
+   */
+  period;
 
   /**
    * @param {Value<"scalar"> | number} x
+   * @param {Object} [options]
+   * @param {Value<"scalar"> | number} [options.period]
    */
-  constructor(x) {
+  constructor(x, { period = 1 } = {}) {
     super("scalar");
     this.x = typeof x === "number" ? scalar(x) : x;
+    this.period = typeof period === "number" ? scalar(period) : period;
   }
 
   /**
@@ -1403,6 +1411,7 @@ export class SignalValue extends Value {
   bind(shape, reference) {
     super.bind(shape, reference);
     this.x.bind(shape, reference);
+    this.period.bind(shape, reference);
   }
 
   /**
@@ -1416,7 +1425,7 @@ export class SignalValue extends Value {
   }
 
   compute() {
-    return this.sample(this.x.evaluate());
+    return this.sample(this.x.evaluate() / this.period.evaluate());
   }
 }
 
@@ -1436,10 +1445,12 @@ export class SinValue extends SignalValue {
 /**
  * ...
  * @param {Value<"scalar"> | number} x
+ * @param {Object} [options]
+ * @param {Value<"scalar"> | number} [options.period]
  * @returns SinValue
  */
-export function sin(x) {
-  return new SinValue(x);
+export function sin(x, { period = 1 } = {}) {
+  return new SinValue(x, { period });
 }
 
 /**
@@ -1529,10 +1540,12 @@ export class NoiseValue extends SignalValue {
 /**
  * ...
  * @param {Value<"scalar"> | number} x
+ * @param {Object} [options]
+ * @param {Value<"scalar"> | number} [options.period]
  * @returns {NoiseValue}
  */
-export function noise(x) {
-  return new NoiseValue(x);
+export function noise(x, { period = 1 } = {}) {
+  return new NoiseValue(x, { period });
 }
 
 /**
