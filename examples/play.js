@@ -3,13 +3,13 @@
 import p5 from "p5";
 import {
   // eslint-disable-next-line no-unused-vars
-  AUTO, CGA_PALETTE, Ellipse, Image, Rectangle, Shape, Text, Triangle, add, assert, body, color,
+  AUTO, CGA_PALETTE, Ellipse, Image, Rectangle, Shape, Text, Triangle, add, assert, body, clamp,
   // eslint-disable-next-line no-unused-vars
-  divide, e, ease, easeOn, easeOut, edge, h, hued, linear, linearGradient, lerp, multiply, noise,
+  color, divide, e, ease, easeOn, easeOut, edge, h, hued, linear, linearGradient, lerp, multiply,
   // eslint-disable-next-line no-unused-vars
-  point, polar, px, random, repeated, rounded, scalar, shaded, sin, subtract, time, tr, transparent,
+  noise, point, polar, px, random, repeated, rounded, scalar, shaded, sin, subtract, time, tr,
   // eslint-disable-next-line no-unused-vars
-  tween, variable, w, wrap,
+  transparent, tween, variable, w, wrap,
 } from "#sticky";
 
 /* eslint-disable @stylistic/no-tabs */

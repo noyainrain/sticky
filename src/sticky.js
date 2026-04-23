@@ -1234,6 +1234,74 @@ export function rounded(value) {
  * @template {Numeric} [T = "scalar"]
  * @extends Value<T>
  */
+export class ClampValue extends Value {
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  value;
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  min;
+  /**
+   * ...
+   * @type {Value<T>}
+   */
+  max;
+
+  /**
+   * @param {Value<T> | number} min
+   * @param {Value<T> | number} value
+   * @param {Value<T> | number} max
+   */
+  constructor(min, value, max) {
+    if (typeof value === "number") {
+      value = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(value)));
+    }
+    super(value.type);
+    this.value = value;
+    this.min = typeof min === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(min)))
+      : min;
+    this.max = typeof max === "number"
+      ? /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(max)))
+      : max;
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.value.bind(shape, reference);
+    this.min.bind(shape, reference);
+    this.max.bind(shape, reference);
+  }
+
+  compute() {
+    return Math.max(Math.min(this.value.evaluate(), this.max.evaluate()), this.min.evaluate());
+  }
+}
+
+/**
+ * @template {Numeric} [T = "scalar"]
+ * @param {Value<T> | number} min
+ * @param {Value<T> | number} value
+ * @param {Value<T> | number} max
+ * @returns {ClampValue<T>}
+ */
+export function clamp(min, value, max) {
+  return new ClampValue(min, value, max);
+}
+
+/**
+ * ...
+ * @template {Numeric} [T = "scalar"]
+ * @extends Value<T>
+ */
 export class WrapValue extends Value {
   /**
    * ...
