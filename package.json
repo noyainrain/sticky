@@ -1,4 +1,5 @@
 {
+    "type": "module",
     "scripts": {
         "type": "tsc --project jsconfig.json || true",
         "lint": "eslint",
