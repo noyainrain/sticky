@@ -1,0 +1,11 @@
+name: Check Code
+on:
+  - push
+  - pull_request
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: npm update --no-package-lock
+      - run: npm run check
