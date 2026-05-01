@@ -1,6 +1,7 @@
 {
     "scripts": {
-        "check": ""
+        "type": "tsc --project jsconfig.json || true",
+        "check": "npm run type"
     },
     "devDependencies": {
         "typescript": "^6.0"
