@@ -2,5 +2,7 @@
     "scripts": {
         "check": ""
     },
-    "devDependencies": {}
+    "devDependencies": {
+        "typescript": "^6.0"
+    }
 }
