@@ -1507,7 +1507,8 @@ export class SignalValue extends Value {
     let norm = 0;
     for (let i = 0; i < this.octaves.evaluate(); i++) {
       const f = Math.pow(2, i);
-      result += this.sample(x / period * f) / f;
+      // TODO how large should shift be?
+      result += this.sample(x / period * f + i * 1000) / f;
       norm += 1 / f;
     }
     return result / norm;
