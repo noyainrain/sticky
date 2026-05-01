@@ -4,6 +4,8 @@
         "check": "npm run type"
     },
     "devDependencies": {
-        "typescript": "^6.0"
+        "typescript": "^6.0",
+        "eslint": "^10.2",
+        "@eslint/js": "^10.0"
     }
 }
