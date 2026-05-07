@@ -5,6 +5,8 @@ import {
   NEON_PALETTE, Ellipse, Rectangle, Text, h, point, px, subtract, transparent, variable, w,
 } from "#sticky";
 
+/** @typedef {"north" | "east" | "south" | "west"} Direction */
+
 /**
  * @type {Game}
  */
@@ -141,6 +143,43 @@ class World extends Screen {
 
   render() {
     this.#model.render(game.p);
+  }
+
+  /**
+   * @param {string} key
+   */
+  onKeyPressed(key) {
+    /** @type {Object<string, Direction>} */
+    const directions = {
+      [game.p.UP_ARROW]: "north",
+      [game.p.RIGHT_ARROW]: "east",
+      [game.p.DOWN_ARROW]: "south",
+      [game.p.LEFT_ARROW]: "west",
+    };
+    const direction = directions[key];
+    if (direction) {
+      this.move(direction);
+    }
+  }
+
+  /**
+   * ...
+   * @param {Direction} direction
+   */
+  move(direction) {
+    /** @type {Object<Direction, [number, number]>} */
+    const offsets = {
+      north: [0, -1],
+      east: [1, 0],
+      south: [0, 1],
+      west: [-1, 0],
+    };
+    const offset = offsets[direction];
+    const x = this.player.x + offset[0];
+    const y = this.player.y + offset[1];
+    if (x >= 0 && x < World.GRID_SIZE && y >= 0 && y < World.GRID_SIZE) {
+      this.player.moveTo(x, y);
+    }
   }
 }
 
