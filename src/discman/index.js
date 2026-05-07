@@ -2,7 +2,7 @@
 
 import p5 from "p5";
 import {
-  NEON_PALETTE, Rectangle, Text, h, point, px, subtract, transparent, variable, w,
+  NEON_PALETTE, Ellipse, Rectangle, Text, h, point, px, subtract, transparent, variable, w,
 } from "#sticky";
 
 /**
@@ -82,12 +82,39 @@ class Cell extends Entity {
 }
 
 /** ... */
+class Character extends Entity {
+  constructor() {
+    super(
+      new Ellipse(
+        h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
+        { fill: variable("lightCyan", "color") },
+      ),
+    );
+  }
+
+  /**
+   * ...
+   * @param {number} x - ...
+   * @param {number} y - ...
+   */
+  moveTo(x, y) {
+    super.moveTo(x, y);
+    this.model.at = point(h((x + 1 / 2) / World.GRID_SIZE), h((y + 1 / 2) / World.GRID_SIZE));
+  }
+}
+
+/** ... */
 class World extends Screen {
   /**
    * ...
    * @type {Cell[][]}
    */
   grid;
+  /**
+   * ...
+   * @type {Character}
+   */
+  player;
 
   /** @type {Rectangle} */
   #model;
@@ -99,14 +126,15 @@ class World extends Screen {
     this.grid = [...Array(World.GRID_SIZE).keys()].map(
       y => [...Array(World.GRID_SIZE).keys()].map(x => new Cell(x, y)),
     );
+    this.player = new Character();
+    this.player.moveTo(0, World.GRID_SIZE - 1);
 
     this.#model = new Rectangle(
       { variables: { ...NEON_PALETTE }, fill: variable("black", "color"), stroke: transparent() },
 
       // Grid
       new Rectangle(
-        h(1),
-        ...this.grid.flatMap(row => row.map(cell => cell.model)),
+        h(1), ...this.grid.flatMap(row => row.map(cell => cell.model)), this.player.model,
       ),
     );
   }
