@@ -219,6 +219,8 @@ class Game extends HTMLElement {
       p.keyPressed = () => {
         if (this.overlay) {
           this.overlay.onKeyPressed(p.key);
+        } else {
+          this.world.onKeyPressed(p.key);
         }
       };
     });
