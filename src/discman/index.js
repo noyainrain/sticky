@@ -14,6 +14,13 @@ let game;
 class Screen {
   /** ... */
   render() {}
+
+  /**
+   * ...
+   * @param {string} key
+   */
+  // eslint-disable-next-line no-unused-vars
+  onKeyPressed(key) {}
 }
 
 /**
@@ -169,6 +176,12 @@ class Game extends HTMLElement {
         this.world.render();
         if (this.overlay) {
           this.overlay.render();
+        }
+      };
+
+      p.keyPressed = () => {
+        if (this.overlay) {
+          this.overlay.onKeyPressed(p.key);
         }
       };
     });
