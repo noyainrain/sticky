@@ -108,6 +108,11 @@ class World extends Screen {
 }
 
 /** ... */
+class Pause extends Screen {
+  render() {}
+}
+
+/** ... */
 class Game extends HTMLElement {
   /**
    * ...
@@ -118,6 +123,11 @@ class Game extends HTMLElement {
    * @type {World}
    */
   world = new World();
+  /**
+   * ...
+   * @type {?Pause}
+   */
+  overlay = new Pause();
 
   constructor() {
     super();
@@ -130,6 +140,9 @@ class Game extends HTMLElement {
 
       p.draw = () => {
         this.world.render();
+        if (this.overlay) {
+          this.overlay.render();
+        }
       };
     });
   }
