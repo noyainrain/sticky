@@ -962,35 +962,18 @@ export function shaded(color, scale) {
  */
 
 /**
- * @typedef LinearGradientOptions
- * @property {Value<"position">} [from]
- * @property {Value<"position">} [to]
- */
-
-/**
  * ...
  * @extends {Value<"linear-gradient">}
  */
-export class LinearGradientValue extends Value {
-  /** @type {Value<"position">} */
-  from;
-  /** @type {Value<"position">} */
-  to;
+export class GradientValue extends Value {
   /** @type {ColorStop[]} */
   stops;
 
   /**
-   * @param {LinearGradientOptions | Color} [options]
    * @param {...Color | Value<"scalar"> | Value<"auto"> | number} stops
    */
-  constructor(options = {}, ...stops) {
+  constructor(...stops) {
     super("linear-gradient");
-    if (options instanceof Value || typeof options === "number") {
-      stops.unshift(options);
-      options = {};
-    }
-    this.from = options.from ?? body(w(0), h(1 / 2));
-    this.to = options.to ?? body(w(1), h(1 / 2));
 
     // Read color-x-pairs
     this.stops = [];
@@ -1025,12 +1008,20 @@ export class LinearGradientValue extends Value {
    */
   bind(shape, reference) {
     super.bind(shape, reference);
-    this.from.bind(shape, reference);
-    this.to.bind(shape, reference);
     for (const stop of this.stops) {
       stop.color.bind(shape, reference);
       stop.x.bind(shape, reference);
     }
+  }
+
+  /**
+   * ...
+   * @param {CanvasRenderingContext2D} context
+   * @returns {CanvasGradient}
+   */
+  // eslint-disable-next-line no-unused-vars
+  makeGradient(context) {
+    throw new Error("Abstract method");
   }
 
   /**
@@ -1042,9 +1033,7 @@ export class LinearGradientValue extends Value {
     }
     // TODO rather if? okay to return null? throw error?
     assert(shape.p.drawingContext instanceof CanvasRenderingContext2D);
-    const from = this.from.evaluate();
-    const to = this.to.evaluate();
-    const gradient = shape.p.drawingContext.createLinearGradient(from.x, from.y, to.x, to.y);
+    const gradient = this.makeGradient(shape.p.drawingContext);
 
     let currentX = -1;
     const interpolated = [];
@@ -1073,6 +1062,53 @@ export class LinearGradientValue extends Value {
     }
 
     return gradient;
+  }
+}
+
+/**
+ * @typedef LinearGradientOptions
+ * @property {Value<"position">} [from]
+ * @property {Value<"position">} [to]
+ */
+
+/** ... */
+export class LinearGradientValue extends GradientValue {
+  /** @type {Value<"position">} */
+  from;
+  /** @type {Value<"position">} */
+  to;
+
+  /**
+   * @param {LinearGradientOptions | Color} [options]
+   * @param {...Color | Value<"scalar"> | Value<"auto"> | number} stops
+   */
+  constructor(options = {}, ...stops) {
+    if (options instanceof Value || typeof options === "number") {
+      stops.unshift(options);
+      options = {};
+    }
+    super(...stops);
+    this.from = options.from ?? body(w(0), h(1 / 2));
+    this.to = options.to ?? body(w(1), h(1 / 2));
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.from.bind(shape, reference);
+    this.to.bind(shape, reference);
+  }
+
+  /**
+   * @param {CanvasRenderingContext2D} context
+   */
+  makeGradient(context) {
+    const from = this.from.evaluate();
+    const to = this.to.evaluate();
+    return context.createLinearGradient(from.x, from.y, to.x, to.y);
   }
 }
 
