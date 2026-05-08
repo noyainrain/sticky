@@ -1,7 +1,9 @@
 /** Disc-Man. */
 
 import p5 from "p5";
-import { NEON_PALETTE, Rectangle, h, point, px, subtract, transparent, variable } from "#sticky";
+import {
+  NEON_PALETTE, Rectangle, Text, h, point, px, subtract, transparent, variable, w,
+} from "#sticky";
 
 /**
  * @type {Game}
@@ -109,7 +111,31 @@ class World extends Screen {
 
 /** ... */
 class Pause extends Screen {
-  render() {}
+  /** @type {import("#sticky").Shape} */
+  #model = new Rectangle(
+    {
+      variables: { ...NEON_PALETTE },
+      fill: variable("black", "color"),
+      stroke: transparent(),
+    },
+    new Text(
+      "Disc-Man",
+      w(1), px(4 * 22),
+      {
+        at: point(w(1 / 2), px(22)),
+        anchor: point(w(1 / 2), h(0)),
+        fill: variable("white", "color"),
+      },
+    ),
+    new Text(
+      "Press Space to Play", w(1), px(2 * 22), point(w(1 / 2), h(2 / 3)),
+      { fill: variable("white", "color") },
+    ),
+  );
+
+  render() {
+    this.#model.render(game.p);
+  }
 }
 
 /** ... */
@@ -136,6 +162,7 @@ class Game extends HTMLElement {
     this.p = new p5((p) => {
       p.setup = () => {
         p.createCanvas(640, 360);
+        p.textFont("\"Noto Sans\", sans-serif");
       };
 
       p.draw = () => {
