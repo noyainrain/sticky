@@ -143,6 +143,15 @@ class Pause extends Screen {
   render() {
     this.#model.render(game.p);
   }
+
+  /**
+   * @param {string} key
+   */
+  onKeyPressed(key) {
+    if (key === " ") {
+      game.play();
+    }
+  }
 }
 
 /** ... */
@@ -185,6 +194,11 @@ class Game extends HTMLElement {
         }
       };
     });
+  }
+
+  /** ... */
+  play() {
+    this.overlay = null;
   }
 }
 customElements.define("discman-game", Game);
