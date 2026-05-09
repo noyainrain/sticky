@@ -1123,6 +1123,69 @@ export function linearGradient(options = {}, ...colors) {
 }
 
 /**
+ * @typedef RadialGradientOptions
+ * @property {Value<"position">} [center]
+ * @property {Value<"length">} [radius]
+ */
+
+/** ... */
+export class RadialGradientValue extends GradientValue {
+  /**
+   * ...
+   * @type {Value<"position">}
+   */
+  center;
+  /**
+   * ...
+   * @type {Value<"length">}
+   */
+  radius;
+
+  /**
+   * @param {RadialGradientOptions | Color | Value<"scalar"> | Value<"auto"> | number} options
+   * @param {...Color | Value<"scalar"> | Value<"auto"> | number} stops
+   */
+  constructor(options = {}, ...stops) {
+    if (options instanceof Value || typeof options === "number") {
+      stops.unshift(options);
+      options = {};
+    }
+    super(...stops);
+    this.center = options.center ?? point(w(1 / 2), h(1 / 2));
+    this.radius = options.radius ?? h(1 / 2);
+  }
+
+  /**
+   * @param {Shape} shape
+   * @param {Shape | p5} reference
+   */
+  bind(shape, reference) {
+    super.bind(shape, reference);
+    this.center.bind(shape, reference);
+    this.radius.bind(shape, reference);
+  }
+
+  /**
+   * @param {CanvasRenderingContext2D} context
+   */
+  makeGradient(context) {
+    const center = this.center.evaluate();
+    const radius = this.radius.evaluate();
+    return context.createRadialGradient(center.x, center.y, 0, center.x, center.y, radius);
+  }
+}
+
+/**
+ * ...
+ * @param {RadialGradientOptions | Color | Value<"scalar"> | Value<"auto"> | number} options
+ * @param {...Color | Value<"scalar"> | Value<"auto"> | number} stops
+ * @returns {RadialGradientValue}
+ */
+export function radialGradient(options = {}, ...stops) {
+  return new RadialGradientValue(options, ...stops);
+}
+
+/**
  * ...
  * @typedef {Value<"linear-gradient">} LinearGradient
  */
