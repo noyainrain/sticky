@@ -4,6 +4,7 @@ import p5 from "p5";
 import {
   NEON_PALETTE, Ellipse, Rectangle, Text, h, point, px, subtract, transparent, variable, w,
 } from "#sticky";
+import { Audio } from "#audio";
 
 /** @typedef {"north" | "east" | "south" | "west"} Direction */
 
@@ -229,6 +230,12 @@ class Game extends HTMLElement {
    */
   p;
   /**
+   * ...
+   * @type {Audio}
+   */
+  audio = new Audio();
+  /**
+   * ...
    * @type {World}
    */
   world = new World();
@@ -268,6 +275,7 @@ class Game extends HTMLElement {
   /** ... */
   play() {
     this.overlay = null;
+    this.audio.resume();
   }
 }
 customElements.define("discman-game", Game);
