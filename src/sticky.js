@@ -1844,6 +1844,30 @@ export const CGA_PALETTE = {
   white: color(tr(0), 0, 3 / 3),
 };
 
+// OQ should e.g. red be fully neon and light red lighter as usual? or okay like it is now?
+export const NEON_PALETTE = {
+  red: color(tr(0 / 6), 1, 1 / 3),
+  brown: color(tr(1 / 12), 1, 1 / 3),
+  yellow: color(tr(1 / 6), 1, 1 / 3),
+  green: color(tr(2 / 6), 1, 1 / 3),
+  cyan: color(tr(3 / 6), 1, 1 / 3),
+  blue: color(tr(4 / 6), 1, 1 / 3),
+  magenta: color(tr(5 / 6), 1, 1 / 3),
+
+  lightRed: color(tr(0 / 6), 1, 1 / 2),
+  lightBrown: color(tr(1 / 12), 1, 1 / 2),
+  lightYellow: color(tr(1 / 6), 1, 1 / 2),
+  lightGreen: color(tr(2 / 6), 1, 1 / 2),
+  lightCyan: color(tr(3 / 6), 1, 1 / 2),
+  lightBlue: color(tr(4 / 6), 1, 1 / 2),
+  lightMagenta: color(tr(5 / 6), 1, 1 / 2),
+
+  black: color(tr(0), 0, 0),
+  darkGray: color(tr(0), 0, 1 / 3),
+  lightGray: color(tr(0), 0, 2 / 3),
+  white: color(tr(0), 0, 3 / 3),
+};
+
 /**
  * @param {number} progress
  */
