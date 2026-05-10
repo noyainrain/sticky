@@ -2,8 +2,8 @@
 
 import p5 from "p5";
 import {
-  NEON_PALETTE, Ellipse, Rectangle, Text, add, color, easeOut, h, multiply, point, px, subtract, tr,
-  transparent, tween, variable, w,
+  NEON_PALETTE, Ellipse, Rectangle, Text, add, assert, color, easeOut, h, multiply, point, px,
+  subtract, tr, transparent, tween, variable, w,
 } from "#sticky";
 import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
 
@@ -128,6 +128,12 @@ class Character extends Entity {
   }
 }
 
+/**
+ * @typedef Hit
+ * @property {?boolean} hit
+ * @property {?number} deviation
+ */
+
 /** ... */
 class World extends Screen {
   /**
@@ -141,9 +147,13 @@ class World extends Screen {
    */
   player;
 
+  #nextBeat = 0;
+  #beatWindow = 0;
+  /** @type {Hit[]} */
+  #hits = [{ hit: null, deviation: null }];
+  #meanDeviation = 0;
   /** @type {Rectangle} */
   #model;
-  #nextBeat = 0;
   #debugText = new Text(
     "", w(1), px(22), point(w(1), h(0)),
     { anchor: point(w(1), h(0)), fill: variable("white", "color"), alignment: 1 },
@@ -175,6 +185,21 @@ class World extends Screen {
 
   render() {
     const t = game.p.millis() / 1000;
+    const beat = t / World.INTERVAL;
+    if (beat - this.#beatWindow >= 0.5) {
+      this.#beatWindow++;
+      this.#hits.unshift({ hit: null, deviation: null });
+      if (this.#hits.length >= 16) {
+        this.#hits.pop();
+      }
+      const stats = this.#hits.filter(hit => hit.deviation !== null).map(hit => hit.deviation ?? 0);
+      if (stats.length) {
+        this.#meanDeviation = stats.reduce((sum, deviation) => sum + deviation) / stats.length;
+      } else {
+        this.#meanDeviation = 0;
+      }
+    }
+
     this.clockShift = t - game.audio.t;
     // console.log(
     //   "CLOCK",
@@ -231,7 +256,7 @@ class World extends Screen {
 
     this.#model.render(game.p);
 
-    this.#debugText.content = `${game.p.frameRate().toFixed(0)} fps`;
+    this.#debugText.content = `${game.p.frameRate().toFixed(0)} fps\n${(this.#meanDeviation * 100).toFixed(0)} %`;
   }
 
   /**
@@ -271,12 +296,21 @@ class World extends Screen {
 
       // const t = game.audio.t;
       const t = game.p.millis() / 1000;
-      const diff1 = t - Math.floor(t / World.INTERVAL) * World.INTERVAL;
-      const diff2 = Math.abs(t - Math.ceil(t / World.INTERVAL) * World.INTERVAL);
-      const diff = Math.min(diff1, diff2);
+      // const diff1 = t - Math.floor(t / World.INTERVAL) * World.INTERVAL;
+      // const diff2 = Math.abs(t - Math.ceil(t / World.INTERVAL) * World.INTERVAL);
+      // const diff = Math.min(diff1, diff2);
+      const diff = Math.abs(t - (this.#beatWindow * World.INTERVAL));
       const rel = diff / World.INTERVAL;
 
-      if (rel < 1 / 2 / 2) {
+      const hit = this.#hits[0];
+      assert(hit);
+      if (hit.hit === null) {
+        hit.hit = rel < 1 / 2 / 2;
+        hit.deviation = rel;
+      } else {
+        hit.hit = false;
+      }
+      if (hit.hit) {
         this.grid[y]?.[x]?.activate();
       }
     }
