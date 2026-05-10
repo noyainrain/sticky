@@ -2,8 +2,8 @@
 
 import p5 from "p5";
 import {
-  NEON_PALETTE, Ellipse, Rectangle, Text, color, h, point, px, subtract, tr, transparent, variable,
-  w,
+  NEON_PALETTE, Ellipse, Rectangle, Text, add, color, easeOut, h, multiply, point, px, subtract, tr,
+  transparent, tween, variable, w,
 } from "#sticky";
 import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
 
@@ -86,7 +86,15 @@ class Cell extends Entity {
 
   activate() {
     this.model.stroke = variable("lightCyan", "color");
-    this.model.fill = color(tr(3 / 6), 1, 1 / 2, { alpha: 1 / 3 });
+    // this.model.fill = radialGradient(
+    //   color(
+    //     tr(3 / 6), 1, 1 / 2, { alpha: tween(1 / 2, 1 / 3, World.INTERVAL, { easing: easeOut }) },
+    //   ),
+    //   color(tr(3 / 6), 1, 1 / 2, { alpha: 1 / 2 }),
+    // );
+    this.model.fill = color(
+      tr(3 / 6), 1, 1 / 2, { alpha: tween(1 / 2, 1 / 3, World.INTERVAL, { easing: easeOut }) },
+    );
   }
 }
 
@@ -95,8 +103,9 @@ class Character extends Entity {
   constructor() {
     super(
       new Ellipse(
-        h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
-        { fill: variable("lightCyan", "color") },
+        h(1 / World.GRID_SIZE / 2),
+        multiply(h(1 / World.GRID_SIZE / 2), tween(7 / 8, 1, World.INTERVAL, { easing: easeOut })),
+        { anchor: point(w(1 / 2), h(1)), fill: variable("lightCyan", "color") },
       ),
     );
   }
@@ -108,7 +117,14 @@ class Character extends Entity {
    */
   moveTo(x, y) {
     super.moveTo(x, y);
-    this.model.at = point(h((x + 1 / 2) / World.GRID_SIZE), h((y + 1 / 2) / World.GRID_SIZE));
+    this.model.at = point(
+      h((x + 1 / 2) / World.GRID_SIZE),
+      add(
+        h((y + 1 / 2) / World.GRID_SIZE),
+        h(1 / World.GRID_SIZE / 2 / 2),
+        tween(h(1 / World.GRID_SIZE / 2 / 8), 0, World.INTERVAL, { easing: easeOut }),
+      ),
+    );
   }
 }
 
