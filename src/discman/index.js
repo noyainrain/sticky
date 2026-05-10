@@ -122,6 +122,10 @@ class World extends Screen {
   /** @type {Rectangle} */
   #model;
   #nextBeat = 0;
+  #debugText = new Text(
+    "", w(1), px(22), point(w(1), h(0)),
+    { anchor: point(w(1), h(0)), fill: variable("white", "color"), alignment: 1 },
+  );
 
   static GRID_SIZE = 10;
   static BPM = 120;
@@ -142,6 +146,8 @@ class World extends Screen {
       new Rectangle(
         h(1), ...this.grid.flatMap(row => row.map(cell => cell.model)), this.player.model,
       ),
+
+      this.#debugText,
     );
   }
 
@@ -202,6 +208,8 @@ class World extends Screen {
     }
 
     this.#model.render(game.p);
+
+    this.#debugText.content = `${game.p.frameRate().toFixed(0)} fps`;
   }
 
   /**
