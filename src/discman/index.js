@@ -4,7 +4,7 @@ import p5 from "p5";
 import {
   NEON_PALETTE, Ellipse, Rectangle, Text, h, point, px, subtract, transparent, variable, w,
 } from "#sticky";
-import { Audio } from "#audio";
+import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
 
 /** @typedef {"north" | "east" | "south" | "west"} Direction */
 
@@ -121,8 +121,11 @@ class World extends Screen {
 
   /** @type {Rectangle} */
   #model;
+  #nextBeat = 0;
 
   static GRID_SIZE = 10;
+  static BPM = 120;
+  static INTERVAL = 1 / (World.BPM / 60);
 
   constructor() {
     super();
@@ -143,6 +146,61 @@ class World extends Screen {
   }
 
   render() {
+    const t = game.p.millis() / 1000;
+    this.clockShift = t - game.audio.t;
+    // console.log(
+    //   "CLOCK",
+    //   this.clockShift, "/",
+    //   game.audio.context.getOutputTimestamp().performanceTime, performance.now(),
+    //   game.audio.context.getOutputTimestamp().performanceTime - performance.now(),
+    //   "/", game.audio.context.getOutputTimestamp().contextTime, game.audio.context.currentTime,
+    //   game.audio.context.getOutputTimestamp().contextTime - game.audio.context.currentTime
+    // );
+    let beatT;
+    while (true) {
+      beatT = (this.#nextBeat * World.INTERVAL) - this.clockShift - game.audio.t;
+      if (beatT >= 0) {
+        break;
+      }
+      // console.log("Dropping beat meh");
+      this.#nextBeat++;
+    }
+
+    const latency = 2;
+    if (beatT <= latency && game.audio.t) {
+      const firstBeat = this.#nextBeat % 4 === 0;
+
+      //          1   2   3   4
+      // kick     X - x - x - x -
+      // snare    - - x - - - x -
+      // hisnare  - x - x - x - x
+
+      // snare half beat
+      if (this.#nextBeat % 1 === 0) {
+        game.audio.play(
+          noteFreq(KEYS.C + 4 * OCTAVE), beatT + World.INTERVAL / 2, World.INTERVAL / 2,
+          { attack: 0, sustain: 1 / 16, noise: true },
+        );
+      }
+      // snare 2 4
+      if (this.#nextBeat % 2 === 1) {
+        // || firstBeat
+        game.audio.play(
+          noteFreq(KEYS.C + 2 * OCTAVE),
+          beatT - (firstBeat ? World.INTERVAL / 2 : 0), World.INTERVAL / 2,
+          { attack: 0, sustain: 1 / 4 * (firstBeat ? 2 : 1), noise: true },
+        );
+      }
+      // kick
+      if (this.#nextBeat % 1 === 0) {
+        game.audio.play(
+          noteFreq(KEYS.C + 1 * OCTAVE), beatT, World.INTERVAL / 2,
+          { attack: 0, frequencyRelease: true, sustain: 1 / 2 * (firstBeat ? 2 : 1) },
+        );
+      }
+      this.#nextBeat++;
+    }
+
     this.#model.render(game.p);
   }
 
