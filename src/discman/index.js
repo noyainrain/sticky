@@ -2,7 +2,8 @@
 
 import p5 from "p5";
 import {
-  NEON_PALETTE, Ellipse, Rectangle, Text, h, point, px, subtract, transparent, variable, w,
+  NEON_PALETTE, Ellipse, Rectangle, Text, color, h, point, px, subtract, tr, transparent, variable,
+  w,
 } from "#sticky";
 import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
 
@@ -81,6 +82,11 @@ class Cell extends Entity {
       ),
     );
     this.moveTo(x, y);
+  }
+
+  activate() {
+    this.model.stroke = variable("lightCyan", "color");
+    this.model.fill = color(tr(3 / 6), 1, 1 / 2, { alpha: 1 / 3 });
   }
 }
 
@@ -246,6 +252,17 @@ class World extends Screen {
     const y = this.player.y + offset[1];
     if (x >= 0 && x < World.GRID_SIZE && y >= 0 && y < World.GRID_SIZE) {
       this.player.moveTo(x, y);
+
+      // const t = game.audio.t;
+      const t = game.p.millis() / 1000;
+      const diff1 = t - Math.floor(t / World.INTERVAL) * World.INTERVAL;
+      const diff2 = Math.abs(t - Math.ceil(t / World.INTERVAL) * World.INTERVAL);
+      const diff = Math.min(diff1, diff2);
+      const rel = diff / World.INTERVAL;
+
+      if (rel < 1 / 2 / 2) {
+        this.grid[y]?.[x]?.activate();
+      }
     }
   }
 }
