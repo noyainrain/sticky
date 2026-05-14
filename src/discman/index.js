@@ -374,11 +374,22 @@ class Pause extends Screen {
 
 /** ... */
 class Credits extends Screen {
-  #model = new Rectangle({
-    variables: { ...NEON_PALETTE },
-    fill: variable("black", "color"),
-    stroke: transparent(),
-  });
+  #model = new Rectangle(
+    {
+      variables: { ...NEON_PALETTE },
+      fill: variable("black", "color"),
+      stroke: transparent(),
+    },
+    new Text(
+      "Fin", w(1), px(4 * 22),
+      {
+        at: point(w(1 / 2), px(22)),
+        anchor: point(w(1 / 2), h(0)),
+        fill: variable("white", "color"),
+      },
+    ),
+    new Text("Thank you for playing!", w(1), px(2 * 22), { fill: variable("white", "color") }),
+  );
 
   render() {
     this.#model.render(game.p);
