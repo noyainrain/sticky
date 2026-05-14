@@ -146,6 +146,11 @@ class World extends Screen {
    * @type {Character}
    */
   player;
+  /**
+   * ...
+   * @type {boolean}
+   */
+  paused = true;
 
   #nextBeat = 0;
   #beatWindow = 0;
@@ -374,13 +379,15 @@ class Game extends HTMLElement {
   world = new World();
   /**
    * ...
-   * @type {?Pause}
+   * @type {?Screen}
    */
-  overlay = new Pause();
+  overlay = null;
 
   constructor() {
     super();
     game = this;
+
+    this.#showOverlay(new Pause());
 
     this.p = new p5((p) => {
       p.setup = () => {
@@ -407,8 +414,16 @@ class Game extends HTMLElement {
 
   /** ... */
   play() {
-    this.overlay = null;
+    this.#showOverlay(null);
     this.audio.resume();
+  }
+
+  /**
+   * @param {?Screen} overlay
+   */
+  #showOverlay(overlay) {
+    this.overlay = overlay;
+    this.audio.volume = overlay ? 1 / 8 : 1 / 2;
   }
 }
 customElements.define("discman-game", Game);

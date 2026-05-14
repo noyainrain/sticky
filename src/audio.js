@@ -106,6 +106,7 @@ export const INSTRUMENTS = {
 export class Audio {
   #context;
   #compressor;
+  #level;
 
   constructor() {
     this.#context = new AudioContext();
@@ -115,14 +116,23 @@ export class Audio {
     // audio.src = "./song.mp3";
     // const track = context.createMediaElementSource(audio);
 
-    const level = this.#context.createGain();
-    level.gain.value = 0.5;
-    level.connect(this.#context.destination);
+    this.#level = this.#context.createGain();
+    this.#level.gain.value = 0.5;
+    this.#level.connect(this.#context.destination);
 
     // const compressor = context.destination;
     this.#compressor = this.#context.createDynamicsCompressor();
     // this.#compressor.connect(this.#context.destination);
-    this.#compressor.connect(level);
+    this.#compressor.connect(this.#level);
+  }
+
+  /**
+   * ...
+   * @param {number} value - ...
+   */
+  set volume(value) {
+    this.#level.gain.value = value;
+    console.log(this.#level.gain.value);
   }
 
   get t() {
