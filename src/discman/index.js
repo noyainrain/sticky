@@ -69,6 +69,9 @@ class Entity {
  * ...
  */
 class Cell extends Entity {
+  /** ... */
+  activated = false;
+
   /**
    * @param {number} x
    * @param {number} y
@@ -82,9 +85,13 @@ class Cell extends Entity {
       ),
     );
     this.moveTo(x, y);
+    if (!(x === 1 && y === 9)) {
+      this.activate();
+    }
   }
 
   activate() {
+    this.activated = true;
     this.model.stroke = variable("lightCyan", "color");
     // this.model.fill = radialGradient(
     //   color(
@@ -189,6 +196,11 @@ class World extends Screen {
   }
 
   render() {
+    const activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
+    if (activated === World.GRID_SIZE * World.GRID_SIZE) {
+      game.rollCredits();
+    }
+
     const t = game.p.millis() / 1000;
     const beat = t / World.INTERVAL;
     if (beat - this.#beatWindow >= 0.5) {
@@ -361,6 +373,19 @@ class Pause extends Screen {
 }
 
 /** ... */
+class Credits extends Screen {
+  #model = new Rectangle({
+    variables: { ...NEON_PALETTE },
+    fill: variable("black", "color"),
+    stroke: transparent(),
+  });
+
+  render() {
+    this.#model.render(game.p);
+  }
+};
+
+/** ... */
 class Game extends HTMLElement {
   /**
    * ...
@@ -416,6 +441,11 @@ class Game extends HTMLElement {
   play() {
     this.#showOverlay(null);
     this.audio.resume();
+  }
+
+  /** ... */
+  rollCredits() {
+    this.#showOverlay(new Credits());
   }
 
   /**
