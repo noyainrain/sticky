@@ -85,9 +85,6 @@ class Cell extends Entity {
       ),
     );
     this.moveTo(x, y);
-    if (!(x === 1 && y === 9)) {
-      this.activate();
-    }
   }
 
   activate() {
@@ -147,11 +144,13 @@ class World extends Screen {
    * ...
    * @type {Cell[][]}
    */
+  // @ts-ignore
   grid;
   /**
    * ...
    * @type {Character}
    */
+  // @ts-ignore
   player;
   /**
    * ...
@@ -165,6 +164,8 @@ class World extends Screen {
   #hits = [{ hit: null, deviation: null }];
   #meanDeviation = 0;
   /** @type {Rectangle} */
+  #entities = new Rectangle(h(1));
+  /** @type {Rectangle} */
   #model;
   #debugText = new Text(
     "", w(1), px(22), point(w(1), h(0)),
@@ -177,21 +178,9 @@ class World extends Screen {
 
   constructor() {
     super();
-    this.grid = [...Array(World.GRID_SIZE).keys()].map(
-      y => [...Array(World.GRID_SIZE).keys()].map(x => new Cell(x, y)),
-    );
-    this.player = new Character();
-    this.player.moveTo(0, World.GRID_SIZE - 1);
-
     this.#model = new Rectangle(
       { variables: { ...NEON_PALETTE }, fill: variable("black", "color"), stroke: transparent() },
-
-      // Grid
-      new Rectangle(
-        h(1), ...this.grid.flatMap(row => row.map(cell => cell.model)), this.player.model,
-      ),
-
-      this.#debugText,
+      this.#entities, this.#debugText,
     );
   }
 
@@ -293,6 +282,23 @@ class World extends Screen {
     if (direction) {
       this.move(direction);
     }
+  }
+
+  start() {
+    if (this.grid) {
+      this.#entities.unstick(...this.grid.flatMap(row => row.map(cell => cell.model)));
+    }
+    if (this.player) {
+      this.#entities.unstick(this.player.model);
+    }
+
+    this.grid = [...Array(World.GRID_SIZE).keys()].map(
+      y => [...Array(World.GRID_SIZE).keys()].map(x => new Cell(x, y)),
+    );
+    this.#entities.stick(...this.grid.flatMap(row => row.map(cell => cell.model)));
+    this.player = new Character();
+    this.player.moveTo(0, World.GRID_SIZE - 1);
+    this.#entities.stick(this.player.model);
   }
 
   /**
@@ -471,6 +477,7 @@ class Game extends HTMLElement {
   play() {
     this.#showOverlay(null);
     this.audio.resume();
+    this.world.start();
   }
 
   /** ... */
