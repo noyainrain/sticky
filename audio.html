@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            .beat input {
+                display: block;
+                width: 1em; /* TODO */
+                direction: rtl;
+                writing-mode: vertical-rl;
+            }
+
+            .current {
+                outline: 1px solid red;
+            }
+
+            .scheduled {
+                outline: 1px solid blue;
+            }
+
+            .notes {
+                display: flex;
+            }
+
+            label {
+                display: block;
+            }
+            input {
+                xdisplay: block;
+            }
+
+            label span {
+                display: block;
+            }
+        </style>
+
+        <script type="module">
+            import {Audio, noteFreq, KEYS, SCALES, INSTRUMENTS, OCTAVE} from "./audio.js";
+
+            const metre = 4;
+            const bars = 4;
+            const n = metre * bars;
+            const multi = 3;
+            function buildChannels() {
+                return [...Array(multi).keys()].map(() => Array(n).fill(0));
+            }
+
+            let songOrig = {
+                scale: "major",
+                scaleKey: KEYS.C,
+                bpm: 120,
+                instrument: {...INSTRUMENTS.PIANO},
+                channels: buildChannels()
+            };
+            const storageKey = `song${location.hash}`;
+            const data = localStorage[storageKey];
+            if (data) {
+                songOrig = JSON.parse(data);
+            }
+
+            const handler = {
+                set(target, property, value) {
+                    target[property] = value;
+                    console.log("STORING PROPERTY", property, value);
+                    localStorage[storageKey] = JSON.stringify(target);
+                    return true;
+                }
+            }
+            const song = new Proxy(songOrig, handler);
+
+            let scale = SCALES[song.scale](song.scaleKey);
+            let scaleSize = Object.keys(scale).length;
+            console.log("SONG", song, scale, scaleSize);
+
+            // SONG
+            const keyInput = document.querySelector("[name=key]");
+            for (const [name, value] of Object.entries(KEYS)) {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = name;
+                keyInput.append(option);
+            }
+            keyInput.value = song.scaleKey;
+            keyInput.addEventListener("change", () => {
+                song.scaleKey = parseInt(keyInput.value);
+                scale = SCALES[song.scale](song.scaleKey);
+            });
+
+            const scaleInput = document.querySelector("[name=scale]");
+            for (const [name, f] of Object.entries(SCALES)) {
+                const option = document.createElement("option");
+                option.value = name;
+                option.textContent = name;
+                scaleInput.append(option);
+            }
+            scaleInput.value = song.scale;
+            scaleInput.addEventListener("change", () => {
+                song.scale = scaleInput.value
+                scale = SCALES[song.scale](song.scaleKey);
+                scaleSize = Object.keys(scale).length;
+                song.channels = buildChannels();
+                renderBars();
+            });
+
+            const bpmInput = document.querySelector("[name=bpm]");
+            bpmInput.value = song.bpm;
+            bpmInput.addEventListener("input", () => {
+                song.bpm = parseInt(bpmInput.value);
+            });
+
+            // INSTRUMENT
+            const attackInput = document.querySelector("[name=attack]");
+            attackInput.addEventListener("input", () => {
+                song.instrument.attack = parseFloat(attackInput.value);
+                song.instrument = song.instrument;
+            });
+            const harmonicInput = document.querySelector("[name=harmonic]");
+            harmonicInput.addEventListener("input", () => {
+                song.instrument.harmonic = harmonicInput.value.split(" ").map(
+                    h => parseFloat(h) || 0
+                );
+                song.instrument = song.instrument;
+            });
+            const frequencyReleaseInput = document.querySelector("[name=frequency-release]");
+            frequencyReleaseInput.addEventListener("change", () => {
+                song.instrument.frequencyRelease = frequencyReleaseInput.checked;
+                song.instrument = song.instrument;
+            });
+            const instrumentInput = document.querySelector("[name=instrument]");
+            instrumentInput.addEventListener("change", () => {
+                console.log("INST", instrumentInput.value);
+                song.instrument = {...INSTRUMENTS[instrumentInput.value]};
+                updateInstrument(song.instrument);
+            });
+
+            function updateInstrument(inst) {
+                attackInput.value = song.instrument.attack;
+                harmonicInput.value = song.instrument.harmonic.join(" ");
+                frequencyReleaseInput.checked = song.instrument.frequencyRelease;
+            }
+            updateInstrument(song.instrument);
+
+            const notes = document.body.querySelector("div");
+
+            function renderBars() {
+                notes.replaceChildren();
+                for (let i = 0; i < n; i++) {
+                    const div = document.createElement("div");
+                    div.classList.add("beat");
+                    for (let j = 0; j < multi; j++) {
+                        const label = document.createElement("label");
+                        const input = document.createElement("input");
+
+                        input.type = "range";
+                        // input.max = 12 * 3;
+                        console.log("SCALE SIZE", scaleSize * 3);
+                        input.max = scaleSize * 3;
+                        const value = song.channels[j][i];
+                        input.value = value;
+                        input.dataset.beat = i;
+                        input.dataset.channel = j;
+                        label.append(input);
+                        const span = document.createElement("span");
+                        span.textContent = "-";
+                        const key = lineToKey(value - 1);
+                        const note = keyToTone(key);
+                        span.textContent = value ? `${note.tone}${note.octave}` : "-";
+                        label.append(span);
+
+                        input.addEventListener("input", () => {
+                            const value = parseInt(input.value);
+                            const key = lineToKey(value - 1);
+                            const channel = parseInt(input.dataset.channel);
+                            const beat = parseInt(input.dataset.beat);
+                            // song.channels[channel][beat] = key;
+                            song.channels[channel][beat] = value;
+                            song.channels = song.channels;
+                            const note = keyToTone(key);
+                            span.textContent = value ? `${note.tone}${note.octave}` : "-";
+                        });
+
+                        div.append(label);
+                    }
+                    notes.append(div);
+                }
+            }
+            renderBars();
+
+            const queue = [{t: 0, i: 0}];
+            let currentBar = queue[0];
+            const audio = new Audio();
+
+            function interval() {
+                return 60 / song.bpm;
+            }
+
+            const latency = interval() * 2;
+
+            function lineToKey(line) {
+                const tone = Object.values(scale)[line % scaleSize];
+                const octave = Math.floor(line / scaleSize) - 1;
+                return tone + octave * OCTAVE;
+            }
+
+            function keyToTone(key) {
+                return {
+                    tone: Object.keys(KEYS)[(key - 4) % OCTAVE],
+                    octave: Math.floor((key - 4) / OCTAVE) + 1
+                };
+            }
+
+            function step() {
+                //console.log("step", audio.t, queue.length);
+                while (queue[queue.length - 1].t + interval() < audio.t + latency) {
+                    const latest = queue[queue.length - 1];
+                    const bar = {
+                        t: latest.t + interval(),
+                        i: (latest.i + 1) % n
+                    };
+                    //console.log("adding bar", bar);
+                    queue.push(bar);
+                    //const barDiv = notes.children[bar.i];
+                    //for (const label of barDiv.children) {
+                    for (const channel of song.channels) {
+                        //const value = parseInt(label.firstElementChild.value);
+                        const value = channel[bar.i];
+                        if (value) {
+                            const first = channel[bar.i - 1] !== value;
+                            if (first) {
+                                const rest = channel.slice(bar.i);
+                                let beats = rest.findIndex(v => v !== value);
+                                if (beats === -1) {
+                                    beats = rest.length;
+                                }
+                                console.log("VALUE", bar.i, value, beats);
+
+                                //const key = channel[bar.i];
+                                //if (key) {
+                                //console.log("KEY", key, bar.i);
+                                const key = lineToKey(value - 1);
+                                audio.play(
+                                    noteFreq(key), bar.t - audio.t, beats * interval(),
+                                    // noteFreq(KEYS.C - 12 + value - 1), bar.t - audio.t, interval(),
+                                    //INSTRUMENTS.PIANO
+                                    song.instrument
+                                    // {attack: 0.1, release: 0.1}
+                                );
+                            }
+                        }
+                    }
+                    document.querySelector(`.beat:nth-child(${bar.i + 1})`).classList.add('scheduled');
+                }
+
+                // TODO <= -- there is nothing in scheduled queue if latency smaller bpm
+                while (queue.length && queue[0].t < audio.t) {
+                    document.querySelector(`.beat:nth-child(${currentBar.i + 1})`).classList.remove('current');
+                    currentBar = queue[0];
+                    document.querySelector(`.beat:nth-child(${currentBar.i + 1})`).classList.remove('scheduled');
+                    document.querySelector(`.beat:nth-child(${currentBar.i + 1})`).classList.add('current');
+                    queue.splice(0, 1);
+                }
+            }
+
+            function frame() {
+                step();
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+            //setInterval(() => {
+            //    step();
+            //    //requestAnimationFrame(step);
+            //}, 500);
+
+            document.querySelector(".play").addEventListener("click", () => {
+                audio.playPause();
+            });
+        </script>
+    </head>
+
+    <body>
+        <select name="key"></select>
+        <select name="scale"></select>
+        <label>
+            <input type="number" name="bpm" min="1" max="180" /> bpm
+        </label>
+        <div class="notes"></div>
+        <button class="play">Play</button>
+        <select name="instrument">
+            <option value="PIANO">Piano</option>
+            <option value="DRUM">Drum</option>
+        </select>
+        <label>
+            <input type="number" name="attack" min="0.01" max="1" step="0.01" /> Attack
+        </label>
+        <label>
+            <input type="text" name="harmonic" max="8" /> Harmonic
+        </label>
+        <label>
+            <input type="checkbox" name="frequency-release" /> Frequency Release
+        </label>
+    </body>
+</html>
