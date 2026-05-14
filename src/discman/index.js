@@ -196,9 +196,11 @@ class World extends Screen {
   }
 
   render() {
-    const activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
-    if (activated === World.GRID_SIZE * World.GRID_SIZE) {
-      game.rollCredits();
+    if (!game.overlay) {
+      const activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
+      if (activated === World.GRID_SIZE * World.GRID_SIZE) {
+        game.rollCredits();
+      }
     }
 
     const t = game.p.millis() / 1000;
@@ -389,10 +391,27 @@ class Credits extends Screen {
       },
     ),
     new Text("Thank you for playing!", w(1), px(2 * 22), { fill: variable("white", "color") }),
+    new Text(
+      "Press Space to Continue", w(1), px(2 * 22),
+      {
+        at: point(w(1 / 2), subtract(h(1), px(22))),
+        anchor: point(w(1 / 2), h(1)),
+        fill: variable("white", "color"),
+      },
+    ),
   );
 
   render() {
     this.#model.render(game.p);
+  }
+
+  /**
+   * @param {string} key
+   */
+  onKeyPressed(key) {
+    if (key === " ") {
+      game.pause();
+    }
   }
 };
 
@@ -423,7 +442,7 @@ class Game extends HTMLElement {
     super();
     game = this;
 
-    this.#showOverlay(new Pause());
+    this.pause();
 
     this.p = new p5((p) => {
       p.setup = () => {
@@ -452,6 +471,11 @@ class Game extends HTMLElement {
   play() {
     this.#showOverlay(null);
     this.audio.resume();
+  }
+
+  /** ... */
+  pause() {
+    this.#showOverlay(new Pause());
   }
 
   /** ... */
