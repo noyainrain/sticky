@@ -2,8 +2,8 @@
 
 import p5 from "p5";
 import {
-  NEON_PALETTE, Ellipse, Rectangle, Text, add, assert, color, easeOut, h, multiply, point, px,
-  subtract, tr, transparent, tween, variable, w,
+  NEON_PALETTE, Ellipse, Rectangle, Text, Triangle, add, assert, color, easeOut, h, multiply, point,
+  px, subtract, tr, transparent, tween, variable, w,
 } from "#sticky";
 import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
 
@@ -168,6 +168,41 @@ class Character extends Entity {
   }
 }
 
+/** ... */
+class Other extends Entity {
+  constructor() {
+    super(
+      new Triangle(
+        h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
+        { fill: variable("lightMagenta", "color") },
+      ),
+    );
+  }
+
+  update() {
+    const cells = game.world.getNeighbors(this.x, this.y).filter(
+      cell => !(cell.entity instanceof Other),
+    );
+    if (cells.length) {
+      const target = cells[Math.trunc(Math.random() * cells.length)];
+      assert(target);
+      game.world.moveTo(this, target.x, target.y);
+    }
+  }
+
+  /**
+   * @param {number} x - ...
+   * @param {number} y - ...
+   */
+  moveTo(x, y) {
+    super.moveTo(x, y);
+    this.model.at = point(
+      h((x + 1 / 2) / World.GRID_SIZE),
+      h((y + 1 / 2) / World.GRID_SIZE),
+    );
+  }
+}
+
 /**
  * @typedef Hit
  * @property {?boolean} hit
@@ -188,6 +223,12 @@ class World extends Screen {
    */
   // @ts-ignore
   player;
+  /**
+   * ...
+   * @type {Other[]}
+   */
+  // @ts-ignore
+  others;
   /**
    * ...
    * @type {boolean}
@@ -212,12 +253,26 @@ class World extends Screen {
   static BPM = 120;
   static INTERVAL = 1 / (World.BPM / 60);
 
+  /** @type {Object<Direction, [number, number]>} */
+  static #OFFSETS = {
+    north: [0, -1],
+    east: [1, 0],
+    south: [0, 1],
+    west: [-1, 0],
+  };
+
   constructor() {
     super();
     this.#model = new Rectangle(
       { variables: { ...NEON_PALETTE }, fill: variable("black", "color"), stroke: transparent() },
       this.#entities, this.#debugText,
     );
+  }
+
+  update() {
+    for (const other of this.others) {
+      other.update();
+    }
   }
 
   render() {
@@ -241,6 +296,10 @@ class World extends Screen {
         this.#meanDeviation = stats.reduce((sum, deviation) => sum + deviation) / stats.length;
       } else {
         this.#meanDeviation = 0;
+      }
+
+      if (!game.overlay) {
+        this.update();
       }
     }
 
@@ -320,6 +379,31 @@ class World extends Screen {
     }
   }
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @returns {Cell | undefined}
+   */
+  getCell(x, y) {
+    const cell = this.grid[y]?.[x];
+    // if (cell === undefined) {
+    //   throw new Error("NOOOOOO");
+    // }
+    return cell;
+  }
+
+  /**
+   * ...
+   * @param {number} x
+   * @param {number} y
+   * @return {Cell[]}
+   */
+  getNeighbors(x, y) {
+    return Object.values(World.#OFFSETS).map(
+      offset => this.getCell(x + offset[0], y + offset[1]),
+    ).filter(cell => cell !== undefined);
+  }
+
   start() {
     if (this.grid) {
       this.#entities.unstick(...this.grid.flatMap(row => row.map(cell => cell.model)));
@@ -327,14 +411,27 @@ class World extends Screen {
     if (this.player) {
       this.#entities.unstick(this.player.model);
     }
+    if (this.others) {
+      this.#entities.unstick(...this.others.map(other => other.model));
+    }
 
     this.grid = [...Array(World.GRID_SIZE).keys()].map(
       y => [...Array(World.GRID_SIZE).keys()].map(x => new Cell(x, y)),
     );
     this.#entities.stick(...this.grid.flatMap(row => row.map(cell => cell.model)));
     this.player = new Character();
-    this.#move(this.player, 0, World.GRID_SIZE - 1);
+    this.moveTo(this.player, 0, World.GRID_SIZE - 1);
     this.#entities.stick(this.player.model);
+
+    this.others = [];
+    this.#spawnOther();
+  }
+
+  #spawnOther() {
+    const other = new Other();
+    this.moveTo(other, Math.trunc(World.GRID_SIZE / 2), Math.trunc(World.GRID_SIZE / 2));
+    this.others.push(other);
+    this.#entities.stick(other.model);
   }
 
   /**
@@ -342,13 +439,13 @@ class World extends Screen {
    * @param {number} x
    * @param {number} y
    */
-  #move(entity, x, y) {
+  moveTo(entity, x, y) {
     let cell = this.grid[entity.y]?.[entity.x];
     assert(cell);
     cell.entity = null;
     cell = this.grid[y]?.[x];
     assert(cell);
-    cell.entity = this.player;
+    cell.entity = entity;
     entity.moveTo(x, y);
   }
 
@@ -368,26 +465,30 @@ class World extends Screen {
     const x = this.player.x + offset[0];
     const y = this.player.y + offset[1];
     if (x >= 0 && x < World.GRID_SIZE && y >= 0 && y < World.GRID_SIZE) {
-      this.#move(this.player, x, y);
-
-      // const t = game.audio.t;
-      const t = game.p.millis() / 1000;
-      // const diff1 = t - Math.floor(t / World.INTERVAL) * World.INTERVAL;
-      // const diff2 = Math.abs(t - Math.ceil(t / World.INTERVAL) * World.INTERVAL);
-      // const diff = Math.min(diff1, diff2);
-      const diff = Math.abs(t - (this.#beatWindow * World.INTERVAL));
-      const rel = diff / World.INTERVAL;
-
-      const hit = this.#hits[0];
-      assert(hit);
-      if (hit.hit === null) {
-        hit.hit = rel < 1 / 2 / 2;
-        hit.deviation = rel;
+      if (this.grid[y]?.[x]?.entity instanceof Other) {
+        game.pause();
       } else {
-        hit.hit = false;
-      }
-      if (hit.hit) {
-        this.grid[y]?.[x]?.activate();
+        this.moveTo(this.player, x, y);
+
+        // const t = game.audio.t;
+        const t = game.p.millis() / 1000;
+        // const diff1 = t - Math.floor(t / World.INTERVAL) * World.INTERVAL;
+        // const diff2 = Math.abs(t - Math.ceil(t / World.INTERVAL) * World.INTERVAL);
+        // const diff = Math.min(diff1, diff2);
+        const diff = Math.abs(t - (this.#beatWindow * World.INTERVAL));
+        const rel = diff / World.INTERVAL;
+
+        const hit = this.#hits[0];
+        assert(hit);
+        if (hit.hit === null) {
+          hit.hit = rel < 1 / 2 / 2;
+          hit.deviation = rel;
+        } else {
+          hit.hit = false;
+        }
+        if (hit.hit) {
+          this.grid[y]?.[x]?.activate();
+        }
       }
     }
   }
