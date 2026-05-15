@@ -73,6 +73,12 @@ class Cell extends Entity {
   activated = false;
 
   /**
+   * ...
+   * @type {boolean}
+   */
+  marked = false;
+
+  /**
    * @param {number} x
    * @param {number} y
    */
@@ -81,15 +87,41 @@ class Cell extends Entity {
       new Rectangle(
         subtract(h(1 / World.GRID_SIZE), px(5)), subtract(h(1 / World.GRID_SIZE), px(5)),
         point(h((x + 1 / 2) / World.GRID_SIZE), h((y + 1 / 2) / World.GRID_SIZE)),
-        { stroke: variable("darkGray", "color") },
+        { stroke: variable("color", "color") },
       ),
     );
     this.moveTo(x, y);
+    this.#updateColor();
+  }
+
+  /**
+   * ...
+   */
+  mark() {
+    this.marked = true;
+    this.#updateColor();
+  }
+
+  /**
+   * ...
+   */
+  unmark() {
+    this.marked = false;
+    this.#updateColor();
+  }
+
+  #updateColor() {
+    this.model.setVariable(
+      "color",
+      this.marked
+        ? variable("lightRed", "color")
+        : (this.activated ? variable("lightCyan", "color") : variable("darkGray", "color")),
+    );
   }
 
   activate() {
     this.activated = true;
-    this.model.stroke = variable("lightCyan", "color");
+    this.#updateColor();
     // this.model.fill = radialGradient(
     //   color(
     //     tr(3 / 6), 1, 1 / 2, { alpha: tween(1 / 2, 1 / 3, World.INTERVAL, { easing: easeOut }) },
