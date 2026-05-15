@@ -69,9 +69,13 @@ class Entity {
  * ...
  */
 class Cell extends Entity {
+  /**
+   * ...
+   * @type {?Entity}
+   */
+  entity = null;
   /** ... */
   activated = false;
-
   /**
    * ...
    * @type {boolean}
@@ -329,8 +333,23 @@ class World extends Screen {
     );
     this.#entities.stick(...this.grid.flatMap(row => row.map(cell => cell.model)));
     this.player = new Character();
-    this.player.moveTo(0, World.GRID_SIZE - 1);
+    this.#move(this.player, 0, World.GRID_SIZE - 1);
     this.#entities.stick(this.player.model);
+  }
+
+  /**
+   * @param {Entity} entity
+   * @param {number} x
+   * @param {number} y
+   */
+  #move(entity, x, y) {
+    let cell = this.grid[entity.y]?.[entity.x];
+    assert(cell);
+    cell.entity = null;
+    cell = this.grid[y]?.[x];
+    assert(cell);
+    cell.entity = this.player;
+    entity.moveTo(x, y);
   }
 
   /**
@@ -349,7 +368,7 @@ class World extends Screen {
     const x = this.player.x + offset[0];
     const y = this.player.y + offset[1];
     if (x >= 0 && x < World.GRID_SIZE && y >= 0 && y < World.GRID_SIZE) {
-      this.player.moveTo(x, y);
+      this.#move(this.player, x, y);
 
       // const t = game.audio.t;
       const t = game.p.millis() / 1000;
