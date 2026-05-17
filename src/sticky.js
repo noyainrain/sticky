@@ -1948,8 +1948,11 @@ export class TweenValue extends Value {
    * @param {Scalar | number} [options.pause]
    * @param {EasingCallback} [options.easing]
    * @param {boolean} [options.yoyo]
+   * @param {boolean} [options.mirror]
    */
-  constructor(from, to, duration, { offset = 0, pause = 0, easing = ease, yoyo = false } = {}) {
+  constructor(
+    from, to, duration, { offset = 0, pause = 0, easing = ease, yoyo = false, mirror = false } = {},
+  ) {
     if (typeof from === "number") {
       from = /** @type {Value<T>} */ (/** @type {unknown} */ (scalar(from)));
     }
@@ -1961,6 +1964,7 @@ export class TweenValue extends Value {
     this.duration = typeof duration === "number" ? scalar(duration) : duration;
     this.easing = easing;
     this.yoyo = yoyo;
+    this.mirror = mirror;
     this.offset = typeof offset === "number" ? scalar(offset) : offset;
     this.pause = typeof pause === "number" ? scalar(pause) : pause;
   }
@@ -1987,7 +1991,8 @@ export class TweenValue extends Value {
     const time = (reference instanceof p5 ? reference : reference.p)?.millis() ?? 0;
     const duration = this.duration.evaluate();
     const pause = this.pause.evaluate();
-    let p = (time / 1000 + this.offset.evaluate()) / (duration + pause) % 1;
+    const cycle = (time / 1000 + this.offset.evaluate()) / (duration + pause);
+    let p = cycle % 1;
     // TODO OQ could also % (this.duration + pause), then if >= duration 0, then scale to 1 with /
     // duration, hmm....
     p = p * (duration + pause) / duration;
@@ -1999,7 +2004,10 @@ export class TweenValue extends Value {
       p = p >= 1 ? 2 - p : p;
     }
     const progress = this.easing(p);
-    const v = (1 - progress) * this.from.evaluate() + progress * this.to.evaluate();
+    let v = (1 - progress) * this.from.evaluate() + progress * this.to.evaluate();
+    if (this.mirror) {
+      v *= Math.floor(cycle) % 2 === 0 ? 1 : -1;
+    }
     // console.log("v", (canvas.millis() / 1000).toFixed(2), v);
     return v;
   }
@@ -2015,10 +2023,13 @@ export class TweenValue extends Value {
  * @param {Scalar | number} [options.pause]
  * @param {EasingCallback} [options.easing]
  * @param {boolean} [options.yoyo]
+ * @param {boolean} [options.mirror]
  * @returns {TweenValue<T>}
  */
-export function tween(from, to, duration, { offset = 0, pause = 0, easing = ease, yoyo = false } = {}) {
-  return new TweenValue(from, to, duration, { offset, pause, easing, yoyo });
+export function tween(
+  from, to, duration, { offset = 0, pause = 0, easing = ease, yoyo = false, mirror = false } = {},
+) {
+  return new TweenValue(from, to, duration, { offset, pause, easing, yoyo, mirror });
 }
 
 /**
