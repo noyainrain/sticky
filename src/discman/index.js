@@ -3,7 +3,7 @@
 import p5 from "p5";
 import {
   NEON_PALETTE, Ellipse, Rectangle, Text, Triangle, add, assert, color, easeOut, h, multiply, point,
-  px, subtract, tr, transparent, tween, variable, w,
+  px, scalar, subtract, tr, transparent, tween, variable, w,
 } from "#sticky";
 import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
 
@@ -177,7 +177,10 @@ class Tail extends Entity {
     super(
       new Rectangle(
         h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
-        { fill: variable("lightMagenta", "color") },
+        {
+          orientation: tween(1 / 32, 0, World.INTERVAL, { easing: easeOut, mirror: true }),
+          fill: variable("lightMagenta", "color"),
+        },
       ),
     );
   }
@@ -208,7 +211,11 @@ class Other extends Entity {
     super(
       new Triangle(
         h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
-        { fill: variable("lightMagenta", "color") },
+        {
+          orientation:
+            add(scalar(1 / 2), tween(1 / 32, 0, World.INTERVAL, { easing: easeOut, mirror: true })),
+          fill: variable("lightMagenta", "color"),
+        },
       ),
     );
   }
