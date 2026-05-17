@@ -14,6 +14,18 @@ import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
  */
 let game;
 
+/**
+ * ...
+ * @template T
+ * @param {Array<T>} array
+ * @return {Array<T>}
+ */
+export function shuffle(array) {
+  return array.map(item => /** @type {[T, number]} */ ([item, Math.random()]))
+    .sort((a, b) => b[1] - a[1])
+    .map(item => item[0]);
+}
+
 /** ... */
 class Screen {
   /** ... */
@@ -500,8 +512,31 @@ class World extends Screen {
     this.#entities.stick(this.player.model);
 
     this.others = [];
-    this.#spawnOther();
     this.tails = [];
+
+    const n = 2;
+    const side = Math.ceil(Math.sqrt(n + 1));
+    /** @type {[number, number][]} */
+    let points = [];
+    for (let y = 0; y < side; y++) {
+      for (let x = 0; x < side; x++) {
+        points.push([
+          Math.trunc((x + 1 / 4 + Math.random() / 2) / side * World.GRID_SIZE),
+          Math.trunc((y + 1 / 4 + Math.random() / 2) / side * World.GRID_SIZE),
+        ]);
+      }
+    }
+    points.splice(side * (side - 1), 1);
+    points = shuffle(points);
+    // for (const point of points) {
+    //   this.getCell(point[0], point[1]).mark();
+    // }
+    // points[side * side - side] = [0, World.GRID_SIZE - 1];
+    for (let i = 0; i < n; i++) {
+      const point = points[i];
+      assert(point);
+      this.#spawnOther(point[0], point[1]);
+    }
   }
 
   /**
@@ -528,9 +563,13 @@ class World extends Screen {
     cell.entity = null;
   }
 
-  #spawnOther() {
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
+  #spawnOther(x, y) {
     const other = new Other();
-    this.moveTo(other, Math.trunc(World.GRID_SIZE / 2), Math.trunc(World.GRID_SIZE / 2));
+    this.moveTo(other, x, y); // Math.trunc(World.GRID_SIZE / 2), Math.trunc(World.GRID_SIZE / 2));
     this.others.push(other);
     this.#entities.stick(other.model);
   }
