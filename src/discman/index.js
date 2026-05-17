@@ -169,6 +169,40 @@ class Character extends Entity {
 }
 
 /** ... */
+class Tail extends Entity {
+  // XXX
+  lifetime = 10;
+
+  constructor() {
+    super(
+      new Rectangle(
+        h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
+        { fill: variable("lightMagenta", "color") },
+      ),
+    );
+  }
+
+  update() {
+    this.lifetime--;
+    if (this.lifetime === 0) {
+      game.world.despawnTail(this);
+    }
+  }
+
+  /**
+   * @param {number} x - ...
+   * @param {number} y - ...
+   */
+  moveTo(x, y) {
+    super.moveTo(x, y);
+    this.model.at = point(
+      h((x + 1 / 2) / World.GRID_SIZE),
+      h((y + 1 / 2) / World.GRID_SIZE),
+    );
+  }
+}
+
+/** ... */
 class Other extends Entity {
   constructor() {
     super(
@@ -181,12 +215,19 @@ class Other extends Entity {
 
   update() {
     const cells = game.world.getNeighbors(this.x, this.y).filter(
-      cell => !(cell.entity instanceof Other),
+      cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
     );
     if (cells.length) {
+      const x = this.x;
+      const y = this.y;
       const target = cells[Math.trunc(Math.random() * cells.length)];
       assert(target);
-      game.world.moveTo(this, target.x, target.y);
+      if (game.world.getCell(target.x, target.y)?.entity instanceof Character) {
+        game.pause();
+      } else {
+        game.world.moveTo(this, target.x, target.y);
+        game.world.spawnTail(x, y);
+      }
     }
   }
 
@@ -231,6 +272,12 @@ class World extends Screen {
   others;
   /**
    * ...
+   * @type {Other[]}
+   */
+  // @ts-ignore
+  tails;
+  /**
+   * ...
    * @type {boolean}
    */
   paused = true;
@@ -270,6 +317,9 @@ class World extends Screen {
   }
 
   update() {
+    for (const tail of this.tails) {
+      tail.update();
+    }
     for (const other of this.others) {
       other.update();
     }
@@ -321,6 +371,10 @@ class World extends Screen {
       // console.log("Dropping beat meh");
       this.#nextBeat++;
     }
+
+    // function snare(beat) {
+    //   return {freq: x};
+    // }
 
     const latency = 2;
     if (beatT <= latency && game.audio.t) {
@@ -414,6 +468,9 @@ class World extends Screen {
     if (this.others) {
       this.#entities.unstick(...this.others.map(other => other.model));
     }
+    if (this.tails) {
+      this.#entities.unstick(...this.tails.map(tail => tail.model));
+    }
 
     this.grid = [...Array(World.GRID_SIZE).keys()].map(
       y => [...Array(World.GRID_SIZE).keys()].map(x => new Cell(x, y)),
@@ -425,6 +482,31 @@ class World extends Screen {
 
     this.others = [];
     this.#spawnOther();
+    this.tails = [];
+  }
+
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
+  spawnTail(x, y) {
+    const tail = new Tail();
+    this.moveTo(tail, x, y);
+    this.tails.push(tail);
+    console.log("TAILS", this.tails.length, this.tails);
+    this.#entities.stick(tail.model);
+  }
+
+  /**
+   * @param {Tail} tail
+   */
+  despawnTail(tail) {
+    this.tails.splice(this.tails.indexOf(tail), 1);
+    this.#entities.unstick(tail.model);
+
+    let cell = this.grid[tail.y]?.[tail.x];
+    assert(cell);
+    cell.entity = null;
   }
 
   #spawnOther() {
@@ -465,7 +547,7 @@ class World extends Screen {
     const x = this.player.x + offset[0];
     const y = this.player.y + offset[1];
     if (x >= 0 && x < World.GRID_SIZE && y >= 0 && y < World.GRID_SIZE) {
-      if (this.grid[y]?.[x]?.entity instanceof Other) {
+      if (this.grid[y]?.[x]?.entity instanceof Other || this.grid[y]?.[x]?.entity instanceof Tail) {
         game.pause();
       } else {
         this.moveTo(this.player, x, y);
