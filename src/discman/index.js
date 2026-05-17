@@ -216,16 +216,28 @@ class Other extends Entity {
   update() {
     const cells = game.world.getNeighbors(this.x, this.y).filter(
       cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
-    );
+    ).map(
+      cell => ({
+        cell,
+        // TODO if we would consider the direction here, we could look at the three cells ahead, if
+        // any is set, we're closing the path (any of the other 6 cells would mean the path is
+        // already closed)
+        priority:
+          game.world.getNeighbors(cell.x, cell.y)
+            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
+      }),
+    ).sort((a, b) => b.priority - a.priority);
+
     if (cells.length) {
       const x = this.x;
       const y = this.y;
-      const target = cells[Math.trunc(Math.random() * cells.length)];
+      // const target = cells[Math.trunc(Math.random() * cells.length)];
+      const target = cells[0];
       assert(target);
-      if (game.world.getCell(target.x, target.y)?.entity instanceof Character) {
+      if (game.world.getCell(target.cell.x, target.cell.y)?.entity instanceof Character) {
         game.pause();
       } else {
-        game.world.moveTo(this, target.x, target.y);
+        game.world.moveTo(this, target.cell.x, target.cell.y);
         game.world.spawnTail(x, y);
       }
     }
