@@ -164,31 +164,37 @@ export class Audio {
    * @param {number} [options.tremoloFrequency]
    * @param {boolean} [options.noise]
    * @param {boolean} [options.frequencyRelease]
+   * @param {OscillatorType} [options.wave]
    * @param {number[]} [options.harmonic]
    */
   play(
     frequency = 440, t = 0, duration = 1,
     {
-      attack = 0.1,
+      attack = 0,
       sustain = 0.5,
       release = null,
       tremolo = 0,
       tremoloFrequency = 15,
       noise = false,
       frequencyRelease = false,
+      wave = "sine",
       harmonic = [],
     } = {},
   ) {
-    // wave = "sawtooth";
-    // wave = "square";
+    // let wave = "sawtooth";
+    // let wave = "square";
     /** @type {OscillatorType} */
-    let wave = "sine";
-    // wave = "triangle";
+    // let wave = "sine";
+    // let wave = "triangle";
 
-    attack = Math.min(attack, duration - 0.1);
+    attack = Math.max(attack, 0.01);
+    // OQ was 0.1, why? (maybe for release rest, but that would be too long
+    attack = Math.min(attack, duration - 0.01);
     if (release === null) {
       release = duration - attack;
     }
+    release = Math.max(release, 0.01);
+    release = Math.min(release, duration - attack);
 
     t += this.#context.currentTime;
     // console.log("PLAY", t, duration, frequency, sustain);
@@ -279,5 +285,155 @@ export class Audio {
     // src.start();
     // src.stop(context.currentTime + duration);
     // src.connect(gain).connect(context.destination);
+  }
+}
+
+/**
+ * ...
+ * @typedef Note
+ * @property {number} frequency
+ * @property {number} sustain
+ */
+
+/** ... */
+export class Track {
+  /**
+   * ...
+   * @type {number}
+   */
+  bpm;
+  /**
+   * ...
+   * @type {number}
+   */
+  noteValue;
+  /**
+   * ...
+   * @type {(Note | null)[]}
+   */
+  notes;
+  /**
+   * ...
+   * @type {number}
+   */
+  attack;
+  /**
+   * ...
+   * @type {number}
+   */
+  sustain;
+  /**
+   * ...
+   * @type {?number}
+   */
+  release;
+  /**
+   * ...
+   * @type {boolean}
+   */
+  noise;
+  /**
+   * ...
+   * @type {boolean}
+   */
+  frequencyRelease;
+  /**
+   * ...
+   * @type {OscillatorType}
+   */
+  wave;
+  /**
+   * ...
+   * @type {Audio}
+   */
+  audio;
+
+  #i = 0;
+
+  /**
+   * @param {Audio} audio
+   * @param {Object} options
+   * @param {number} [options.bpm]
+   * @param {number} [options.noteValue]
+   * @param {number} [options.attack]
+   * @param {number} [options.sustain]
+   * @param {?number} [options.release]
+   * @param {boolean} [options.noise]
+   * @param {boolean} [options.frequencyRelease]
+   * @param {OscillatorType} [options.wave]
+   * @param {(?Note | number)[]} notes
+   */
+  constructor(
+    audio,
+    {
+      bpm = 120,
+      noteValue = 4,
+      attack = 0,
+      sustain = 0.5,
+      release = null,
+      noise = false,
+      frequencyRelease = false,
+      wave = "sine",
+    } = {},
+    ...notes
+  ) {
+    this.bpm = bpm;
+    this.noteValue = noteValue;
+    this.notes = notes.map(
+      note => (typeof note === "number" ? { frequency: note, sustain } : note),
+    );
+    this.attack = attack;
+    this.sustain = sustain;
+    this.release = release;
+    this.noise = noise;
+    this.frequencyRelease = frequencyRelease;
+    this.wave = wave;
+    this.audio = audio;
+  }
+
+  /**
+   * ...
+   * @param {number} t
+   */
+  play(t) {
+    const interval = 1 / (this.bpm / 60) / (this.noteValue / 4);
+    const clockShift = t - this.audio.t;
+    // console.log(
+    //   "CLOCK",
+    //   this.clockShift, "/",
+    //   game.audio.context.getOutputTimestamp().performanceTime, performance.now(),
+    //   game.audio.context.getOutputTimestamp().performanceTime - performance.now(),
+    //   "/", game.audio.context.getOutputTimestamp().contextTime, game.audio.context.currentTime,
+    //   game.audio.context.getOutputTimestamp().contextTime - game.audio.context.currentTime
+    // );
+    let beatT;
+    while (true) {
+      beatT = (this.#i * interval) - clockShift - this.audio.t;
+      if (beatT >= 0) {
+        break;
+      }
+      console.log("Dropping beat meh");
+      this.#i++;
+    }
+
+    const latency = 2;
+    if (beatT <= latency && this.audio.t) {
+      const note = this.notes[this.#i % this.notes.length];
+      console.log("SCHEDULING", beatT, note);
+      if (note) {
+        this.audio.play(
+          note.frequency, beatT, interval,
+          {
+            attack: this.attack,
+            sustain: note.sustain,
+            release: this.release,
+            noise: this.noise,
+            frequencyRelease: this.frequencyRelease,
+            wave: this.wave,
+          },
+        );
+      }
+      this.#i++;
+    }
   }
 }
