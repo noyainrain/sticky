@@ -5,7 +5,7 @@ import {
   NEON_PALETTE, Ellipse, Rectangle, Text, Triangle, add, assert, color, easeOut, h, multiply, point,
   px, scalar, subtract, tr, transparent, tween, variable, w,
 } from "#sticky";
-import { KEYS, OCTAVE, Audio, noteFreq } from "#audio";
+import { KEYS, OCTAVE, Audio, Track, noteFreq } from "#audio";
 
 /** @typedef {"north" | "east" | "south" | "west"} Direction */
 
@@ -313,7 +313,6 @@ class World extends Screen {
    */
   paused = true;
 
-  #nextBeat = 0;
   #beatWindow = 0;
   /** @type {Hit[]} */
   #hits = [{ hit: null, deviation: null }];
@@ -384,68 +383,35 @@ class World extends Screen {
       }
     }
 
-    this.clockShift = t - game.audio.t;
-    // console.log(
-    //   "CLOCK",
-    //   this.clockShift, "/",
-    //   game.audio.context.getOutputTimestamp().performanceTime, performance.now(),
-    //   game.audio.context.getOutputTimestamp().performanceTime - performance.now(),
-    //   "/", game.audio.context.getOutputTimestamp().contextTime, game.audio.context.currentTime,
-    //   game.audio.context.getOutputTimestamp().contextTime - game.audio.context.currentTime
-    // );
-    let beatT;
-    while (true) {
-      beatT = (this.#nextBeat * World.INTERVAL) - this.clockShift - game.audio.t;
-      if (beatT >= 0) {
-        break;
-      }
-      // console.log("Dropping beat meh");
-      this.#nextBeat++;
-    }
+    //          1   2   3   4
+    // kick     X - x - x - x -
+    // snare    - - x - - - x -
+    // hisnare  - x - x - x - x
 
-    // function snare(beat) {
-    //   return {freq: x};
-    // }
-
-    const latency = 2;
-    if (beatT <= latency && game.audio.t) {
-      const firstBeat = this.#nextBeat % 4 === 0;
-
-      //          1   2   3   4
-      // kick     X - x - x - x -
-      // snare    - - x - - - x -
-      // hisnare  - x - x - x - x
-
-      // snare half beat
-      if (this.#nextBeat % 1 === 0) {
-        game.audio.play(
-          noteFreq(KEYS.C + 4 * OCTAVE), beatT + World.INTERVAL / 2, World.INTERVAL / 2,
-          { attack: 0, sustain: 1 / 16, noise: true },
-        );
-      }
-      // snare 2 4
-      if (this.#nextBeat % 2 === 1) {
-        // || firstBeat
-        game.audio.play(
-          noteFreq(KEYS.C + 2 * OCTAVE),
-          beatT - (firstBeat ? World.INTERVAL / 2 : 0), World.INTERVAL / 2,
-          { attack: 0, sustain: 1 / 4 * (firstBeat ? 2 : 1), noise: true },
-        );
-      }
-      // kick
-      if (this.#nextBeat % 1 === 0) {
-        game.audio.play(
-          noteFreq(KEYS.C + 1 * OCTAVE), beatT, World.INTERVAL / 2,
-          { attack: 0, frequencyRelease: true, sustain: 1 / 2 * (firstBeat ? 2 : 1) },
-        );
-      }
-      this.#nextBeat++;
-    }
+    this.#kick.play(t);
+    this.#snare.play(t);
+    this.#hisnare.play(t);
 
     this.#model.render(game.p);
 
     this.#debugText.content = `${game.p.frameRate().toFixed(0)} fps\n${(this.#meanDeviation * 100).toFixed(0)} %`;
   }
+
+  #kick = new Track(
+    game.audio, { bpm: World.BPM, noteValue: 8, attack: 0, frequencyRelease: true },
+    { frequency: noteFreq(KEYS.C + OCTAVE), sustain: 1 }, null, noteFreq(KEYS.C + OCTAVE), null,
+    noteFreq(KEYS.C + OCTAVE), null, noteFreq(KEYS.C + OCTAVE), null,
+  );
+
+  #snare = new Track(
+    game.audio, { bpm: World.BPM, noteValue: 8, attack: 0, sustain: 1 / 4, noise: true },
+    null, null, noteFreq(KEYS.C + 2 * OCTAVE), null,
+  );
+
+  #hisnare = new Track(
+    game.audio, { bpm: World.BPM, noteValue: 8, attack: 0, sustain: 1 / 16, noise: true },
+    null, noteFreq(KEYS.C + 4 * OCTAVE),
+  );
 
   /**
    * @param {string} key
@@ -547,7 +513,6 @@ class World extends Screen {
     const tail = new Tail();
     this.moveTo(tail, x, y);
     this.tails.push(tail);
-    console.log("TAILS", this.tails.length, this.tails);
     this.#entities.stick(tail.model);
   }
 
@@ -729,7 +694,7 @@ class Game extends HTMLElement {
    * ...
    * @type {World}
    */
-  world = new World();
+  world;
   /**
    * ...
    * @type {?Screen}
@@ -739,6 +704,7 @@ class Game extends HTMLElement {
   constructor() {
     super();
     game = this;
+    this.world = new World();
 
     this.pause();
 
