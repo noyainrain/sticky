@@ -391,6 +391,7 @@ class World extends Screen {
     this.#kick.play(t);
     this.#snare.play(t);
     this.#hisnare.play(t);
+    this.#synth.play(t);
 
     this.#model.render(game.p);
 
@@ -411,6 +412,66 @@ class World extends Screen {
   #hisnare = new Track(
     game.audio, { bpm: World.BPM, noteValue: 8, attack: 0, sustain: 1 / 16, noise: true },
     null, noteFreq(KEYS.C + 4 * OCTAVE),
+  );
+
+  #synth = new Track(
+    game.audio, { bpm: World.BPM, noteValue: 8, wave: "triangle" },
+    // noteFreq(KEYS.C),
+    // noteFreq(KEYS.E),
+    // noteFreq(KEYS.G),
+    // null,
+    // noteFreq(KEYS.D),
+    // noteFreq(KEYS.F),
+    // noteFreq(KEYS.A),
+    // null,
+    // noteFreq(KEYS.C),
+    // noteFreq(KEYS.E),
+    // noteFreq(KEYS.G),
+    // null,
+    // noteFreq(KEYS.F),
+    // noteFreq(KEYS.A),
+    // noteFreq(KEYS.C + OCTAVE),
+    // null,
+
+    noteFreq(KEYS.C),
+    noteFreq(KEYS.C + OCTAVE),
+    noteFreq(KEYS.G),
+    noteFreq(KEYS.E),
+
+    noteFreq(KEYS.C + OCTAVE),
+    noteFreq(KEYS.G),
+    noteFreq(KEYS.E),
+    null,
+
+    noteFreq(KEYS.D),
+    noteFreq(KEYS.D + OCTAVE),
+    noteFreq(KEYS.F),
+    noteFreq(KEYS.A),
+
+    noteFreq(KEYS.D + OCTAVE),
+    noteFreq(KEYS.F),
+    noteFreq(KEYS.A),
+    null,
+
+    noteFreq(KEYS.C),
+    noteFreq(KEYS.C + OCTAVE),
+    noteFreq(KEYS.G),
+    noteFreq(KEYS.E),
+
+    noteFreq(KEYS.C + OCTAVE),
+    noteFreq(KEYS.G),
+    noteFreq(KEYS.E),
+    null,
+
+    noteFreq(KEYS.F),
+    noteFreq(KEYS.A),
+    noteFreq(KEYS.C + OCTAVE),
+    noteFreq(KEYS.F + OCTAVE),
+
+    null,
+    null,
+    null,
+    null,
   );
 
   /**
