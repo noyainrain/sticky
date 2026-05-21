@@ -219,6 +219,8 @@ class Tail extends Entity {
 
 /** ... */
 class Other extends Entity {
+  #energy = 0;
+
   constructor() {
     super(
       new Triangle(
@@ -241,6 +243,12 @@ class Other extends Entity {
   }
 
   update() {
+    const cell = game.world.getCell(this.x, this.y, Error);
+    this.#energy += cell.activated ? 1 : 2;
+    if (this.#energy < 2) {
+      return;
+    }
+
     const target = this.plan();
     if (target) {
       const x = this.x;
@@ -251,6 +259,7 @@ class Other extends Entity {
       } else {
         game.world.moveTo(this, target.x, target.y);
         game.world.spawnTail(x, y);
+        this.#energy = 0;
       }
     }
   }
