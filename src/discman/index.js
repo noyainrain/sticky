@@ -183,7 +183,7 @@ class Character extends Entity {
 /** ... */
 class Tail extends Entity {
   // XXX
-  lifetime = 10;
+  // lifetime = 10;
 
   constructor() {
     super(
@@ -198,10 +198,10 @@ class Tail extends Entity {
   }
 
   update() {
-    this.lifetime--;
-    if (this.lifetime === 0) {
-      game.world.despawnTail(this);
-    }
+    // this.lifetime--;
+    // if (this.lifetime === 0) {
+    //   game.world.despawnTail(this);
+    // }
   }
 
   /**
@@ -219,6 +219,12 @@ class Tail extends Entity {
 
 /** ... */
 class Other extends Entity {
+  /**
+   * ...
+   * @type {Tail[]}
+   */
+  tails = [];
+
   #energy = 0;
 
   constructor() {
@@ -258,8 +264,19 @@ class Other extends Entity {
         game.pause();
       } else {
         game.world.moveTo(this, target.x, target.y);
-        game.world.spawnTail(x, y);
+        this.tails.unshift(game.world.spawnTail(x, y));
         this.#energy = 0;
+        if (this.tails.length > 10) {
+          const tail = this.tails.pop();
+          if (tail) {
+            game.world.despawnTail(tail);
+          }
+        }
+      }
+    } else {
+      const tail = this.tails.pop();
+      if (tail) {
+        game.world.despawnTail(tail);
       }
     }
   }
@@ -671,12 +688,14 @@ class World extends Screen {
   /**
    * @param {number} x
    * @param {number} y
+   * @returns {Tail}
    */
   spawnTail(x, y) {
     const tail = new Tail();
     this.moveTo(tail, x, y);
     this.tails.push(tail);
     this.#entities.stick(tail.model);
+    return tail;
   }
 
   /**
