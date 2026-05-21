@@ -232,31 +232,24 @@ class Other extends Entity {
     );
   }
 
-  update() {
-    const cells = game.world.getNeighbors(this.x, this.y).filter(
-      cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
-    ).map(
-      cell => ({
-        cell,
-        // TODO if we would consider the direction here, we could look at the three cells ahead, if
-        // any is set, we're closing the path (any of the other 6 cells would mean the path is
-        // already closed)
-        priority:
-          game.world.getNeighbors(cell.x, cell.y)
-            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
-      }),
-    ).sort((a, b) => b.priority - a.priority);
+  /**
+   * ...
+   * @returns {?Cell}
+   */
+  plan() {
+    throw new Error("Abstract method");
+  }
 
-    if (cells.length) {
+  update() {
+    const target = this.plan();
+    if (target) {
       const x = this.x;
       const y = this.y;
       // const target = cells[Math.trunc(Math.random() * cells.length)];
-      const target = cells[0];
-      assert(target);
-      if (game.world.getCell(target.cell.x, target.cell.y)?.entity instanceof Character) {
+      if (game.world.getCell(target.x, target.y)?.entity instanceof Character) {
         game.pause();
       } else {
-        game.world.moveTo(this, target.cell.x, target.cell.y);
+        game.world.moveTo(this, target.x, target.y);
         game.world.spawnTail(x, y);
       }
     }
@@ -272,6 +265,26 @@ class Other extends Entity {
       h((x + 1 / 2) / World.GRID_SIZE),
       h((y + 1 / 2) / World.GRID_SIZE),
     );
+  }
+}
+
+/** ... */
+class RandomOther extends Other {
+  plan() {
+    const cells = game.world.getNeighbors(this.x, this.y).filter(
+      cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
+    ).map(
+      cell => ({
+        cell,
+        // TODO if we would consider the direction here, we could look at the three cells ahead, if
+        // any is set, we're closing the path (any of the other 6 cells would mean the path is
+        // already closed)
+        priority:
+          game.world.getNeighbors(cell.x, cell.y)
+            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
+      }),
+    ).sort((a, b) => b.priority - a.priority);
+    return cells[0]?.cell ?? null;
   }
 }
 
@@ -303,7 +316,7 @@ class World extends Screen {
   others;
   /**
    * ...
-   * @type {Other[]}
+   * @type {Tail[]}
    */
   // @ts-ignore
   tails;
@@ -492,15 +505,28 @@ class World extends Screen {
   }
 
   /**
+   * @overload
    * @param {number} x
    * @param {number} y
    * @returns {Cell | undefined}
+   * @overload
+   * @param {number} x
+   * @param {number} y
+   * @param {ErrorConstructor} value
+   * @returns {Cell}
+   * @param {number} x
+   * @param {number} y
+   * @param {new (message: string) => Error} [value]
+   * @returns {Cell | undefined}
    */
-  getCell(x, y) {
+  getCell(x, y, value) {
     const cell = this.grid[y]?.[x];
-    // if (cell === undefined) {
-    //   throw new Error("NOOOOOO");
-    // }
+    if (cell === undefined) {
+      if (value !== undefined) {
+        throw new value("NOOOOOO");
+      }
+      return value;
+    }
     return cell;
   }
 
@@ -562,7 +588,7 @@ class World extends Screen {
     for (let i = 0; i < n; i++) {
       const point = points[i];
       assert(point);
-      this.#spawnOther(point[0], point[1]);
+      this.#spawnOther(RandomOther, point[0], point[1]);
     }
   }
 
@@ -590,11 +616,12 @@ class World extends Screen {
   }
 
   /**
+   * @param {new () => Other} type
    * @param {number} x
    * @param {number} y
    */
-  #spawnOther(x, y) {
-    const other = new Other();
+  #spawnOther(type, x, y) {
+    const other = new type();
     this.moveTo(other, x, y); // Math.trunc(World.GRID_SIZE / 2), Math.trunc(World.GRID_SIZE / 2));
     this.others.push(other);
     this.#entities.stick(other.model);

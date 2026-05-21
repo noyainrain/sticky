@@ -419,7 +419,7 @@ export class Track {
     const latency = 2;
     if (beatT <= latency && this.audio.t) {
       const note = this.notes[this.#i % this.notes.length];
-      console.log("SCHEDULING", beatT, note);
+      // console.log("SCHEDULING", beatT, note);
       if (note) {
         this.audio.play(
           note.frequency, beatT, interval,
