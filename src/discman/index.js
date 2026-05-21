@@ -288,6 +288,70 @@ class RandomOther extends Other {
   }
 }
 
+/** ... */
+class ConfrontingOther extends Other {
+  meow = false;
+  plan() {
+    for (const row of game.world.grid) {
+      for (const cell of row) {
+        cell.unmark();
+      }
+    }
+    if (this.meow) {
+      return null;
+    }
+    // this.meow = true;
+    const path = this.walk(cell => cell.entity instanceof Character);
+    if (path) {
+      for (const cell of path) {
+        cell.mark();
+      }
+    }
+    // console.log("FOUND PATH", path);
+    return path?.[1] ?? null;
+  }
+
+  /**
+   * @callback TestFunc
+   * @param {Cell} cell
+   * @returns {boolean}
+   * @param {TestFunc} test
+   * @returns {?Cell[]}
+   */
+  walk(test) {
+    const c = game.world.getCell(this.x, this.y, Error);
+    const path = [c];
+    const queue = [path];
+    const visited = new Set([c]);
+
+    while (queue.length) {
+      const path = queue.shift();
+      assert(path);
+      const current = path.at(-1);
+      assert(current);
+      // console.log("VISIT", current.x, current.y);
+      if (test(current)) {
+        return path;
+      }
+
+      let cells = game.world.getNeighbors(current.x, current.y).filter(
+        cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
+      );
+      cells = shuffle(cells);
+      for (const cell of cells) {
+        if (visited.has(cell)) {
+          continue;
+        }
+        // console.log("ADD", cell.x, cell.y);
+        visited.add(cell);
+        queue.push([...path, cell]);
+      }
+    }
+
+    return null;
+  }
+}
+
 /**
  * @typedef Hit
  * @property {?boolean} hit
@@ -567,7 +631,8 @@ class World extends Screen {
     this.others = [];
     this.tails = [];
 
-    const n = 2;
+    const others = [ConfrontingOther, RandomOther];
+    const n = others.length;
     const side = Math.ceil(Math.sqrt(n + 1));
     /** @type {[number, number][]} */
     let points = [];
@@ -588,7 +653,9 @@ class World extends Screen {
     for (let i = 0; i < n; i++) {
       const point = points[i];
       assert(point);
-      this.#spawnOther(RandomOther, point[0], point[1]);
+      const type = others[i];
+      assert(type);
+      this.#spawnOther(type, point[0], point[1]);
     }
   }
 
