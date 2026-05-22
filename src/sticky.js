@@ -1860,7 +1860,9 @@ export const NEON_PALETTE = {
   lightGreen: color(tr(2 / 6), 1, 1 / 2),
   lightCyan: color(tr(3 / 6), 1, 1 / 2),
   lightBlue: color(tr(4 / 6), 1, 1 / 2),
+  lightPurple: color(tr(9 / 12), 1, 1 / 2),
   lightMagenta: color(tr(5 / 6), 1, 1 / 2),
+  lightCrimson: color(tr(11 / 12), 1, 1 / 2),
 
   black: color(tr(0), 0, 0),
   darkGray: color(tr(0), 0, 1 / 3),
