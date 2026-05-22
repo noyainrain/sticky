@@ -148,6 +148,12 @@ class Cell extends Entity {
       tr(3 / 6), 1, 1 / 2, { alpha: tween(1 / 2, 1 / 3, World.INTERVAL, { easing: easeOut }) },
     );
   }
+
+  deactivate() {
+    this.activated = false;
+    this.model.fill = transparent();
+    this.#updateColor();
+  }
 }
 
 /** ... */
@@ -185,13 +191,16 @@ class Tail extends Entity {
   // XXX
   // lifetime = 10;
 
-  constructor() {
+  /**
+   * @param {string} color
+   */
+  constructor(color) {
     super(
       new Rectangle(
         h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
         {
           orientation: tween(1 / 32, 0, World.INTERVAL, { easing: easeOut, mirror: true }),
-          fill: variable("lightMagenta", "color"),
+          fill: variable(color, "color"),
         },
       ),
     );
@@ -227,17 +236,21 @@ class Other extends Entity {
 
   #energy = 0;
 
-  constructor() {
+  /**
+   * @param {string} color
+   */
+  constructor(color) {
     super(
       new Triangle(
         h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
         {
           orientation:
             add(scalar(1 / 2), tween(1 / 32, 0, World.INTERVAL, { easing: easeOut, mirror: true })),
-          fill: variable("lightMagenta", "color"),
+          fill: variable(color, "color"),
         },
       ),
     );
+    this.color = color;
   }
 
   /**
@@ -264,7 +277,7 @@ class Other extends Entity {
         game.pause();
       } else {
         game.world.moveTo(this, target.x, target.y);
-        this.tails.unshift(game.world.spawnTail(x, y));
+        this.tails.unshift(game.world.spawnTail(x, y, this.color));
         this.#energy = 0;
         if (this.tails.length > 10) {
           const tail = this.tails.pop();
@@ -296,6 +309,10 @@ class Other extends Entity {
 
 /** ... */
 class RandomOther extends Other {
+  constructor() {
+    super("lightMagenta");
+  }
+
   plan() {
     const cells = game.world.getNeighbors(this.x, this.y).filter(
       cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
@@ -316,23 +333,27 @@ class RandomOther extends Other {
 
 /** ... */
 class ConfrontingOther extends Other {
+  constructor() {
+    super("lightCrimson");
+  }
+
   meow = false;
   plan() {
-    for (const row of game.world.grid) {
-      for (const cell of row) {
-        cell.unmark();
-      }
-    }
+    // for (const row of game.world.grid) {
+    //   for (const cell of row) {
+    //     cell.unmark();
+    //   }
+    // }
     if (this.meow) {
       return null;
     }
     // this.meow = true;
     const path = this.walk(cell => cell.entity instanceof Character);
-    if (path) {
-      for (const cell of path) {
-        cell.mark();
-      }
-    }
+    // if (path) {
+    //   for (const cell of path) {
+    //     cell.mark();
+    //   }
+    // }
     // console.log("FOUND PATH", path);
     return path?.[1] ?? null;
   }
@@ -688,10 +709,11 @@ class World extends Screen {
   /**
    * @param {number} x
    * @param {number} y
+   * @param {string} color
    * @returns {Tail}
    */
-  spawnTail(x, y) {
-    const tail = new Tail();
+  spawnTail(x, y, color) {
+    const tail = new Tail(color);
     this.moveTo(tail, x, y);
     this.tails.push(tail);
     this.#entities.stick(tail.model);
@@ -776,6 +798,8 @@ class World extends Screen {
         }
         if (hit.hit) {
           this.grid[y]?.[x]?.activate();
+        } else {
+          this.grid[y]?.[x]?.deactivate();
         }
       }
     }
