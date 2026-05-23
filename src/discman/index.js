@@ -430,6 +430,13 @@ class AvoidingOther extends Other {
 }
 
 /**
+ * @typedef Level
+ * @property {new () => Other} others
+ */
+
+const LEVELS = [{ others: [ConfrontingOther, RandomOther, AvoidingOther] }];
+
+/**
  * @typedef Hit
  * @property {?boolean} hit
  * @property {?number} deviation
@@ -466,6 +473,11 @@ class World extends Screen {
    * @type {boolean}
    */
   paused = true;
+  /**
+   * ...
+   * @type {number}
+   */
+  level = 0;
 
   #beatWindow = 0;
   /** @type {Hit[]} */
@@ -708,7 +720,9 @@ class World extends Screen {
     this.others = [];
     this.tails = [];
 
-    const others = [ConfrontingOther, RandomOther, AvoidingOther];
+    const level = LEVELS[this.level];
+    assert(level);
+    const others = level.others;
     const n = others.length;
     const side = Math.ceil(Math.sqrt(n + 1));
     /** @type {[number, number][]} */
