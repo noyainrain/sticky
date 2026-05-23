@@ -399,7 +399,7 @@ class ConfrontingOther extends Other {
     }
     // this.meow = true;
     const path = this.walk(cell => cell.entity instanceof Character);
-    return path?.[1] ?? null;
+    return path?.[1] ?? this.pickRandom();
   }
 }
 
