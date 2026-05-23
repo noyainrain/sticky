@@ -305,60 +305,9 @@ class Other extends Entity {
       h((y + 1 / 2) / World.GRID_SIZE),
     );
   }
-}
-
-/** ... */
-class RandomOther extends Other {
-  constructor() {
-    super("lightMagenta");
-  }
-
-  plan() {
-    const cells = game.world.getNeighbors(this.x, this.y).filter(
-      cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
-    ).map(
-      cell => ({
-        cell,
-        // TODO if we would consider the direction here, we could look at the three cells ahead, if
-        // any is set, we're closing the path (any of the other 6 cells would mean the path is
-        // already closed)
-        priority:
-          game.world.getNeighbors(cell.x, cell.y)
-            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
-      }),
-    ).sort((a, b) => b.priority - a.priority);
-    return cells[0]?.cell ?? null;
-  }
-}
-
-/** ... */
-class ConfrontingOther extends Other {
-  constructor() {
-    super("lightCrimson");
-  }
-
-  meow = false;
-  plan() {
-    // for (const row of game.world.grid) {
-    //   for (const cell of row) {
-    //     cell.unmark();
-    //   }
-    // }
-    if (this.meow) {
-      return null;
-    }
-    // this.meow = true;
-    const path = this.walk(cell => cell.entity instanceof Character);
-    // if (path) {
-    //   for (const cell of path) {
-    //     cell.mark();
-    //   }
-    // }
-    // console.log("FOUND PATH", path);
-    return path?.[1] ?? null;
-  }
 
   /**
+   * ...
    * @callback TestFunc
    * @param {Cell} cell
    * @returns {boolean}
@@ -396,6 +345,47 @@ class ConfrontingOther extends Other {
     }
 
     return null;
+  }
+}
+
+/** ... */
+class RandomOther extends Other {
+  constructor() {
+    super("lightMagenta");
+  }
+
+  plan() {
+    const cells = game.world.getNeighbors(this.x, this.y).filter(
+      cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
+    ).map(
+      cell => ({
+        cell,
+        // TODO if we would consider the direction here, we could look at the three cells ahead, if
+        // any is set, we're closing the path (any of the other 6 cells would mean the path is
+        // already closed)
+        priority:
+          game.world.getNeighbors(cell.x, cell.y)
+            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
+      }),
+    ).sort((a, b) => b.priority - a.priority);
+    return cells[0]?.cell ?? null;
+  }
+}
+
+/** ... */
+class ConfrontingOther extends Other {
+  constructor() {
+    super("lightCrimson");
+  }
+
+  meow = false;
+  plan() {
+    if (this.meow) {
+      return null;
+    }
+    // this.meow = true;
+    const path = this.walk(cell => cell.entity instanceof Character);
+    return path?.[1] ?? null;
   }
 }
 
