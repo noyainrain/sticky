@@ -308,6 +308,26 @@ class Other extends Entity {
 
   /**
    * ...
+   */
+  pickRandom() {
+    const cells = game.world.getNeighbors(this.x, this.y).filter(
+      cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
+    ).map(
+      cell => ({
+        cell,
+        // TODO if we would consider the direction here, we could look at the three cells ahead, if
+        // any is set, we're closing the path (any of the other 6 cells would mean the path is
+        // already closed)
+        priority:
+          game.world.getNeighbors(cell.x, cell.y)
+            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
+      }),
+    ).sort((a, b) => b.priority - a.priority);
+    return cells[0]?.cell ?? null;
+  }
+
+  /**
+   * ...
    * @callback TestFunc
    * @param {Cell} cell
    * @returns {boolean}
@@ -355,20 +375,7 @@ class RandomOther extends Other {
   }
 
   plan() {
-    const cells = game.world.getNeighbors(this.x, this.y).filter(
-      cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
-    ).map(
-      cell => ({
-        cell,
-        // TODO if we would consider the direction here, we could look at the three cells ahead, if
-        // any is set, we're closing the path (any of the other 6 cells would mean the path is
-        // already closed)
-        priority:
-          game.world.getNeighbors(cell.x, cell.y)
-            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
-      }),
-    ).sort((a, b) => b.priority - a.priority);
-    return cells[0]?.cell ?? null;
+    return this.pickRandom();
   }
 }
 
