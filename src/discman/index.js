@@ -308,20 +308,27 @@ class Other extends Entity {
 
   /**
    * ...
+   * @param {Object} [options]
+   * @param {boolean} [options.avoid]
    */
-  pickRandom() {
+  pickRandom({ avoid = false } = {}) {
     const cells = game.world.getNeighbors(this.x, this.y).filter(
       cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
     ).map(
-      cell => ({
-        cell,
-        // TODO if we would consider the direction here, we could look at the three cells ahead, if
-        // any is set, we're closing the path (any of the other 6 cells would mean the path is
-        // already closed)
-        priority:
-          game.world.getNeighbors(cell.x, cell.y)
-            .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random(),
-      }),
+      (cell) => {
+        let priority = game.world.getNeighbors(cell.x, cell.y)
+          .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random();
+        if (avoid && !cell.activated) {
+          priority += 10;
+        }
+        return {
+          cell,
+          // TODO if we would consider the direction here, we could look at the three cells ahead, if
+          // any is set, we're closing the path (any of the other 6 cells would mean the path is
+          // already closed)
+          priority,
+        };
+      },
     ).sort((a, b) => b.priority - a.priority);
     return cells[0]?.cell ?? null;
   }
@@ -393,6 +400,32 @@ class ConfrontingOther extends Other {
     // this.meow = true;
     const path = this.walk(cell => cell.entity instanceof Character);
     return path?.[1] ?? null;
+  }
+}
+
+/** ... */
+class AvoidingOther extends Other {
+  constructor() {
+    super("lightPurple");
+  }
+
+  plan() {
+    let target = null;
+    if (game.world.getCell(this.x, this.y, Error).activated) {
+      // for (const row of game.world.grid) {
+      //   for (const cell of row) {
+      //     cell.unmark();
+      //   }
+      // }
+      const path = this.walk(cell => !cell.activated);
+      // if (path) {
+      //   for (const cell of path) {
+      //     cell.mark();
+      //   }
+      // }
+      target = path?.[1] ?? null;
+    }
+    return target ?? this.pickRandom({ avoid: true });
   }
 }
 
@@ -675,7 +708,7 @@ class World extends Screen {
     this.others = [];
     this.tails = [];
 
-    const others = [ConfrontingOther, RandomOther];
+    const others = [ConfrontingOther, RandomOther, AvoidingOther];
     const n = others.length;
     const side = Math.ceil(Math.sqrt(n + 1));
     /** @type {[number, number][]} */
