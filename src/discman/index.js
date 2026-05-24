@@ -559,6 +559,14 @@ class World extends Screen {
     this.#hisnare.play(t);
     this.#synth.play(t);
 
+    // TODO find a better way to unstick on animation done
+    if (
+      this.#label.base && this.#label.getVariable("offset", "scalar").shape
+      && t + this.#label.getVariable("offset", "scalar").evaluate() >= 2
+    ) {
+      this.#model.unstick(this.#label);
+    }
+
     this.#model.render(game.p);
 
     this.#debugText.content = `${game.p.frameRate().toFixed(0)} fps\n${(this.#meanDeviation * 100).toFixed(0)} %`;
@@ -748,6 +756,30 @@ class World extends Screen {
       assert(type);
       this.#spawnOther(type, point[0], point[1]);
     }
+
+    this.label();
+  }
+
+  #label = new Text(
+    "", w(1), px(4 * 22), point(px(22), px(22)),
+    {
+      anchor: point(w(0), h(0)),
+      fill: color(
+        tr(0), 1, 1, {
+          alpha: tween(
+            // TODO delay without hack
+            1, 0, 1, { offset: add(variable("offset", "scalar"), scalar(1)), pause: 1 },
+          ),
+        },
+      ),
+      alignment: 0,
+    },
+  );
+
+  label() {
+    this.#label.content = `Level ${this.level + 1}/${LEVELS.length}`;
+    this.#label.setVariable("offset", -game.p.millis() / 1000);
+    this.#model.stick(this.#label);
   }
 
   /**
