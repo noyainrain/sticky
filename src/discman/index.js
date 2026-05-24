@@ -528,13 +528,7 @@ class World extends Screen {
     if (!game.overlay) {
       const activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
       if (activated === World.GRID_SIZE * World.GRID_SIZE) {
-        if (this.level === LEVELS.length - 1) {
-          this.level = 0;
-          game.rollCredits();
-        } else {
-          this.level++;
-          this.start();
-        }
+        game.showOverlay(new ClearScreen());
       }
     }
 
@@ -930,6 +924,50 @@ class Pause extends Screen {
 }
 
 /** ... */
+class ClearScreen extends Screen {
+  #title = new Text(
+    "Level ?/? Clear", w(1), px(4 * 22), point(w(1 / 2), px(22)),
+    { anchor: point(w(1 / 2), h(0)), fill: variable("white", "color") },
+  );
+
+  #model = new Rectangle(
+    {
+      variables: { ...NEON_PALETTE }, fill: variable("black", "color"), stroke: transparent(),
+    },
+    this.#title,
+    new Text(
+      "Press Space to Continue", w(1), px(2 * 22), point(w(1 / 2), h(2 / 3)),
+      { fill: variable("white", "color") },
+    ),
+  );
+
+  constructor() {
+    super();
+    this.#title.content = game.world.level === LEVELS.length - 1
+      ? "All Clear"
+      : `Level ${game.world.level + 1}/${LEVELS.length} Clear`;
+  }
+
+  render() {
+    this.#model.render(game.p);
+  }
+
+  /**
+   * @param {string} key
+   */
+  onKeyPressed(key) {
+    if (key === " ") {
+      game.world.level = (game.world.level + 1) % LEVELS.length;
+      if (game.world.level === 0) {
+        game.pause();
+      } else {
+        game.play();
+      }
+    }
+  }
+}
+
+/** ... */
 class Credits extends Screen {
   #model = new Rectangle(
     {
@@ -1025,25 +1063,25 @@ class Game extends HTMLElement {
 
   /** ... */
   play() {
-    this.#showOverlay(null);
+    this.showOverlay(null);
     this.audio.resume();
     this.world.start();
   }
 
   /** ... */
   pause() {
-    this.#showOverlay(new Pause());
+    this.showOverlay(new Pause());
   }
 
   /** ... */
   rollCredits() {
-    this.#showOverlay(new Credits());
+    this.showOverlay(new Credits());
   }
 
   /**
    * @param {?Screen} overlay
    */
-  #showOverlay(overlay) {
+  showOverlay(overlay) {
     this.overlay = overlay;
     this.audio.volume = overlay ? 1 / 8 : 1 / 2;
   }
