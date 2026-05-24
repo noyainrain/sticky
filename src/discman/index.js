@@ -436,7 +436,9 @@ class AvoidingOther extends Other {
 
 const LEVELS = [
   { others: [RandomOther] },
+  { others: [ConfrontingOther, RandomOther] },
   { others: [ConfrontingOther, RandomOther, AvoidingOther] },
+  { others: [AvoidingOther, AvoidingOther, AvoidingOther] },
 ];
 
 /**
