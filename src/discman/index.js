@@ -434,7 +434,10 @@ class AvoidingOther extends Other {
  * @property {new () => Other} others
  */
 
-const LEVELS = [{ others: [ConfrontingOther, RandomOther, AvoidingOther] }];
+const LEVELS = [
+  { others: [RandomOther] },
+  { others: [ConfrontingOther, RandomOther, AvoidingOther] },
+];
 
 /**
  * @typedef Hit
@@ -525,7 +528,13 @@ class World extends Screen {
     if (!game.overlay) {
       const activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
       if (activated === World.GRID_SIZE * World.GRID_SIZE) {
-        game.rollCredits();
+        if (this.level === LEVELS.length - 1) {
+          this.level = 0;
+          game.rollCredits();
+        } else {
+          this.level++;
+          this.start();
+        }
       }
     }
 
