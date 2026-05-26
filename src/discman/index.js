@@ -515,6 +515,7 @@ class World extends Screen {
       { variables: { ...NEON_PALETTE }, fill: variable("black", "color"), stroke: transparent() },
       this.#entities, this.#debugText,
     );
+    this.reset();
   }
 
   update() {
@@ -708,7 +709,7 @@ class World extends Screen {
     ).filter(cell => cell !== undefined);
   }
 
-  start() {
+  reset() {
     if (this.grid) {
       this.#entities.unstick(...this.grid.flatMap(row => row.map(cell => cell.model)));
     }
@@ -761,7 +762,9 @@ class World extends Screen {
       assert(type);
       this.#spawnOther(type, point[0], point[1]);
     }
+  }
 
+  start() {
     this.label();
   }
 
@@ -777,6 +780,7 @@ class World extends Screen {
           ),
         },
       ),
+      orientation: tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }),
       alignment: 0,
     },
   );
@@ -857,6 +861,7 @@ class World extends Screen {
     const y = this.player.y + offset[1];
     if (x >= 0 && x < World.GRID_SIZE && y >= 0 && y < World.GRID_SIZE) {
       if (this.grid[y]?.[x]?.entity instanceof Other || this.grid[y]?.[x]?.entity instanceof Tail) {
+        game.world.reset();
         game.pause();
       } else {
         this.moveTo(this.player, x, y);
@@ -893,21 +898,30 @@ class Pause extends Screen {
   #model = new Rectangle(
     {
       variables: { ...NEON_PALETTE },
-      fill: variable("black", "color"),
+      // fill: variable("black", "color"),
+      fill: color(tr(0), 0, 0, { alpha: 2 / 3 }),
       stroke: transparent(),
     },
     new Text(
       "Disc-Man",
       w(1), px(4 * 22),
+      // tween(px(4 * 22), px(4 * 22 + 4 * 22 / 8), World.INTERVAL, { easing: easeOut }),
       {
-        at: point(w(1 / 2), px(22)),
-        anchor: point(w(1 / 2), h(0)),
+        at: point(px(22), px(5 * 22)),
+        anchor: point(w(0), h(1)),
+        orientation: tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }),
+        alignment: 0,
         fill: variable("white", "color"),
       },
     ),
     new Text(
-      "Press Space to Play", w(1), px(2 * 22), point(w(1 / 2), h(2 / 3)),
-      { fill: variable("white", "color") },
+      "Press Space to Play", w(1), px(2 * 22), point(px(22), subtract(h(1), px(22))),
+      {
+        anchor: point(w(0), h(1)),
+        alignment: 0,
+        fill: variable("white", "color"),
+        orientation: tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }),
+      },
     ),
   );
 
@@ -928,18 +942,30 @@ class Pause extends Screen {
 /** ... */
 class ClearScreen extends Screen {
   #title = new Text(
-    "Level ?/? Clear", w(1), px(4 * 22), point(w(1 / 2), px(22)),
-    { anchor: point(w(1 / 2), h(0)), fill: variable("white", "color") },
+    "Level ?/? Clear", w(1), px(4 * 22), point(px(22), px(5 * 22)),
+    {
+      anchor: point(w(0), h(1)),
+      fill: variable("white", "color"),
+      orientation: tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }),
+      alignment: 0,
+    },
   );
 
   #model = new Rectangle(
     {
-      variables: { ...NEON_PALETTE }, fill: variable("black", "color"), stroke: transparent(),
+      variables: { ...NEON_PALETTE },
+      fill: color(tr(0), 0, 0, { alpha: 2 / 3 }),
+      stroke: transparent(),
     },
     this.#title,
     new Text(
-      "Press Space to Continue", w(1), px(2 * 22), point(w(1 / 2), h(2 / 3)),
-      { fill: variable("white", "color") },
+      "Press Space to Continue", w(1), px(2 * 22), point(px(22), subtract(h(1), px(22))),
+      {
+        anchor: point(w(0), h(1)),
+        orientation: tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }),
+        fill: variable("white", "color"),
+        alignment: 0,
+      },
     ),
   );
 
@@ -960,6 +986,7 @@ class ClearScreen extends Screen {
   onKeyPressed(key) {
     if (key === " ") {
       game.world.level = (game.world.level + 1) % LEVELS.length;
+      game.world.reset();
       if (game.world.level === 0) {
         game.pause();
       } else {
