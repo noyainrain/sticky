@@ -274,6 +274,7 @@ class Other extends Entity {
       const y = this.y;
       // const target = cells[Math.trunc(Math.random() * cells.length)];
       if (game.world.getCell(target.x, target.y)?.entity instanceof Character) {
+        game.world.reset();
         game.pause();
       } else {
         game.world.moveTo(this, target.x, target.y);
@@ -523,6 +524,10 @@ class World extends Screen {
       tail.update();
     }
     for (const other of this.others) {
+      // XXX if game was resetted, a bit hacky
+      if (game.overlay) {
+        break;
+      }
       other.update();
     }
   }
