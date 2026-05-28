@@ -3,7 +3,7 @@
 import p5 from "p5";
 import {
   NEON_PALETTE, Ellipse, Rectangle, Text, Triangle, add, assert, color, easeOut, h, multiply, point,
-  px, scalar, subtract, tr, transparent, tween, variable, w,
+  px, scalar, subtract, tr, transparent, tween, variable, w, ease,
 } from "#sticky";
 import { KEYS, OCTAVE, Audio, Track, noteFreq } from "#audio";
 
@@ -317,8 +317,19 @@ class Other extends Entity {
       cell => !(cell.entity instanceof Other || cell.entity instanceof Tail),
     ).map(
       (cell) => {
-        let priority = game.world.getNeighbors(cell.x, cell.y)
-          .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random();
+        let priorityCells = game.world.getNeighbors(cell.x, cell.y, { diagonal: true })
+          .filter(
+            cell => !cell.entity || cell.entity instanceof Character || cell.entity === this
+              || cell.entity === this.tails[0],
+          );
+        // let priority = game.world.getNeighbors(cell.x, cell.y)
+        //   .filter(cell => !cell.entity || cell.entity instanceof Character).length + Math.random();
+        // if (cell.x === this.x && cell.y === this.y - 1) {
+        //   for (const cell of priorityCells) {
+        //     cell.mark();
+        //   }
+        // }
+        let priority = priorityCells.length + Math.random();
         if (avoid && !cell.activated) {
           priority += 10;
         }
@@ -413,17 +424,7 @@ class AvoidingOther extends Other {
   plan() {
     let target = null;
     if (game.world.getCell(this.x, this.y, Error).activated) {
-      // for (const row of game.world.grid) {
-      //   for (const cell of row) {
-      //     cell.unmark();
-      //   }
-      // }
       const path = this.walk(cell => !cell.activated);
-      // if (path) {
-      //   for (const cell of path) {
-      //     cell.mark();
-      //   }
-      // }
       target = path?.[1] ?? null;
     }
     return target ?? this.pickRandom({ avoid: true });
@@ -485,6 +486,12 @@ class World extends Screen {
    */
   level = 0;
 
+  /**
+   * ...
+   * @type {number}
+   */
+  active = 0;
+
   #beatWindow = 0;
   /** @type {Hit[]} */
   #hits = [{ hit: null, deviation: null }];
@@ -502,14 +509,6 @@ class World extends Screen {
   static BPM = 120;
   static INTERVAL = 1 / (World.BPM / 60);
 
-  /** @type {Object<Direction, [number, number]>} */
-  static #OFFSETS = {
-    north: [0, -1],
-    east: [1, 0],
-    south: [0, 1],
-    west: [-1, 0],
-  };
-
   constructor() {
     super();
     this.#model = new Rectangle(
@@ -520,6 +519,11 @@ class World extends Screen {
   }
 
   update() {
+    // for (const row of game.world.grid) {
+    //   for (const cell of row) {
+    //     cell.unmark();
+    //   }
+    // }
     for (const tail of this.tails) {
       tail.update();
     }
@@ -534,8 +538,7 @@ class World extends Screen {
 
   render() {
     if (!game.overlay) {
-      const activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
-      if (activated === World.GRID_SIZE * World.GRID_SIZE) {
+      if (this.activated === World.GRID_SIZE * World.GRID_SIZE) {
         game.showOverlay(new ClearScreen());
       }
     }
@@ -706,12 +709,30 @@ class World extends Screen {
    * ...
    * @param {number} x
    * @param {number} y
+   * @param {Object} [options]
+   * @param {boolean} [options.diagonal]
    * @return {Cell[]}
    */
-  getNeighbors(x, y) {
-    return Object.values(World.#OFFSETS).map(
-      offset => this.getCell(x + offset[0], y + offset[1]),
-    ).filter(cell => cell !== undefined);
+  getNeighbors(x, y, { diagonal = false } = {}) {
+    const cells = [];
+    for (let j = -1; j <= 1; j++) {
+      for (let i = -1; i <= 1; i++) {
+        if (i === 0 && j === 0) {
+          continue;
+        }
+        if (!diagonal && i !== 0 && j !== 0) {
+          continue;
+        }
+        const cell = this.getCell(x + i, y + j);
+        if (cell) {
+          cells.push(cell);
+        }
+      }
+    }
+    return cells;
+    // return Object.values(World.#OFFSETS).map(
+    //   offset => this.getCell(x + offset[0], y + offset[1]),
+    // ).filter(cell => cell !== undefined);
   }
 
   reset() {
@@ -767,6 +788,8 @@ class World extends Screen {
       assert(type);
       this.#spawnOther(type, point[0], point[1]);
     }
+
+    this.#updateActivated();
   }
 
   start() {
@@ -892,8 +915,16 @@ class World extends Screen {
         } else {
           this.grid[y]?.[x]?.deactivate();
         }
+        this.#updateActivated();
       }
     }
+  }
+
+  #updateActivated() {
+    this.activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
+    const ratio = ease(this.activated / (World.GRID_SIZE * World.GRID_SIZE));
+    const freq = (1 - ratio) * noteFreq(KEYS.C - OCTAVE) + ratio * 20000;
+    game.audio.filter(freq);
   }
 }
 
@@ -1068,6 +1099,7 @@ class Game extends HTMLElement {
   constructor() {
     super();
     game = this;
+    this.audio.filter(20000);
     this.world = new World();
 
     this.pause();
