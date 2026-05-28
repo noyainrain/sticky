@@ -106,6 +106,10 @@ export const INSTRUMENTS = {
 export class Audio {
   #context;
   #compressor;
+  /** @type {AudioNode} */
+  #out;
+  /** @type {?BiquadFilterNode} */
+  #filter = null;
   #level;
 
   constructor() {
@@ -124,6 +128,7 @@ export class Audio {
     this.#compressor = this.#context.createDynamicsCompressor();
     // this.#compressor.connect(this.#context.destination);
     this.#compressor.connect(this.#level);
+    this.#out = this.#compressor;
   }
 
   /**
@@ -133,6 +138,24 @@ export class Audio {
   set volume(value) {
     this.#level.gain.value = value;
     console.log(this.#level.gain.value);
+  }
+
+  /**
+   * @param {?number} frequency
+   */
+  filter(frequency) {
+    if (frequency === null) {
+      this.#filter = null;
+      this.#out = this.#compressor;
+    } else {
+      if (!this.#filter) {
+        this.#filter = this.#context.createBiquadFilter();
+        this.#filter.type = "lowpass";
+        this.#filter.connect(this.#compressor);
+        this.#out = this.#filter;
+      }
+      this.#filter.frequency.value = frequency;
+    }
   }
 
   get t() {
@@ -279,7 +302,7 @@ export class Audio {
       src = src.connect(amp);
     }
 
-    src.connect(gain).connect(this.#compressor);
+    src.connect(gain).connect(this.#out);
 
     // const src = context.createConstantSource();
     // src.start();
