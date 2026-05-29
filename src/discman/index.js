@@ -145,7 +145,36 @@ class Cell extends Entity {
     //   color(tr(3 / 6), 1, 1 / 2, { alpha: 1 / 2 }),
     // );
     this.model.fill = color(
-      tr(3 / 6), 1, 1 / 2, { alpha: tween(1 / 2, 1 / 3, World.INTERVAL, { easing: easeOut }) },
+      tr(3 / 6), 1, 1 / 2,
+      /* tween(
+        1 / 2, 1 / 2, World.INTERVAL,
+        {
+          offset: -(World.INTERVAL / 10 * this.x + World.INTERVAL / 10 * this.y),
+          // pause: (World.GRID_SIZE - 1) * World.INTERVAL + 9 / 10 * World.INTERVAL,
+          // easing: ease,
+          easing: easeOut,
+          // yoyo: true,
+        },
+      ), */
+      {
+        alpha:
+          add(
+            tween(1 / 2, 1 / 3, World.INTERVAL, { easing: easeOut }),
+            multiply(
+              tween(
+                1 / 6, 0 / 6, World.INTERVAL,
+                {
+                  offset: -(World.INTERVAL / 10 * this.x + World.INTERVAL / 10 * this.y),
+                  // pause: (World.GRID_SIZE - 1) * World.INTERVAL + 9 / 10 * World.INTERVAL,
+                  // easing: ease,
+                  easing: easeOut,
+                  // yoyo: true,
+                },
+              ),
+              variable("intense", "scalar"),
+            ),
+          ),
+      },
     );
   }
 
@@ -512,7 +541,10 @@ class World extends Screen {
   constructor() {
     super();
     this.#model = new Rectangle(
-      { variables: { ...NEON_PALETTE }, fill: variable("black", "color"), stroke: transparent() },
+      {
+        variables: { ...NEON_PALETTE, intense: 0 },
+        fill: variable("black", "color"), stroke: transparent(),
+      },
       this.#entities, this.#debugText,
     );
     this.reset();
@@ -922,9 +954,12 @@ class World extends Screen {
 
   #updateActivated() {
     this.activated = this.grid.flat().reduce((sum, cell) => sum + (cell.activated ? 1 : 0), 0);
-    const ratio = ease(this.activated / (World.GRID_SIZE * World.GRID_SIZE));
-    const freq = (1 - ratio) * noteFreq(KEYS.C - OCTAVE) + ratio * 20000;
+    const ratio = this.activated / (World.GRID_SIZE * World.GRID_SIZE);
+    const t = ease(ratio);
+    const freq = (1 - t) * noteFreq(KEYS.C - OCTAVE) + t * 20000;
     game.audio.filter(freq);
+    const intense = ratio >= 2 / 3 ? easeOut(((ratio - 2 / 3) * 3)) : 0;
+    this.#model.setVariable("intense", intense);
   }
 }
 
