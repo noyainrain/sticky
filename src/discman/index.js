@@ -697,7 +697,9 @@ class World extends Screen {
     this.#model = new Rectangle(
       {
         variables: { ...NEON_PALETTE, intense: 0 },
-        fill: variable("black", "color"), stroke: transparent(),
+        fill: variable("black", "color"),
+        stroke: transparent(),
+        viewport: 360,
       },
       this.#entities, this.#debugText,
     );
@@ -1176,6 +1178,7 @@ class Pause extends Screen {
       // fill: variable("black", "color"),
       fill: color(tr(0), 0, 0, { alpha: 2 / 3 }),
       stroke: transparent(),
+      viewport: 360,
     },
     new Text(
       "Disc-Man",
@@ -1199,7 +1202,7 @@ class Pause extends Screen {
   }
 
   #updateSettings() {
-    this.#settings.content = `Volume: ${(game.volume * 100).toFixed(0)}% [-][+]`;
+    this.#settings.content = `Fullscreen [F] / Volume: ${(game.volume * 100).toFixed(0)}% [-][+]`;
   }
 
   render() {
@@ -1214,6 +1217,13 @@ class Pause extends Screen {
     switch (key) {
       case " ":
         game.play();
+        break;
+      case "f":
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          document.body.requestFullscreen();
+        }
         break;
       case "+":
       case "=":
@@ -1246,6 +1256,7 @@ class ClearScreen extends Screen {
       variables: { ...NEON_PALETTE },
       fill: color(tr(0), 0, 0, { alpha: 2 / 3 }),
       stroke: transparent(),
+      viewport: 360,
     },
     this.#title,
     write("Press Space to Continue", subtract(h(1), px(3 * 22)), { scale: 2, dance: true }),
@@ -1317,6 +1328,7 @@ class Credits extends Screen {
         // fill: variable("black", "color"),
         fill: color(tr(0), 0, 0, { alpha: clear ? 2 / 3 : 1 }),
         stroke: transparent(),
+        viewport: 360,
       },
       write(
         clear ? "All Clear" : shuffle([..."All Clear"]).join(""), px(22),
@@ -1390,7 +1402,8 @@ class Game extends HTMLElement {
 
     this.p = new p5((p) => {
       p.setup = () => {
-        p.createCanvas(640, 360);
+        const s = Math.floor(screen.height / 360);
+        p.createCanvas(640 * s, 360 * s);
         p.textFont("\"Noto Sans\", sans-serif");
       };
 

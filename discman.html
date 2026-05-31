@@ -15,6 +15,34 @@
             }
         </script>
         <script type="module" src="src/discman/index.js"></script>
+
+        <style>
+            html {
+              background: black;
+            }
+
+            body {
+                margin: unset;
+            }
+
+            main {
+                margin: unset;
+                padding: unset;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+
+            canvas {
+                /* object-fit scale-down does not consider dpr */
+                display: block;
+                width: auto !important;
+                height: auto !important;
+                max-width: 100%;
+                max-height: 100%;
+            }
+        </style>
     </head>
 
     <body>
