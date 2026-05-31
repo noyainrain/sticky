@@ -793,6 +793,7 @@ class World extends Screen {
     this.#snare.play(t);
     this.#hisnare.play(t);
     this.#synth.play(t);
+    this.bass.play(t);
     this.noise.play(t);
 
     // TODO find a better way to unstick on animation done
@@ -810,6 +811,89 @@ class World extends Screen {
 
   noise = new Track(
     game.audio, { bpm: World.BPM, attack: 0, release: 0, noise: true, sustain: 0 }, 20000,
+  );
+
+  bass = new Track(
+    game.audio, { bpm: World.BPM, noteValue: 16, wave: "triangle" },
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+    noteFreq(KEYS.D - 1 * OCTAVE),
+
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+    noteFreq(KEYS.C - 1 * OCTAVE),
+
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
+    noteFreq(KEYS.F - 1 * OCTAVE),
   );
 
   #kick = new Track(
@@ -1166,6 +1250,12 @@ class World extends Screen {
     game.audio.filter(freq);
     const intense = ratio >= 2 / 3 ? easeOut(((ratio - 2 / 3) * 3)) : 0;
     this.#model.setVariable("intense", intense);
+
+    for (const note of this.bass.notes) {
+      if (note) {
+        note.sustain = intense / 2;
+      }
+    }
   }
 }
 
