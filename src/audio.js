@@ -439,7 +439,7 @@ export class Track {
       this.#i++;
     }
 
-    const latency = 2;
+    const latency = interval;
     if (beatT <= latency && this.audio.t) {
       const note = this.notes[this.#i % this.notes.length];
       // console.log("SCHEDULING", beatT, note);
