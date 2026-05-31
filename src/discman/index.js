@@ -3,7 +3,7 @@
 import p5 from "p5";
 import {
   NEON_PALETTE, Ellipse, Rectangle, Text, Triangle, add, assert, color, easeOut, h, multiply, point,
-  px, scalar, subtract, tr, transparent, tween, variable, w, ease,
+  px, scalar, subtract, tr, transparent, tween, variable, w, ease, lerp, linear,
 } from "#sticky";
 import { KEYS, OCTAVE, Audio, Track, noteFreq } from "#audio";
 
@@ -460,16 +460,128 @@ class AvoidingOther extends Other {
   }
 }
 
+class Event {
+  /** ... */
+  update() {}
+
+  /** .. */
+  reset() {}
+}
+
+class EndEvent extends Event {
+  /** @type {?Text} */
+  #text = null;
+  /** @type {?Text} */
+  #text2 = null;
+
+  update() {
+    let missed = game.world.hits.slice(1).findIndex(hit => hit.hit);
+    if (missed === -1) {
+      return;
+    }
+
+    if (this.#text && missed === 0) {
+      this.reset();
+    } else if (!this.#text && missed >= 2) {
+      this.#text = game.world.spawnText("Press ↑→ ↓← to move to the beat");
+      this.#text.at = point(
+        add(
+          px(22),
+          tween(
+            multiply(px(0), variable("madness", "scalar")),
+            multiply(px(6), variable("madness", "scalar")), World.INTERVAL / 8,
+            { mirror: true, easing: linear },
+          ),
+        ),
+        add(
+          px(8 * 22),
+          tween(
+            multiply(px(0), variable("madness", "scalar")),
+            multiply(px(6), variable("madness", "scalar")), World.INTERVAL / 8,
+            { mirror: true, easing: linear },
+          ),
+        ),
+      );
+      this.#text.fill = color(
+        tr(11 / 12), 1, tween(
+          1, lerp(1, 1 / 2, variable("madness", "scalar")), World.INTERVAL, { easing: easeOut },
+        ),
+      );
+      this.#text.height = px(2 * 22);
+      this.#text.setVariable("madness", 0);
+      this.#text2 = game.world.spawnText("~ Bring the light ~");
+      this.#text2.at = point(
+        add(
+          px(22),
+          tween(
+            multiply(px(0), variable("madness", "scalar")),
+            multiply(px(6), variable("madness", "scalar")), World.INTERVAL / 8,
+            { mirror: true, easing: linear },
+          ),
+        ),
+        add(
+          px(11 * 22),
+          tween(
+            multiply(px(0), variable("madness", "scalar")),
+            multiply(px(6), variable("madness", "scalar")), World.INTERVAL / 8,
+            { mirror: true, easing: linear },
+          ),
+        ),
+      );
+      this.#text2.height = px(2 * 22);
+      this.#text2.setVariable("madness", 0);
+      this.#text2.fill = color(
+        tr(11 / 12), 1, tween(
+          1, lerp(1, 1 / 2, variable("madness", "scalar")), World.INTERVAL, { easing: easeOut },
+        ),
+      );
+    } else if (this.#text && this.#text2 && missed >= 6) {
+      const madness = (missed - 6) / 16;
+      if (madness >= 1) {
+        game.world.reset();
+        game.rollCredits();
+        game.audio.volume = 0;
+      } else {
+        this.#text.setVariable("madness", madness);
+        this.#text2.setVariable("madness", madness);
+        /**
+         * @param {number} progress
+         */
+        function easeIn(progress) {
+          return 1 - Math.cos(progress * Math.PI / 2);
+        }
+        const note = game.world.noise.notes[0];
+        assert(note);
+        note.sustain = easeIn(madness);
+      }
+    }
+  }
+
+  /** .. */
+  reset() {
+    if (this.#text && this.#text2) {
+      game.world.despawnText(this.#text);
+      game.world.despawnText(this.#text2);
+      this.#text = null;
+      this.#text2 = null;
+      const note = game.world.noise.notes[0];
+      assert(note);
+      note.sustain = 0;
+    }
+  }
+}
+
 /**
  * @typedef Level
  * @property {new () => Other} others
+ * @property {new () => Event} events
  */
 
 const LEVELS = [
-  { others: [RandomOther] },
-  { others: [ConfrontingOther, RandomOther] },
-  { others: [ConfrontingOther, RandomOther, AvoidingOther] },
-  { others: [AvoidingOther, AvoidingOther, AvoidingOther] },
+  { others: [RandomOther], events: [] },
+  { others: [ConfrontingOther, RandomOther], events: [] },
+  { others: [ConfrontingOther, RandomOther, AvoidingOther], events: [] },
+  { others: [AvoidingOther, AvoidingOther, AvoidingOther], events: [EndEvent] },
 ];
 
 /**
@@ -504,6 +616,12 @@ class World extends Screen {
    */
   // @ts-ignore
   tails;
+  /**
+   * ...
+   * @type {Event[]}
+   */
+  // @ts-ignore
+  events;
   /**
    * ...
    * @type {boolean}
@@ -566,6 +684,38 @@ class World extends Screen {
       }
       other.update();
     }
+    for (const event of this.events) {
+      event.update();
+    }
+  }
+
+  // XXX
+  get hits() {
+    return this.#hits;
+  }
+
+  /**
+   * ...
+   * @param {string} content
+   */
+  spawnText(content) {
+    const text = new Text(
+      content, w(1), px(2 * 22), point(px(22), px(22)), {
+        anchor: point(w(0), h(1)),
+        alignment: 0,
+        fill: variable("white", "color"),
+      },
+    );
+    this.#model.stick(text);
+    return text;
+  }
+
+  /**
+   * ...
+   * @param {Text} text
+   */
+  despawnText(text) {
+    this.#model.unstick(text);
   }
 
   render() {
@@ -580,7 +730,7 @@ class World extends Screen {
     if (beat - this.#beatWindow >= 0.5) {
       this.#beatWindow++;
       this.#hits.unshift({ hit: null, deviation: null });
-      if (this.#hits.length >= 16) {
+      if (this.#hits.length >= 32) {
         this.#hits.pop();
       }
       const stats = this.#hits.filter(hit => hit.deviation !== null).map(hit => hit.deviation ?? 0);
@@ -604,6 +754,7 @@ class World extends Screen {
     this.#snare.play(t);
     this.#hisnare.play(t);
     this.#synth.play(t);
+    this.noise.play(t);
 
     // TODO find a better way to unstick on animation done
     if (
@@ -617,6 +768,10 @@ class World extends Screen {
 
     this.#debugText.content = `${game.p.frameRate().toFixed(0)} fps\n${(this.#meanDeviation * 100).toFixed(0)} %`;
   }
+
+  noise = new Track(
+    game.audio, { bpm: World.BPM, attack: 0, release: 0, noise: true, sustain: 0 }, 20000,
+  );
 
   #kick = new Track(
     game.audio, { bpm: World.BPM, noteValue: 8, attack: 0, frequencyRelease: true },
@@ -780,6 +935,13 @@ class World extends Screen {
     if (this.tails) {
       this.#entities.unstick(...this.tails.map(tail => tail.model));
     }
+    if (this.events) {
+      for (const event of this.events) {
+        event.reset();
+      }
+    }
+
+    this.#hits = [{ hit: null, deviation: null }];
 
     this.grid = [...Array(World.GRID_SIZE).keys()].map(
       y => [...Array(World.GRID_SIZE).keys()].map(x => new Cell(x, y)),
@@ -821,6 +983,11 @@ class World extends Screen {
       this.#spawnOther(type, point[0], point[1]);
     }
 
+    this.events = [];
+    for (const Event of level.events) {
+      this.events.push(new Event());
+    }
+
     this.#updateActivated();
   }
 
@@ -829,9 +996,9 @@ class World extends Screen {
   }
 
   #label = new Text(
-    "", w(1), px(4 * 22), point(px(22), px(22)),
+    "", w(1), px(4 * 22), point(px(22), px(5 * 22)),
     {
-      anchor: point(w(0), h(0)),
+      anchor: point(w(0), h(1)),
       fill: color(
         tr(0), 1, 1, {
           alpha: tween(
