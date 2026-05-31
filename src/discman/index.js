@@ -309,7 +309,8 @@ class Other extends Entity {
         game.world.moveTo(this, target.x, target.y);
         this.tails.unshift(game.world.spawnTail(x, y, this.color));
         this.#energy = 0;
-        if (this.tails.length > 10) {
+        const limit = game.casual ? 5 : 10;
+        if (this.tails.length > limit) {
           const tail = this.tails.pop();
           if (tail) {
             game.world.despawnTail(tail);
@@ -1202,7 +1203,8 @@ class Pause extends Screen {
   }
 
   #updateSettings() {
-    this.#settings.content = `Fullscreen [F] / Volume: ${(game.volume * 100).toFixed(0)}% [-][+]`;
+    const difficulty = game.casual ? "Casual" : "Normal";
+    this.#settings.content = `Fullscreen [F] / Volume: ${(game.volume * 100).toFixed(0)}% [-][+] / Difficulty: ${difficulty} [D]`;
   }
 
   render() {
@@ -1233,6 +1235,10 @@ class Pause extends Screen {
       case "-":
       case "_":
         game.volume = Math.max(game.volume - 0.1, 0);
+        this.#updateSettings();
+        break;
+      case "d":
+        game.casual = !game.casual;
         this.#updateSettings();
         break;
     }
@@ -1391,6 +1397,11 @@ class Game extends HTMLElement {
    * @type {?Screen}
    */
   overlay = null;
+  /**
+   * ...
+   * @type {boolean}
+   */
+  casual = false;
 
   constructor() {
     super();
