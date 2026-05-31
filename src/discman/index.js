@@ -1168,6 +1168,7 @@ class World extends Screen {
 
 /** ... */
 class Pause extends Screen {
+  #settings = write("", subtract(h(1), px(2 * 22)));
   /** @type {import("#sticky").Shape} */
   #model = new Rectangle(
     {
@@ -1188,16 +1189,18 @@ class Pause extends Screen {
         fill: variable("white", "color"),
       },
     ),
-    new Text(
-      "Press Space to Play", w(1), px(2 * 22), point(px(22), subtract(h(1), px(22))),
-      {
-        anchor: point(w(0), h(1)),
-        alignment: 0,
-        fill: variable("white", "color"),
-        orientation: tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }),
-      },
-    ),
+    write("Press Space to Play", subtract(h(1), px(4 * 22)), { scale: 2, dance: true }),
+    this.#settings,
   );
+
+  constructor() {
+    super();
+    this.#updateSettings();
+  }
+
+  #updateSettings() {
+    this.#settings.content = `Volume: ${(game.volume * 100).toFixed(0)}% [-][+]`;
+  }
 
   render() {
     this.#model.render(game.p);
@@ -1207,8 +1210,21 @@ class Pause extends Screen {
    * @param {string} key
    */
   onKeyPressed(key) {
-    if (key === " ") {
-      game.play();
+    game.audio.resume();
+    switch (key) {
+      case " ":
+        game.play();
+        break;
+      case "+":
+      case "=":
+        game.volume = Math.min(game.volume + 0.1, 1);
+        this.#updateSettings();
+        break;
+      case "-":
+      case "_":
+        game.volume = Math.max(game.volume - 0.1, 0);
+        this.#updateSettings();
+        break;
     }
   }
 }
@@ -1395,6 +1411,21 @@ class Game extends HTMLElement {
     });
   }
 
+  #volume = 1;
+
+  get volume() {
+    return this.#volume;
+  }
+
+  set volume(value) {
+    this.#volume = value;
+    this.#updateVolume();
+  }
+
+  #updateVolume() {
+    this.audio.volume = (this.overlay ? 1 / 8 : 1 / 2) * this.#volume;
+  }
+
   /** ... */
   play() {
     this.showOverlay(null);
@@ -1412,7 +1443,7 @@ class Game extends HTMLElement {
    */
   showOverlay(overlay) {
     this.overlay = overlay;
-    this.audio.volume = overlay ? 1 / 8 : 1 / 2;
+    this.#updateVolume();
   }
 }
 customElements.define("discman-game", Game);
