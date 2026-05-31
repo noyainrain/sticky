@@ -538,8 +538,7 @@ class EndEvent extends Event {
     } else if (this.#text && this.#text2 && missed >= 6) {
       const madness = (missed - 6) / 16;
       if (madness >= 1) {
-        game.world.reset();
-        game.rollCredits();
+        game.showOverlay(new Credits(false));
         game.audio.volume = 0;
       } else {
         this.#text.setVariable("madness", madness);
@@ -1196,22 +1195,15 @@ class ClearScreen extends Screen {
       stroke: transparent(),
     },
     this.#title,
-    new Text(
-      "Press Space to Continue", w(1), px(2 * 22), point(px(22), subtract(h(1), px(22))),
-      {
-        anchor: point(w(0), h(1)),
-        orientation: tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }),
-        fill: variable("white", "color"),
-        alignment: 0,
-      },
-    ),
+    write("Press Space to Continue", subtract(h(1), px(3 * 22)), { scale: 2, dance: true }),
   );
 
   constructor() {
     super();
-    this.#title.content = game.world.level === LEVELS.length - 1
-      ? "All Clear"
-      : `Level ${game.world.level + 1}/${LEVELS.length} Clear`;
+    // this.#title.content = game.world.level === LEVELS.length - 1
+    //   ? "All Clear"
+    //   : `Level ${game.world.level + 1}/${LEVELS.length} Clear`;
+    this.#title.content = `Level ${game.world.level + 1}/${LEVELS.length} Clear`;
   }
 
   render() {
@@ -1223,43 +1215,69 @@ class ClearScreen extends Screen {
    */
   onKeyPressed(key) {
     if (key === " ") {
-      game.world.level = (game.world.level + 1) % LEVELS.length;
-      game.world.reset();
-      if (game.world.level === 0) {
-        game.pause();
+      // game.world.level = (game.world.level + 1) % LEVELS.length;
+      if (game.world.level === LEVELS.length - 1) {
+        game.showOverlay(new Credits(true));
       } else {
+        game.world.level++;
+        game.world.reset();
         game.play();
       }
     }
   }
 }
 
+/**
+ * ...
+ * @param {string} content
+ * @param {import("#sticky").Value<"length">} y
+ * @param {Object} [options]
+ * @param {number} [options.scale]
+ * @param {boolean} [options.dance]
+ * @param {number} [options.alignment]
+ * @returns {Text}
+ */
+function write(content, y, { scale = 1, dance = false, alignment = 0 } = {}) {
+  return new Text(
+    content, subtract(w(1), px(2 * 22)), px(scale * 22), point(px(22), add(px(scale * 22), y)),
+    {
+      anchor: point(w(0), h(1)),
+      orientation: dance ? tween(0, -1 / 256, World.INTERVAL, { easing: easeOut }) : 0,
+      fill: variable("white", "color"),
+      alignment,
+    },
+  );
+}
+
 /** ... */
 class Credits extends Screen {
-  #model = new Rectangle(
-    {
-      variables: { ...NEON_PALETTE },
-      fill: variable("black", "color"),
-      stroke: transparent(),
-    },
-    new Text(
-      "Fin", w(1), px(4 * 22),
+  #model;
+
+  /**
+   * @param {boolean} clear
+   */
+  constructor(clear) {
+    super();
+    this.#model = new Rectangle(
       {
-        at: point(w(1 / 2), px(22)),
-        anchor: point(w(1 / 2), h(0)),
-        fill: variable("white", "color"),
+        variables: { ...NEON_PALETTE },
+        // fill: variable("black", "color"),
+        fill: color(tr(0), 0, 0, { alpha: clear ? 2 / 3 : 1 }),
+        stroke: transparent(),
       },
-    ),
-    new Text("Thank you for playing!", w(1), px(2 * 22), { fill: variable("white", "color") }),
-    new Text(
-      "Press Space to Continue", w(1), px(2 * 22),
-      {
-        at: point(w(1 / 2), subtract(h(1), px(22))),
-        anchor: point(w(1 / 2), h(1)),
-        fill: variable("white", "color"),
-      },
-    ),
-  );
+      write(
+        clear ? "All Clear" : shuffle([..."All Clear"]).join(""), px(22),
+        { scale: 4, dance: clear },
+      ),
+      write(clear ? "They are gone…" : "They stay…", px(5 * 22), { scale: 2 }),
+      write("~ A game by noya ~", h(1 / 2), { alignment: 1 / 2 }),
+      write("~ Made for Game-Like Jam ~", add(h(1 / 2), px(22)), { alignment: 1 / 2 }),
+      write("Thank you for playing!", add(h(1 / 2), px(2 * 22)), { alignment: 1 / 2 }),
+      // write("Let us know your feedback [D]", add(h(1 / 2), px(2 * 22)), { alignment: 1 / 2 }),
+      write("Replay Level [R] · Give ꙳Feedback꙳ [G]", subtract(h(1), px(2 * 22))),
+      write("Press Space to Continue", subtract(h(1), px(4 * 22)), { scale: 2, dance: clear }),
+    );
+  }
 
   render() {
     this.#model.render(game.p);
@@ -1269,8 +1287,19 @@ class Credits extends Screen {
    * @param {string} key
    */
   onKeyPressed(key) {
-    if (key === " ") {
-      game.pause();
+    switch (key) {
+      case " ":
+        game.world.level = 0;
+        game.world.reset();
+        game.pause();
+        break;
+      case "r":
+        game.world.reset();
+        game.play();
+        break;
+      case "g":
+        open("https://discord.gg/tyGGkZKb3D", "_blank");
+        break;
     }
   }
 };
@@ -1339,11 +1368,6 @@ class Game extends HTMLElement {
   /** ... */
   pause() {
     this.showOverlay(new Pause());
-  }
-
-  /** ... */
-  rollCredits() {
-    this.showOverlay(new Credits());
   }
 
   /**
