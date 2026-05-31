@@ -468,6 +468,43 @@ class Event {
   reset() {}
 }
 
+class StartEvent extends Event {
+  /** @type {?Text} */
+  #text = null;
+  /** @type {?Text} */
+  #text2 = null;
+  #complete = false;
+
+  update() {
+    if (this.#complete) {
+      return;
+    }
+
+    let hits = game.world.hits.slice(1).findIndex(hit => !hit.hit);
+    if (hits === -1) {
+      hits = game.world.hits.length;
+    }
+    if (!this.#text) {
+      this.#text = game.world.spawnText("Press ↑→ ↓← to move to the beat");
+      this.#text.at = point(px(22), px(7 * 22));
+      this.#text2 = game.world.spawnText("~ Bring the sound ~");
+      this.#text2.at = point(px(22), px(9 * 22));
+    } else if (hits >= 2) {
+      this.#complete = true;
+      this.reset();
+    }
+  }
+
+  reset() {
+    if (this.#text && this.#text2) {
+      game.world.despawnText(this.#text);
+      game.world.despawnText(this.#text2);
+      this.#text = null;
+      this.#text2 = null;
+    }
+  }
+}
+
 class EndEvent extends Event {
   /** @type {?Text} */
   #text = null;
@@ -494,7 +531,7 @@ class EndEvent extends Event {
           ),
         ),
         add(
-          px(8 * 22),
+          px(7 * 22),
           tween(
             multiply(px(0), variable("madness", "scalar")),
             multiply(px(6), variable("madness", "scalar")), World.INTERVAL / 8,
@@ -509,7 +546,7 @@ class EndEvent extends Event {
       );
       this.#text.height = px(2 * 22);
       this.#text.setVariable("madness", 0);
-      this.#text2 = game.world.spawnText("~ Bring the light ~");
+      this.#text2 = game.world.spawnText("~ Bring the sound ~");
       this.#text2.at = point(
         add(
           px(22),
@@ -520,7 +557,7 @@ class EndEvent extends Event {
           ),
         ),
         add(
-          px(11 * 22),
+          px(9 * 22),
           tween(
             multiply(px(0), variable("madness", "scalar")),
             multiply(px(6), variable("madness", "scalar")), World.INTERVAL / 8,
@@ -577,7 +614,7 @@ class EndEvent extends Event {
  */
 
 const LEVELS = [
-  { others: [RandomOther], events: [] },
+  { others: [RandomOther], events: [StartEvent] },
   { others: [ConfrontingOther, RandomOther], events: [] },
   { others: [ConfrontingOther, RandomOther, AvoidingOther], events: [] },
   { others: [AvoidingOther, AvoidingOther, AvoidingOther], events: [EndEvent] },
