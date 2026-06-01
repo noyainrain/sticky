@@ -264,11 +264,15 @@ class Other extends Entity {
   tails = [];
 
   #energy = 0;
+  #talkGenerator;
+  #nextTalk;
 
   /**
    * @param {string} color
+   * @param {string} word
+   * @param {boolean} intense
    */
-  constructor(color) {
+  constructor(color, word, intense) {
     super(
       new Triangle(
         h(1 / World.GRID_SIZE / 2), h(1 / World.GRID_SIZE / 2),
@@ -280,6 +284,30 @@ class Other extends Entity {
       ),
     );
     this.color = color;
+    this.word = word;
+
+    this.#talkGenerator = this.#talk(intense);
+    const result = this.#talkGenerator.next();
+    this.#nextTalk = result.value ? result.value : null;
+  }
+
+  /**
+   * @param {boolean} intense
+   */
+  * #talk(intense = false) {
+    const n = World.GRID_SIZE * World.GRID_SIZE;
+    yield Math.trunc(n / 8 + (Math.random() - 0.5) * n / 8);
+    yield Math.trunc(n / 2 + (Math.random() - 0.5) * n / 8);
+    const freq = 4;
+    if (intense) {
+      for (let i = Math.trunc(2 / 3 * n); i < n; i += freq) {
+        yield Math.trunc(i + freq / 2 + (Math.random() - 0.5) * (freq / 2));
+      }
+    }
+    //    [  v  ]
+    // 0_ 1_ 2_ 3_
+    //    [   v    ]
+    // 0_ 1_ 2_ 3_ 4_
   }
 
   /**
@@ -322,6 +350,12 @@ class Other extends Entity {
       if (tail) {
         game.world.despawnTail(tail);
       }
+    }
+
+    if (this.#nextTalk !== null && this.#nextTalk <= game.world.activated) {
+      game.world.word(this.word, this.x, this.y);
+      const result = this.#talkGenerator.next();
+      this.#nextTalk = result.value ? result.value : null;
     }
   }
 
@@ -419,8 +453,8 @@ class Other extends Entity {
 
 /** ... */
 class RandomOther extends Other {
-  constructor() {
-    super("lightMagenta");
+  constructor({ word = "Shhh!", intense = false } = {}) {
+    super("lightMagenta", word, intense);
   }
 
   plan() {
@@ -430,8 +464,8 @@ class RandomOther extends Other {
 
 /** ... */
 class ConfrontingOther extends Other {
-  constructor() {
-    super("lightCrimson");
+  constructor({ word = "Silence!", intense = false } = {}) {
+    super("lightCrimson", word, intense);
   }
 
   meow = false;
@@ -447,8 +481,8 @@ class ConfrontingOther extends Other {
 
 /** ... */
 class AvoidingOther extends Other {
-  constructor() {
-    super("lightPurple");
+  constructor({ word = "Nooo!", intense = false } = {}) {
+    super("lightPurple", word, intense);
   }
 
   plan() {
@@ -612,13 +646,14 @@ class EndEvent extends Event {
  * @typedef Level
  * @property {new () => Other} others
  * @property {new () => Event} events
+ * @property {?string} word
  */
 
 const LEVELS = [
-  { others: [RandomOther], events: [StartEvent] },
-  { others: [ConfrontingOther, RandomOther], events: [] },
-  { others: [ConfrontingOther, RandomOther, AvoidingOther], events: [] },
-  { others: [AvoidingOther, AvoidingOther, AvoidingOther], events: [EndEvent] },
+  { others: [RandomOther], events: [StartEvent], word: null },
+  { others: [ConfrontingOther, RandomOther], events: [], word: null },
+  { others: [ConfrontingOther, RandomOther, AvoidingOther], events: [], word: null },
+  { others: [AvoidingOther, AvoidingOther, AvoidingOther], events: [EndEvent], word: "Why?" },
 ];
 
 /**
@@ -674,7 +709,7 @@ class World extends Screen {
    * ...
    * @type {number}
    */
-  active = 0;
+  activated = 0;
 
   #beatWindow = 0;
   /** @type {Hit[]} */
@@ -682,6 +717,8 @@ class World extends Screen {
   #meanDeviation = 0;
   /** @type {Rectangle} */
   #entities = new Rectangle(h(1));
+  /** @type {Text[]} */
+  #words = [];
   /** @type {Rectangle} */
   #model;
   #debugText = new Text(
@@ -726,11 +763,58 @@ class World extends Screen {
     for (const event of this.events) {
       event.update();
     }
+
+    const oldWords = this.#words;
+    this.#words = [];
+    for (const word of oldWords) {
+      const t = game.p.millis() / 1000;
+      if (
+        word.base && word.getVariable("offset", "scalar").shape
+        && t + word.getVariable("offset", "scalar").evaluate() >= 2
+      ) {
+        this.#entities.unstick(word);
+      } else {
+        this.#words.push(word);
+      }
+    }
   }
 
   // XXX
   get hits() {
     return this.#hits;
+  }
+
+  /**
+   * ...
+   * @param {string} content
+   * @param {number} x
+   * @param {number} y
+   */
+  word(content, x, y) {
+    const word = new Text(
+      content, w(1), px(22),
+      point(
+        h((x + 1 / 2) / World.GRID_SIZE),
+        multiply(
+          h(1 / World.GRID_SIZE),
+          add(
+            scalar(y + 1 / 2),
+            tween(0, -1, 2, { offset: variable("offset", "scalar"), easing: easeOut }),
+          ),
+        ),
+      ),
+      {
+        anchor: point(w(0), h(1)),
+        alignment: 0,
+        fill: color(
+          tr(0), 1, 1,
+          { alpha: tween(1, 0, 1, { offset: add(variable("offset", "scalar"), scalar(1)), pause: 1 }) },
+        ),
+      },
+    );
+    word.setVariable("offset", -game.p.millis() / 1000);
+    this.#words.push(word);
+    this.#entities.stick(word);
   }
 
   /**
@@ -1103,7 +1187,7 @@ class World extends Screen {
       assert(point);
       const type = others[i];
       assert(type);
-      this.#spawnOther(type, point[0], point[1]);
+      this.#spawnOther(type, point[0], point[1], level.word);
     }
 
     this.events = [];
@@ -1168,12 +1252,13 @@ class World extends Screen {
   }
 
   /**
-   * @param {new () => Other} type
+   * @param {new (options: {word?: string; intense?: boolean}) => Other} type
    * @param {number} x
    * @param {number} y
+   * @param {?string} word
    */
-  #spawnOther(type, x, y) {
-    const other = new type();
+  #spawnOther(type, x, y, word) {
+    const other = new type({ word: word ?? undefined, intense: word !== null });
     this.moveTo(other, x, y); // Math.trunc(World.GRID_SIZE / 2), Math.trunc(World.GRID_SIZE / 2));
     this.others.push(other);
     this.#entities.stick(other.model);
