@@ -742,6 +742,8 @@ class World extends Screen {
       this.#entities, this.#debugText,
     );
     this.reset();
+
+    this.debug = new URL(location.href).searchParams.has("debug");
   }
 
   update() {
@@ -890,7 +892,9 @@ class World extends Screen {
 
     this.#model.render(game.p);
 
-    this.#debugText.content = `${game.p.frameRate().toFixed(0)} fps\n${(this.#meanDeviation * 100).toFixed(0)} %`;
+    this.#debugText.content = this.debug
+      ? `${game.p.frameRate().toFixed(0)} fps\n${(this.#meanDeviation * 100).toFixed(0)} %`
+      : "";
   }
 
   noise = new Track(
