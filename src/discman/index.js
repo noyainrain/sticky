@@ -1,4 +1,4 @@
-/** Disc-Man. */
+/** Silance. */
 
 import p5 from "p5";
 import {
@@ -1361,7 +1361,7 @@ class Pause extends Screen {
       viewport: 360,
     },
     new Text(
-      "Disc-Man",
+      "Silänce",
       w(1), px(4 * 22),
       // tween(px(4 * 22), px(4 * 22 + 4 * 22 / 8), World.INTERVAL, { easing: easeOut }),
       {
